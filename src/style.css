@@ -631,3 +631,18 @@
 @media(min-width:1000px){.menu-main{width:520px;padding-top:18px}.menu-main h1{font-size:clamp(64px,6vw,88px);white-space:nowrap;line-height:.98}.menu-nav{gap:18px;margin-top:14px}.menu-main .intro-copy{margin-bottom:18px}.menu-bottom{flex-shrink:0}}
 
 .practice-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.practice-actions button{min-width:0;white-space:normal;line-height:1.3}.hud-mission{background:rgba(6,23,32,.72);padding:12px 14px;border-left:2px solid #76b5b6}.hud-mission .eyebrow{color:#a5c7ce}
+
+/* Flight readability against both bright sand and dark terrain. */
+.hud{ text-shadow:0 1px 1px #031019,1px 0 1px #031019,-1px 0 1px #031019; }
+.hud-bottom-left,.hud-weapons,.radio,.hud-session{background:rgba(5,19,29,.9);border:1px solid #48616c;padding:12px;border-radius:4px;color:#e9fff7}
+.hud-weapons{grid-template-columns:125px 115px}
+.hud .flight-hints{background:rgba(5,19,29,.94);padding:9px;bottom:0;color:#e9fff7}
+.hud kbd{background:#112a35;color:#fff;border-color:#78929e}
+.hud .health-row,.hud .flight-telemetry,.hud .radio,.hud .weapon>span,.hud .flare-line,.hud #fps{color:#e4fff4}
+.hud .lock-status,.hud .flight-warning{background:rgba(4,18,27,.88);padding:5px 9px;border-radius:3px}
+#toast{top:auto;bottom:175px;max-width:min(520px,85vw);font-size:13px}
+@media(max-width:700px){.hud-weapons{grid-template-columns:70px 65px;padding:8px}.hud-bottom-left{padding:8px}.radio{max-width:210px;padding:6px}.hud-session{padding:6px}#toast{bottom:210px}}
+.hud-bottom-left{bottom:132px;width:230px}
+.hud .flight-warning:empty{display:none}
+#toast{top:180px;bottom:auto}
+@media(max-width:700px){.hud-bottom-left{bottom:115px;width:145px}#toast{top:180px;bottom:auto}}

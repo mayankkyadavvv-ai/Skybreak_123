@@ -1229,7 +1229,10 @@ class UI {
       x = w / 2,
       y = h * 0.43;
     c.clearRect(0, 0, w, h);
-    const ink = "rgba(199,240,229,.82)",
+    c.shadowColor = "#03121c";
+    c.shadowBlur = 2;
+    c.shadowOffsetY = 1;
+    const ink = "#c4ffe8",
       red = "#ff796c",
       blue = "#65d8ff";
     c.strokeStyle = ink;
@@ -1386,7 +1389,7 @@ class UI {
           if (Math.abs(proj.x) < 0.94 && Math.abs(proj.y) < 0.85) {
             const sx = (proj.x * 0.5 + 0.5) * w;
             const sy = (-proj.y * 0.5 + 0.5) * h;
-            const alpha = Math.max(0.35, 1 - dist / 38000);
+            const alpha = 1;
 
             c.save();
             c.globalAlpha = alpha;
@@ -1417,7 +1420,7 @@ class UI {
 
     c.lineWidth = 1;
     this.drawILSGuidance(c, g, w, h);
-    this.drawLensFlare(c, g, w, h);
+    // Keep flight instruments free of lens-glare overlays.
     this.drawHighGVignette(c, g, w, h);
     this.drawRadar(g, c, w, h);
 
@@ -1543,7 +1546,7 @@ class UI {
   drawILSGuidance(c, g, w, h) {
     const p = g.player;
     const near = getNearestIAFBase(p.position.x, p.position.z);
-    if (!near || near.distance > 15000) return;
+    if (!near || near.distance > 15000 || !(p.landingMode || p.gearDown || p.isLanded)) return;
     const base = near.base;
     const guidance=approachInfo(base,p);
 

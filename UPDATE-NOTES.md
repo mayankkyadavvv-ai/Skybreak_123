@@ -1,3 +1,7 @@
+# v1.3.1 — daylight contrast and flight HUD
+
+Canvas terrain colour textures are now correctly tagged sRGB, avoiding washed-out midtones. Flight readouts have dark backplates and canvas instruments have dark edge shadows. Removed lens glare over flight instruments; ILS only appears when gear/landing mode is active or parked. Toasts moved away from landing guidance and the radar.
+
 # v1.3.0 — reference-inspired surface detail
 
 Original procedural rocky slope/snow materials and distance-filtered aircraft panel seams. No supplied game imagery is shipped as an asset. Afterburner pulses are slower and less erratic.

@@ -319,6 +319,7 @@ function createGeoTexture(width = 2048, height = 2048) {
 
   // Create and configure Three.js texture
   const texture = new T.CanvasTexture(canvas);
+  texture.colorSpace = T.SRGBColorSpace;
   texture.wrapS = T.ClampToEdgeWrapping;
   texture.wrapT = T.ClampToEdgeWrapping;
   texture.generateMipmaps = true;
