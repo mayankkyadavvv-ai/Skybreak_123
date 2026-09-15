@@ -883,6 +883,7 @@ class UI {
       <div class="settings-list">
         ${select("quality", "Graphics quality", [
           ["low", "Low · performance"],
+          ["clear", "Clear & Smooth · integrated GPU"],
           ["medium", "Medium · balanced"],
           ["high", "High · bloom + detail"]
         ])}

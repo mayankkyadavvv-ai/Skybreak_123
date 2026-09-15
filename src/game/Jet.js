@@ -1,3 +1,4 @@
+import { aircraftDetail } from "./SurfaceDetail.js";
 import * as T from "three";
 import { forward } from "./math.js";
 import { JET_MODELS, LIVERIES, computeJetStats, DEFAULT_PLAYER_CONFIG } from "./JetConfigs.js";
@@ -45,6 +46,7 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
     glassMat = new T.MeshStandardMaterial({ color: livery.glassColor || 0x98b4cc, metalness: 0.85, roughness: 0.10 });
   }
 
+  aircraftDetail(bodyMat);
   const elevators = [];
   const canards = [];
   const flames = [];
@@ -660,18 +662,18 @@ export class Jet {
     if (u.flames) {
       u.flames.forEach((f, i) => {
         f.visible = !(this.isLanded && this.throttle < .05);
-        f.scale.set(1, boost ? 1.6 + Math.sin(t * 58 + i) * 0.2 : 0.72 + this.throttle * 0.7, 1);
+        f.scale.set(1, boost ? 1.6 + Math.sin(t * 18 + i) * 0.08 : 0.72 + this.throttle * 0.7, 1);
         f.material.color.setHex(boost ? (i % 2 ? 11526143 : 16740908) : i % 2 ? 12775167 : 6458367);
       });
     }
 
     if (u.shockDiamonds) {
       const showDiamonds = boost || this.throttle > 0.82;
-      const diaOpacity = boost ? 0.85 + Math.sin(t * 60) * 0.15 : this.throttle > 0.82 ? 0.45 : 0;
+      const diaOpacity = boost ? 0.85 + Math.sin(t * 20) * 0.08 : this.throttle > 0.82 ? 0.45 : 0;
       u.shockDiamonds.forEach((dia, i) => {
         dia.material.opacity = diaOpacity;
         if (showDiamonds) {
-          const pulse = 1.0 + Math.sin(t * 45 + i * 1.5) * 0.12;
+          const pulse = 1.0 + Math.sin(t * 16 + i * 1.5) * 0.06;
           dia.scale.set(0.85 * pulse, 0.85 * pulse, 1.4 * pulse);
         }
       });

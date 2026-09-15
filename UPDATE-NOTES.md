@@ -1,3 +1,11 @@
+# v1.3.0 — reference-inspired surface detail
+
+Original procedural rocky slope/snow materials and distance-filtered aircraft panel seams. No supplied game imagery is shipped as an asset. Afterburner pulses are slower and less erratic.
+
+Clear & Smooth is the default for new settings: native CSS resolution, 2x MSAA, no bloom pass, fewer clouds. Existing saved quality choices remain available; choose Clear & Smooth in Settings. This is an integrated-GPU budget, not a measured FPS guarantee.
+
+References informed material separation and movement. Destructible cities, photoreal assets and real-world terrain are not included in this release.
+
 # v1.2.1 — graphics clarity
 
 - Medium/high now render at device pixel ratio up to 2, with multisampled post-processing for clean silhouettes.

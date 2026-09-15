@@ -1,3 +1,4 @@
+import { terrainDetail } from "./SurfaceDetail.js";
 import * as T from "three";
 import { runwayLocal, onRunway } from "./Landing.js";
 import { rng } from "./math.js";
@@ -230,6 +231,7 @@ class World {
       metalness: 0.04,
       flatShading: false
     });
+    terrainDetail(this.landMat);
     this.terrain = new T.Mesh(this.terrainGeometry(180), this.landMat);
     this.terrain.receiveShadow = true;
     scene.add(this.terrain);
@@ -667,7 +669,7 @@ class World {
   }
 
   setQuality(q, renderer) {
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q === "low" ? 1 : 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q === "low" || q === "clear" ? 1 : 2));
     if (q === this.quality) return;
     this.quality = q;
     const anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
@@ -681,7 +683,7 @@ class World {
       this.sun.shadow.map.dispose();
       this.sun.shadow.map = null;
     }
-    this.clouds.forEach((c, i) => (c.visible = q === "high" || i < (q === "low" ? 35 : 90)));
+    this.clouds.forEach((c, i) => (c.visible = q === "high" || i < (q === "low" ? 35 : q === "clear" ? 45 : 90)));
     this.terrain.geometry.dispose();
     this.terrain.geometry = this.terrainGeometry(q === "high" ? 220 : q === "low" ? 100 : 180);
     if (this.landMat?.normalScale) {

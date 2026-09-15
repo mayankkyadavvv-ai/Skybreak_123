@@ -2,7 +2,7 @@ import "./style.css";
 import { Game } from "./game/Game.js";
 import { UI } from "./ui/UI.js";
 import { AUDIO_DEFAULTS, normalizeAudioSettings } from "./game/SoundDesign.js";
-const defaults = { quality: "medium", difficulty: "easy", input: "keyboard", sensitivity: 0.8, ...AUDIO_DEFAULTS, invert: false, shake: true, guideSeen: false, controlsVersion: 2 };
+const defaults = { quality: "clear", difficulty: "easy", input: "keyboard", sensitivity: 0.8, ...AUDIO_DEFAULTS, invert: false, shake: true, guideSeen: false, controlsVersion: 2 };
 let saved = {};
 try {
   saved = JSON.parse(localStorage.getItem("skybreak-settings") || "{}");
@@ -15,7 +15,7 @@ if (saved.controlsVersion !== 2) {
   settings.guideSeen = false;
   settings.controlsVersion = 2;
 }
-for (const [key, allowed] of Object.entries({ quality: ["low", "medium", "high"], difficulty: ["easy", "medium", "hard"], input: ["mouse", "keyboard", "advanced"] })) if (!allowed.includes(settings[key])) settings[key] = defaults[key];
+for (const [key, allowed] of Object.entries({ quality: ["low", "clear", "medium", "high"], difficulty: ["easy", "medium", "hard"], input: ["mouse", "keyboard", "advanced"] })) if (!allowed.includes(settings[key])) settings[key] = defaults[key];
 if (!Number.isFinite(settings.sensitivity)) settings.sensitivity = defaults.sensitivity;
 const ui = new UI(document.getElementById("app"), settings);
 try {

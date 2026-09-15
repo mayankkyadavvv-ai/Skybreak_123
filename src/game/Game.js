@@ -124,9 +124,16 @@ class Game {
     if (this.effects) {
       this.effects.quality = this.settings.quality === "low" ? 0.45 : this.settings.quality === "high" ? 1 : 0.7;
     }
+    if (this.composer) {
+      const samples = this.settings.quality === "low" ? 0 : this.settings.quality === "clear" ? 2 : 4;
+      for (const target of [this.composer.renderTarget1, this.composer.renderTarget2]) {
+        const supported = Math.min(samples, this.renderer.capabilities.maxSamples);
+        if (target.samples !== supported) { target.dispose(); target.samples = supported; }
+      }
+    }
     this.composer?.setPixelRatio(this.renderer.getPixelRatio());
     if (this.bloomPass) {
-      if (this.settings.quality === "low") {
+      if (["low", "clear"].includes(this.settings.quality)) {
         this.bloomPass.enabled = false;
       } else if (this.settings.quality === "high") {
         this.bloomPass.enabled = true;
