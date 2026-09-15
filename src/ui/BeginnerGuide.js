@@ -1,0 +1,25 @@
+export const CONTROL_LABELS = { keyboard: 'Arrow keys · Easy', mouse: 'Mouse · Easy', advanced: 'Advanced' };
+
+export function flightHints(mode, freeFlight = false) {
+  const steering = mode === 'mouse' ? '<span><kbd>MOUSE</kbd> DIRECTION</span>' : mode === 'advanced' ? '<span><kbd>W S / A D</kbd> PITCH / ROLL</span>' : '<span><kbd>↑ ↓ ← →</kbd> PITCH / TURN</span>';
+  return `${steering}<span><kbd>SHIFT / TAB</kbd> FAST</span><span><kbd>B</kbd> SLOW</span>${freeFlight ? '<span><kbd>X</kbd> LEVEL WINGS</span>' : '<span><kbd>SPACE</kbd> CANNON</span>'}<span><kbd>H</kbd> HELP</span><span><kbd>ESC</kbd> PAUSE</span>`;
+}
+
+export function beginnerGuide(mode, full = false) {
+  const advanced = mode === 'advanced';
+  const steering = mode === 'mouse'
+    ? '<div class="arrow-guide"><kbd>MOUSE</kbd><div>Aim mouse toward desired flight path.<small>Up = climb. Down = dive. Left/Right = turn.</small></div></div>'
+    : advanced
+    ? '<div class="arrow-guide"><kbd>W / S</kbd><div>W = pitch down, S = pitch up.<small>A/D = roll, Q/E = yaw. Full manual aerobatic flight model.</small></div></div>'
+    : '<div class="arrow-guide"><div class="arrow-cluster"><kbd>↑</kbd><div><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></div></div><div><b>↑ Climb &nbsp; ↓ Dive</b><small>← Turn Left &nbsp; → Turn Right<br>Wings automatically bank and coordinate turns.</small></div></div>';
+  return `<div class="guide-modes">${Object.entries(CONTROL_LABELS).map(([key, label]) => `<button data-mode="${key}" class="${key === mode ? 'active' : ''}">${label}</button>`).join('')}</div>
+  <p class="guide-summary">${advanced ? 'Advanced controls require full manual flight control. New pilots should select Arrow keys · Easy.' : 'Aircraft maintains forward flight automatically. You only need to steer.'}</p>
+  ${steering}
+  <ol class="learn-steps">
+    <li><b>Use gentle inputs</b><span>${mode === 'mouse' ? 'Move mouse smoothly. Avoid dragging all the way to screen edges.' : advanced ? 'Tap W/S in short bursts. Manage roll and yaw independently.' : 'Tap arrow keys for 1-2 seconds, then release. You can combine Up + Left.'}</span></li>
+    <li><b>Speed & Throttle</b><span>Hold Shift or Tab = Afterburner boost. Hold B = Airbrakes.${advanced ? ' Advanced mode features manual throttle control.' : ' Releasing returns to cruising speed automatically.'}</span></li>
+    <li><b>Level the aircraft</b><span>${advanced ? 'Press X: engages auto-level assist.' : mode === 'mouse' ? 'Center your mouse cursor inside the inner reticle.' : 'Release arrow keys. Jet auto-levels wings.'} Press H anytime to open this guide.</span></li>
+  </ol>
+  <details class="combat-guide"><summary>Landing, takeoff & air stations</summary><p>L opens air stations. Choose <b>ILS Approach</b> to fly the approach, or <b>Start parked</b> to practise takeoff.</p><div class="controls-grid"><div><kbd>J</kbd><span>Toggle landing mode / cruise assist.</span></div><div><kbd>PgUp / PgDn</kbd><span>Increase / decrease throttle in landing mode. + / − also work.</span></div><div><kbd>K</kbd><span>Flaps: lower approach speed and assisted 3° descent.</span></div><div><kbd>G</kbd><span>Landing gear. Cannot retract while on the ground.</span></div><div><kbd>B</kbd><span>Airbrakes in flight; wheel brakes on runway.</span></div><div><kbd>↑</kbd><span>Gently flare before touchdown; rotate above 342 km/h for takeoff.</span></div></div><p>Target about 400 km/h on approach. Keep wings level and centreline aligned. Two white / two red PAPI lights indicate the approach path. After touchdown: idle throttle, hold B, then remain stopped for 5 seconds to repair and rearm. High throttle alone will not lift the jet off the runway.</p></details>
+  ${full ? `<details class="combat-guide"><summary>Combat Controls & Weapons Guide</summary><p>Targets in front of you are automatically acquired (Easy modes). Keep the enemy inside the large central reticle for 1.4s. Fire missile once <b>LOCKED</b> appears.</p><div class="controls-grid"><div><kbd>SPACE / LEFT CLICK</kbd><span>Hold to fire 20mm rotary cannon.</span></div><div><kbd>${advanced ? 'RIGHT CLICK' : 'E / RIGHT CLICK'}</kbd><span>Fire IR missile at LOCKED target. 1.7s reload cooldown.</span></div><div><kbd>F</kbd><span>Deploy defensive flares upon MISSILE WARNING and break turn.</span></div><div><kbd>R</kbd><span>Cycle through next enemy targets.</span></div></div></details><details class="combat-guide"><summary>Camera & Flight Shortcuts</summary><div class="controls-grid"><div><kbd>C</kbd><span>Change camera: chase, cockpit, free look, cinematic.</span></div><div><kbd>V</kbd><span>Toggle cockpit first-person view.</span></div><div><kbd>X</kbd><span>Wings-leveling auto flight assist.</span></div><div><kbd>ESC</kbd><span>Pause game; click Resume to continue.</span></div></div><p>In Easy modes, W/S/A/D can be used as alternatives to Arrow keys. In Free Look, moving the mouse pans the camera freely. On mobile devices, use the virtual stick for steering and buttons for throttle/weapons.</p></details>` : ''}`;
+}
