@@ -1,3 +1,11 @@
+# v1.2.1 — graphics clarity
+
+- Medium/high now render at device pixel ratio up to 2, with multisampled post-processing for clean silhouettes.
+- Reduced bloom spread, exposure and clear-weather haze; stronger separation between blue water, green land and warm sand.
+- Terrain avoids double-dark colour multiplication; improved oblique texture filtering.
+- Sparks have defined cores and explosion shockwaves have thinner outlines. Smoke stays soft by design.
+- Higher resolution can cost GPU performance; Low remains available.
+
 # Skybreak 1.2 review and changes
 
 ## Source and scope

@@ -26,11 +26,11 @@ function createGeoTexture(width = 2048, height = 2048) {
 
   // 1. Base Geographic Biome Gradients (North to South / East to West)
   const baseGrad = ctx.createLinearGradient(0, 0, width, height);
-  baseGrad.addColorStop(0, "#425540");   // Northern pine foothills & valleys
-  baseGrad.addColorStop(0.28, "#657248"); // Punjab & Haryana agricultural belt
-  baseGrad.addColorStop(0.52, "#cda96c"); // Thar & Sindh desert golden sands
+  baseGrad.addColorStop(0, "#345839");   // Northern pine foothills & valleys
+  baseGrad.addColorStop(0.28, "#66884a"); // Punjab & Haryana agricultural belt
+  baseGrad.addColorStop(0.52, "#d4ac64"); // Thar & Sindh desert golden sands
   baseGrad.addColorStop(0.82, "#968158"); // Semi-arid Gujarat & coastal scrub
-  baseGrad.addColorStop(1, "#325055");   // Coastal rim & Arabian sea edge
+  baseGrad.addColorStop(1, "#36665a");   // Coastal rim & Arabian sea edge
   ctx.fillStyle = baseGrad;
   ctx.fillRect(0, 0, width, height);
 

@@ -156,7 +156,7 @@ class World {
     this.time = 0;
 
     scene.background = new T.Color(0x8ab8cb);
-    scene.fog = new T.FogExp2(0x8db4c3, 39e-6);
+    scene.fog = new T.FogExp2(0x8db4c3, 18e-6);
 
     this.sun = new T.DirectionalLight(0xfffaf0, 3.8);
     this.sun.position.set(-7e3, 6e3, -1e4);
@@ -353,7 +353,9 @@ class World {
         // Fertile agricultural river plains (Punjab, Haryana, Delhi)
         c.setHex(0x56784a);
       }
-      c.multiplyScalar(0.92 + 0.08 * Math.sin(x * 0.015) * Math.cos(z * 0.018));
+      // Avoid multiplying two fully saturated dark biome colours together.
+      if (this.geoTexture) c.lerp(new T.Color(0xffffff), 0.65);
+      c.multiplyScalar(0.96 + 0.04 * Math.sin(x * 0.015) * Math.cos(z * 0.018));
       colors.push(c.r, c.g, c.b);
     }
 
@@ -665,9 +667,13 @@ class World {
   }
 
   setQuality(q, renderer) {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q === "low" ? 1 : 2));
     if (q === this.quality) return;
     this.quality = q;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, q === "high" ? 1.5 : q === "medium" ? 1.25 : 1));
+    const anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+    for (const texture of [this.geoTexture, this.terrainNormalMap]) {
+      if (texture) { texture.anisotropy = anisotropy; texture.needsUpdate = true; }
+    }
     renderer.shadowMap.enabled = q !== "low";
     const size = q === "high" ? 2048 : 1024;
     this.sun.shadow.mapSize.set(size, size);
@@ -714,7 +720,7 @@ class World {
         break;
       }
     }
-    const targetDensity = inside ? 55e-5 : 39e-6;
+    const targetDensity = inside ? 18e-5 : 18e-6;
     this.scene.fog.density = T.MathUtils.lerp(this.scene.fog.density, targetDensity, dt * 3.5);
   }
 }

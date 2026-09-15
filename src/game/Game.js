@@ -44,7 +44,7 @@ class Game {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
     this.renderer.toneMapping = T.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.0;
     this.scene = new T.Scene();
     this.camera = new T.PerspectiveCamera(68, innerWidth / innerHeight, 1.2, 95e3);
     this.world = new World(this.scene);
@@ -78,7 +78,13 @@ class Game {
     this.bloomPass = null;
     try {
       if (typeof window !== "undefined" && this.renderer && this.renderer.capabilities?.isWebGL2) {
-        this.composer = new EffectComposer(this.renderer);
+        // Multisample the offscreen scene too: canvas antialias alone does not
+        // smooth geometry rendered through the post-processing composer.
+        const sceneTarget = new T.WebGLRenderTarget(innerWidth, innerHeight, {
+          type: T.HalfFloatType,
+          samples: Math.min(4, this.renderer.capabilities.maxSamples)
+        });
+        this.composer = new EffectComposer(this.renderer, sceneTarget);
         const renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
 
@@ -124,14 +130,14 @@ class Game {
         this.bloomPass.enabled = false;
       } else if (this.settings.quality === "high") {
         this.bloomPass.enabled = true;
-        this.bloomPass.strength = 0.38;
-        this.bloomPass.threshold = 1.05;
-        this.bloomPass.radius = 0.45;
+        this.bloomPass.strength = 0.16;
+        this.bloomPass.threshold = 1.5;
+        this.bloomPass.radius = 0.12;
       } else {
         this.bloomPass.enabled = true;
-        this.bloomPass.strength = 0.25;
-        this.bloomPass.threshold = 1.1;
-        this.bloomPass.radius = 0.38;
+        this.bloomPass.strength = 0.10;
+        this.bloomPass.threshold = 1.5;
+        this.bloomPass.radius = 0.08;
       }
     }
     if (this.settings.timeOfDay) this.atmosphere?.setTimeOfDay(this.settings.timeOfDay);
@@ -157,6 +163,8 @@ class Game {
   }
 
   resize() {
+    this.world.setQuality(this.settings.quality, this.renderer);
+    this.composer?.setPixelRatio(this.renderer.getPixelRatio());
     this.renderer.setSize(innerWidth, innerHeight);
     this.composer?.setSize(innerWidth, innerHeight);
     this.camera.aspect = innerWidth / innerHeight;

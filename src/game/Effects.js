@@ -43,7 +43,7 @@ class Effects {
         float r=length(gl_PointCoord-0.5)*2.0;
         if(r>1.0)discard;
         #include <logdepthbuf_fragment>
-        gl_FragColor=vec4(vColor,pow(1.0-r,1.8)*0.8);
+        gl_FragColor=vec4(vColor,(1.0-smoothstep(0.18,1.0,r))*0.85);
       }`
     });
     this.points = new T.Points(geo, mat);
@@ -73,7 +73,7 @@ class Effects {
 
     // 3D Expanding Explosion Shockwaves pool
     this.shockwaves = [];
-    const ringGeo = new T.RingGeometry(0.8, 1.25, 48);
+    const ringGeo = new T.RingGeometry(0.94, 1.06, 64);
     ringGeo.rotateX(-Math.PI / 2);
     for (let i = 0; i < 8; i++) {
       const swMat = new T.MeshBasicMaterial({
