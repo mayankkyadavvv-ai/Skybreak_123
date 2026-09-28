@@ -1,5 +1,5 @@
 import { AUDIO_DEFAULTS, normalizeAudioSettings } from './SoundDesign.js';
-import { CONTROLS_VERSION, migrateBindings } from './InputActions.js';
+import { CONTROLS_VERSION, migrateBindings, bindingLabel } from './InputActions.js';
 export const DEFAULT_SETTINGS = Object.freeze({
   quality: 'medium', timeOfDay: 'day', weather: 'clear', difficulty: 'easy', device: 'keyboard', input: 'keyboard', flightMode: 'assisted',
   sensitivity: .8, pitchSensitivity: 1, rollSensitivity: 1, keyboardInvert: false, mouseInvert: false,
@@ -20,10 +20,15 @@ export function normalizeSettings(saved = {}, reducedMotion = false) {
   for (const [key, allowed] of Object.entries({ timeOfDay: ['morning','midday','day','sunset','night'], weather: ['clear','storm'], quality: ['low','medium','high','ultra'], difficulty: ['easy','medium','hard'], device: ['keyboard','mouse','gamepad'], flightMode: ['assisted','manual'], mouseRecenter: ['spring','hold'] })) if (!allowed.includes(value[key])) value[key] = DEFAULT_SETTINGS[key];
   for (const [key, [min,max]] of Object.entries(bounds)) value[key] = Number.isFinite(value[key]) ? Math.max(min, Math.min(max, value[key])) : DEFAULT_SETTINGS[key];
   for (const key of ['keyboardInvert','gamepadInvert','mouseInvert','mouseLock','autoCruise','landingCamera','highContrast']) value[key] = value[key] === true;
-  const migrated = migrateBindings(saved.keyBindings);
+  const savedBindings = { ...saved.keyBindings };
+  if ((Number(saved.controlsVersion) || 0) < 4) {
+    if (savedBindings.pitchUp === 'ArrowDown') delete savedBindings.pitchUp;
+    if (savedBindings.pitchDown === 'ArrowUp') delete savedBindings.pitchDown;
+  }
+  const migrated = migrateBindings(savedBindings);
   value.keyBindings = migrated.bindings; value.controlsVersion = CONTROLS_VERSION; value.input = value.device;
   delete value.invert;
   const notices = migrated.notices.map(action => `Reset conflicting or unsupported binding: ${action}.`);
-  if (saved.controlsVersion !== CONTROLS_VERSION && Object.keys(saved).length) notices.unshift('Controls updated: ↓ nose up, ↑ nose down; M missile, N map, Q/E yaw, W/S throttle. Check Controls before flight.');
+  if (saved.controlsVersion !== CONTROLS_VERSION && Object.keys(saved).length) notices.unshift(`Pitch controls updated: ${bindingLabel('pitchUp', value, false)} nose up, ${bindingLabel('pitchDown', value, false)} nose down. Check Controls before flight.`);
   return { settings: value, notices };
 }

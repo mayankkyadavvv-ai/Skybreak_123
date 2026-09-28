@@ -240,8 +240,8 @@ test("FlightPhysics: ground rollout, wheel braking to stop, nosewheel steering, 
   for (let i = 0; i < 25; i++) updateFlight(p, input, 0.1, settings);
   assert.ok(p.speed > 60, `Speed should accelerate down runway (speed is ${p.speed})`);
 
-  // 4. Takeoff rotation & liftoff when pilot pulls up (ArrowDown) at Vr (>58 m/s)
-  input.keys.add("ArrowDown");
+  // 4. Takeoff rotation & liftoff when pilot pulls up (ArrowUp) at Vr (>58 m/s)
+  input.keys.add("ArrowUp");
   updateFlight(p, input, 0.1, settings);
   assert.equal(p.isLanded, false, "Aircraft should lift off and become airborne");
   assert.ok(p.velocity.y > 10, "Aircraft should have positive climb rate after liftoff");
@@ -297,7 +297,7 @@ test("World & Game: manual in-flight airbase touchdown and collision immunity", 
 
   // 4. Takeoff and Scramble: liftoff transitions cleanly into flight with active boost and pitch
   const inputState = {
-    keys: new Set(["KeyW", "ShiftLeft", "ArrowDown"]),
+    keys: new Set(["KeyW", "ShiftLeft", "ArrowUp"]),
     mouse: { x: 0, y: 0 },
     pitch: 0,
     roll: 0,
@@ -315,9 +315,9 @@ test("World & Game: manual in-flight airbase touchdown and collision immunity", 
   assert.ok(g.player.takeoffCooldown > 0, "Must have active takeoff cooldown timer");
   assert.ok(g.player.velocity.y > 10, "Must have positive vertical climb rate");
 
-  // Airborne flight controls verification: Shift increases speed, ArrowDown climbs
-  inputState.keys.delete("ArrowDown");
-  inputState.keys.add("ArrowDown"); // Climb in easy controls
+  // Airborne flight controls verification: Shift increases speed, ArrowUp climbs
+  inputState.keys.delete("ArrowUp");
+  inputState.keys.add("ArrowUp"); // Climb in easy controls
   for (let i = 0; i < 60; i++) {
     updateFlight(g.player, inputState, 1 / 60, settings);
   }

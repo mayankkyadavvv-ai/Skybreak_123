@@ -26,7 +26,7 @@ The preview uses production-like routing: `/about`, `/help`, `/privacy`, `/terms
 
 ## Fly
 
-- **↓ nose up, ↑ nose down; ←/→ roll; Q/E yaw and ground steering.**
+- **↑ nose up, ↓ nose down; ←/→ roll; Q/E yaw and ground steering.**
 - **W/S changes throttle and holds it after release.** Shift boosts, B brakes.
 - Space/LMB cannon; M/RMB missile; X flares; R next target; `[` previous.
 - G gear; N map; L airbase panel; C camera cycle; V cockpit/chase.

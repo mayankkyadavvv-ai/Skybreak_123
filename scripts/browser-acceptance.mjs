@@ -33,7 +33,7 @@ try{
    const after=await page.evaluate(()=>window.game.player.throttle);
    report.throttle={before,afterHold:held,afterRelease:after};
    if(!(held>before && Math.abs(held-after)<.01))report.errors.push({message:'Throttle did not increase and hold'});
-   await page.keyboard.down('ArrowDown');await page.waitForTimeout(600);await page.keyboard.up('ArrowDown');
+   await page.keyboard.down('ArrowUp');await page.waitForTimeout(600);await page.keyboard.up('ArrowUp');
    for(const key of ['KeyC','KeyV','KeyN','KeyN'])await page.keyboard.press(key);
    await page.keyboard.press('Escape');await page.waitForFunction(()=>window.game.state==='paused');await page.keyboard.press('Escape');await page.waitForFunction(()=>window.game.state==='playing');
    // Five minutes of sampled running. This automated run is separate from manual feel/playthrough acceptance.
@@ -46,7 +46,7 @@ try{
    await page.evaluate(()=>window.game.landAtBase('ambala_afb'));await page.waitForTimeout(500);await page.screenshot({path:`${out}/ground.png`});
    await page.evaluate(()=>window.game.settings.device='keyboard');
    await page.keyboard.down('KeyW');await page.waitForTimeout(2000);await page.keyboard.up('KeyW');
-   await page.keyboard.down('ArrowDown');await page.waitForTimeout(3000);await page.keyboard.up('ArrowDown');
+   await page.keyboard.down('ArrowUp');await page.waitForTimeout(3000);await page.keyboard.up('ArrowUp');
    report.takeoff=await page.evaluate(()=>({landed:window.game.player.isLanded,speed:window.game.player.speed,altitude:window.game.player.position.y}));
    report.lifecycle=[];for(let i=0;i<10;i++){await page.evaluate(()=>{const g=window.game;g.menu();g.start(3);});await page.waitForTimeout(250);report.lifecycle.push(await page.evaluate(()=>window.game.getPerformanceSnapshot()));}
   }

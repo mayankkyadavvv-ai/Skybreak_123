@@ -17,7 +17,7 @@ const effects = { emit() {
 const makeWeapons = (hit) => new Weapons(new T.Scene(), effects, hit, () => {
 });
 test("pitch, roll and yaw have the requested signs and forward flight is stable", () => {
-  for (const [key, axis, sign] of [["ArrowDown", "y", 1], ["ArrowUp", "y", -1], ["KeyQ", "x", -1], ["KeyE", "x", 1]]) {
+  for (const [key, axis, sign] of [["ArrowUp", "y", 1], ["ArrowDown", "y", -1], ["KeyQ", "x", -1], ["KeyE", "x", 1]]) {
     const p2 = new Jet("player");
     for (let i = 0; i < 60; i++) updateFlight(p2, input(key), 1 / 60, settings);
     assert.ok(p2.forward[axis] * sign > 0.1, key);
@@ -255,19 +255,19 @@ test("empty ammo, lock and cooldown gates prevent unintended launches", () => {
 
 const easy = { ...settings, input: 'keyboard' };
 test('arrow keys steer intuitively, bank automatically and respect pitch limits', () => {
-  for (const [key, axis, sign] of [['ArrowDown', 'y', 1], ['ArrowUp', 'y', -1], ['ArrowLeft', 'x', -1], ['ArrowRight', 'x', 1]]) {
+  for (const [key, axis, sign] of [['ArrowUp', 'y', 1], ['ArrowDown', 'y', -1], ['ArrowLeft', 'x', -1], ['ArrowRight', 'x', 1]]) {
     const p = new Jet('player');
     for (let i = 0; i < 120; i++) updateFlight(p, input(key), 1 / 60, easy);
     assert.ok(p.forward[axis] * sign > .18, key);
     if (axis === 'x') assert.ok(Math.abs(new T.Euler().setFromQuaternion(p.quaternion, 'YXZ').z) > .1);
   }
   const p = new Jet('player');
-  for (let i = 0; i < 900; i++) updateFlight(p, input('ArrowDown'), 1 / 60, easy);
-  assert.ok(p.forward.y > .35 && p.forward.y < .6, 'held Down should climb without looping');
+  for (let i = 0; i < 900; i++) updateFlight(p, input('ArrowUp'), 1 / 60, easy);
+  assert.ok(p.forward.y > .35 && p.forward.y < .6, 'held Up should climb without looping');
 });
 test('releasing arrows levels wings and nose; combined arrows work', () => {
   const p = new Jet('player');
-  for (let i = 0; i < 120; i++) updateFlight(p, input('ArrowDown', 'ArrowRight'), 1 / 60, easy);
+  for (let i = 0; i < 120; i++) updateFlight(p, input('ArrowUp', 'ArrowRight'), 1 / 60, easy);
   assert.ok(p.forward.x > .15 && p.forward.y > .15);
   for (let i = 0; i < 600; i++) updateFlight(p, input(), 1 / 60, easy);
   const angle = new T.Euler().setFromQuaternion(p.quaternion, 'YXZ');

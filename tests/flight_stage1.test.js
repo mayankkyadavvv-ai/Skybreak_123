@@ -24,7 +24,7 @@ test("Stage 1: High-G pitch pull & induced drag energy bleed (DCS World Referenc
   p.speed = 300;
   const initialSpeed = p.speed;
   for (let i = 0; i < 180; i++) {
-    updateFlight(p, input("ArrowDown"), 1 / 60, advSettings);
+    updateFlight(p, input("ArrowUp"), 1 / 60, advSettings);
   }
   assert.ok(p.speed < initialSpeed, "Induced drag & climbing must bleed kinetic energy");
   assert.ok(p.forward.y > 0.5, "Pitch up must achieve authoritative vertical climb");
@@ -64,7 +64,7 @@ test("Stage 1: Throttle response, spooling & flight envelope limits", () => {
 test("Stage 1: Beginner auto-leveling & recovery from high bank/pitch (Ace Combat 7 Reference)", () => {
   const p = new Jet("player");
   // Put jet into extreme bank and climb
-  for (let i = 0; i < 120; i++) updateFlight(p, input("ArrowDown", "ArrowRight"), 1 / 60, easySettings);
+  for (let i = 0; i < 120; i++) updateFlight(p, input("ArrowUp", "ArrowRight"), 1 / 60, easySettings);
 
   // Release all controls (hands off)
   for (let i = 0; i < 600; i++) updateFlight(p, input(), 1 / 60, easySettings);
@@ -76,11 +76,11 @@ test("Stage 1: Beginner auto-leveling & recovery from high bank/pitch (Ace Comba
 test("Stage 1: Dynamic pressure control authority scaling (q-factor)", () => {
   const lowSpeedJet = new Jet("player");
   lowSpeedJet.speed = 100;
-  updateFlight(lowSpeedJet, input("ArrowDown"), 0.1, advSettings);
+  updateFlight(lowSpeedJet, input("ArrowUp"), 0.1, advSettings);
 
   const cornerSpeedJet = new Jet("player");
   cornerSpeedJet.speed = 220;
-  updateFlight(cornerSpeedJet, input("ArrowDown"), 0.1, advSettings);
+  updateFlight(cornerSpeedJet, input("ArrowUp"), 0.1, advSettings);
 
   assert.ok(cornerSpeedJet.angular.x > lowSpeedJet.angular.x, "Corner velocity must have superior control authority than near-stall speed");
 });

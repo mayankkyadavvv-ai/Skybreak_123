@@ -48,13 +48,13 @@ test('first launch defaults to Free Flight, shows arrow guidance, then starts th
   assert.equal(document.querySelector('.mission-card.selected').dataset.mission, '3');
   click(document, '[data-action="play"]');
   assert.equal(ui.modalType, 'preflight');
-  assert.match(ui.modal.textContent, /↓ Nose up/);assert.match(ui.modal.textContent, /↑ Nose down/);
+  assert.match(ui.modal.textContent, /↑ Nose up/);assert.match(ui.modal.textContent, /↓ Nose down/);
   assert.equal(starts.length, 0);
   click(document, '[data-action="launch-flight"]');
   assert.deepEqual(starts, [3]);assert.equal(settings.guideSeen, true);
   assert.equal(ui.hudEl.hidden, false);assert.equal(ui.dom['practice-help'].hidden, false);
   assert.equal(document.querySelector('.hud-weapons').hidden, true);
-  assert.match(document.querySelector('.flight-hints').textContent, /↓ NOSE UP/);
+  assert.match(document.querySelector('.flight-hints').textContent, /↑ NOSE UP/);
 });
 test('mission selection, switching modes and Help all use the current controls', () => {
   const { document, ui, game, settings, starts } = screen();

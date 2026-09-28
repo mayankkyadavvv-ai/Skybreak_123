@@ -20,20 +20,26 @@ test('cannon and afterburner cannot rotate a ground aircraft; nose-up command ca
   for(const keys of [['Space'],['ShiftLeft'],['Space','ShiftLeft']]) {
     const jet=new Jet('player');jet.isLanded=true;jet.speed=90;jet.throttle=1;jet.landedElev=38;
     run(jet,input(...keys),{flightMode:'assisted'},2); assert.equal(jet.isLanded,true);
-    run(jet,input('ArrowDown'),{flightMode:'assisted'},.5); assert.equal(jet.isLanded,false);
+    run(jet,input('ArrowUp'),{flightMode:'assisted'},.5); assert.equal(jet.isLanded,false);
   }
 });
 test('rebinding updates behavior and labels, rejects collisions, and preserves supported custom settings', () => {
-  const old={input:'advanced',invert:true,volume:0,controlsVersion:2,keyBindings:{missile:'KeyF',airBrake:'KeyJ',chaff:'KeyZ'}};
+  const old={input:'advanced',invert:true,volume:0,controlsVersion:3,keyBindings:{pitchUp:'ArrowDown',pitchDown:'ArrowUp',missile:'KeyF',airBrake:'KeyJ',chaff:'KeyZ'}};
   const {settings,notices}=normalizeSettings(old);
   assert.equal(settings.device,'keyboard');assert.equal(settings.flightMode,'manual');assert.equal(settings.mouseInvert,true);assert.equal(settings.volume,0);
   assert.equal(actionForCode('KeyF',settings),'missile');assert.equal(actionForCode('KeyM',settings),undefined);assert.equal(bindingLabel('missile',settings),'F / RMB');
   assert.ok(bindingError('missile','KeyN',settings));assert.ok(notices.some(n=>n.includes('chaff')));
   assert.equal(flightCommands(input('KeyJ'),settings).brake,1);assert.equal(flightCommands(input('KeyB'),settings).brake,0);
+  const jet=new Jet('player');run(jet,input('ArrowUp'),settings,1);assert.ok(jet.forward.y>0);
+  assert.equal(bindingLabel('pitchUp',settings),'↑');assert.ok(notices[0].includes('↑ nose up'));
+  const custom=normalizeSettings({controlsVersion:3,keyBindings:{pitchUp:'KeyI',pitchDown:'KeyK'}}).settings;
+  assert.ok(flightCommands(input('KeyI'),custom).pitch>0);assert.ok(flightCommands(input('KeyK'),custom).pitch<0);
+  const rebound=normalizeSettings({controlsVersion:4,keyBindings:{pitchUp:'ArrowDown',pitchDown:'ArrowUp'}}).settings;
+  assert.ok(flightCommands(input('ArrowDown'),rebound).pitch>0);
 });
 test('mouse deadzone, inversion and free-look are independent of keyboard pitch inversion', () => {
   const settings={device:'mouse',keyboardInvert:true,sensitivity:1};
-  assert.ok(flightCommands(input('ArrowDown'),settings).pitch<0);
+  assert.ok(flightCommands(input('ArrowUp'),settings).pitch<0);
   const stick={...input(),mouse:{x:.02,y:-.02}};assert.equal(flightCommands(stick,settings).pitch,0);
   stick.mouse.y=-.8;assert.ok(flightCommands(stick,settings).pitch>0);
   assert.ok(flightCommands(stick,{...settings,mouseInvert:true}).pitch<0);
@@ -52,7 +58,7 @@ test('fixed simulation results are independent of render frame limits', () => {
   const positions=[];
   for(const fps of [30,60,144]) {
     const jet=new Jet('player');let accumulator=0,ticks=0;
-    for(let frame=0;frame<fps*8;frame++) {accumulator+=1/fps;while(accumulator+1e-10>=1/60){updateFlight(jet,input('ArrowDown','ArrowRight','KeyW'),1/60,{flightMode:'assisted'});accumulator-=1/60;ticks++;}}
+    for(let frame=0;frame<fps*8;frame++) {accumulator+=1/fps;while(accumulator+1e-10>=1/60){updateFlight(jet,input('ArrowUp','ArrowRight','KeyW'),1/60,{flightMode:'assisted'});accumulator-=1/60;ticks++;}}
     assert.equal(ticks,480);positions.push(jet.position.clone());
   }
   assert.ok(positions[0].distanceTo(positions[2])<.001);

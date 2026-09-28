@@ -26,7 +26,7 @@ The harness first tries your installed Chrome, then Edge, then a bundled Chromiu
 ## Manual five-minute flight and focus test
 
 1. Reload from persisted settings; enter menu, hangar, aircraft/livery/weapons tabs, and all settings sections using keyboard only. Verify focus returns and panels scroll at 200% zoom. Check selected/locked states.
-2. Start Free Flight. Hold/release W and S; confirm throttle holds. Verify ↑ nose down, ↓ nose up, left/right roll, Q/E yaw, B brake, Shift boost. Space must not rotate on a runway. Try custom bindings and conflicts.
+2. Start Free Flight. Hold/release W and S; confirm throttle holds. Verify ↓ nose down, ↑ nose up, left/right roll, Q/E yaw, B brake, Shift boost. Space must not rotate on a runway. Try custom bindings and conflicts.
 3. Try mouse unlocked/locked, inversion, deadzone, response curve, Z recenter and MMB free-look. Escape, pointer-lock rejection/loss, tab switching and window blur must leave no held input.
 4. Try Assisted and Manual on each supported input device. Test a real standard controller's triggers, shoulders, right stick, deadzone, Menu pause/resume, D-pad map and disconnect. Confirm unsupported mapping feedback.
 5. Use real touch at each portrait size and tablet/landscape. Steer and fire simultaneously; adjust throttle; pause, camera, gear and brake. Test pointer cancel and lost capture. Check no touch target is obscured.

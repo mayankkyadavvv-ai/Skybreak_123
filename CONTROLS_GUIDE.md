@@ -4,8 +4,8 @@ Generated from src/game/InputActions.js. Custom bindings and device labels appea
 
 | Action | Default | Behavior |
 |---|---|---|
-| Nose down | ↑ | axis |
-| Nose up | ↓ | axis |
+| Nose down | ↓ | axis |
+| Nose up | ↑ | axis |
 | Roll left | ← | axis |
 | Roll right | → | axis |
 | Yaw / steer left | Q | axis |

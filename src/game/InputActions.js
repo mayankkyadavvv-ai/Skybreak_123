@@ -1,7 +1,7 @@
-export const CONTROLS_VERSION = 3;
+export const CONTROLS_VERSION = 4;
 export const ACTIONS = Object.freeze({
-  pitchDown: { label: 'Nose down', key: 'ArrowUp', kind: 'axis' },
-  pitchUp: { label: 'Nose up', key: 'ArrowDown', kind: 'axis' },
+  pitchDown: { label: 'Nose down', key: 'ArrowDown', kind: 'axis' },
+  pitchUp: { label: 'Nose up', key: 'ArrowUp', kind: 'axis' },
   rollLeft: { label: 'Roll left', key: 'ArrowLeft', kind: 'axis' },
   rollRight: { label: 'Roll right', key: 'ArrowRight', kind: 'axis' },
   yawLeft: { label: 'Yaw / steer left', key: 'KeyQ', kind: 'axis' },
