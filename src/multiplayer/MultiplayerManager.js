@@ -136,6 +136,11 @@ export class MultiplayerManager {
   }
 
   onGameStarted(msg) {
+    this.game.openSkies?.abort();
+    this.game.openSkies = null;
+    this.game.squadronReturnState = null;
+    this.game.input.menuMode = null;
+    this.game.applyMissionEnvironment?.();
     this.active = true;
     this.lostConnectionDuringMatch = false;
     this.matchOptions = msg.options;

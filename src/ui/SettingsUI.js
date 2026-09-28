@@ -23,7 +23,7 @@ const sections = {
     ['range','shakeIntensity','Camera shake',0,1,.05], ['range','horizonStabilization','Horizon stabilization',0,1,.05],
     ['check','landingCamera','Steadier landing camera'],
   ],
-  hud: [ ['range','hudScale','HUD scale',.8,1.4,.05], ['range','hudOpacity','Panel opacity',.72,1,.02], ['check','highContrast','High contrast'] ],
+  hud: [ ['range','hudScale','HUD scale',.8,1.4,.05], ['range','hudOpacity','Panel opacity',.72,1,.02], ['check','highContrast','High contrast'], ['check','reducedMotion','Reduced motion · no camera shake or speed FOV'] ],
   audio: [],
 };
 export function settingsMarkup(value, section = 'graphics') {

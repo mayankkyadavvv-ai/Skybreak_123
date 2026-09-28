@@ -223,7 +223,7 @@ test("all mission spawns are safe and interceptor base-loss reaches debrief", ()
     const g2 = harness();
     g2.start(i);
     for (const j of [g2.player, ...g2.enemies, ...g2.allies]) assert.equal(g2.world.collision(j.position), false);
-    assert.equal(g2.enemies.length, MISSIONS[i].fighters + MISSIONS[i].bombers);
+    assert.equal(g2.enemies.length, i === 2 ? 3 : MISSIONS[i].fighters + MISSIONS[i].bombers);
     assert.equal(g2.allies.length, MISSIONS[i].allies);
   }
   const g = harness();

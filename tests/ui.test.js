@@ -4,6 +4,8 @@ import { parseHTML } from 'linkedom';
 import { UI } from '../src/ui/UI.js';
 import { Input } from '../src/game/Input.js';
 import { FREE_FLIGHT, MISSIONS } from '../src/game/Missions.js';
+import { Game } from '../src/game/Game.js';
+import { OpenSkiesEncounter, scoreOpenSkies } from '../src/game/OpenSkies.js';
 
 function screen() {
   const { window, document } = parseHTML('<html><body><canvas id="world"></canvas><main id="app"></main></body></html>');
@@ -26,6 +28,72 @@ function screen() {
   return { ui, game, settings, document, window, starts, saves };
 }
 function click(document, selector) { const target = document.querySelector(selector);assert.ok(target, selector);target.click(); }
+
+function battleScreen() {
+  const s = screen(), { game, ui } = s;
+  game.ui = ui;
+  game.openSkies = new OpenSkiesEncounter(15); game.openSkies.start();
+  game.mission = MISSIONS[2]; game.state = 'playing'; game.player = { alive: true };
+  game.allies = [0, 1].map(i => ({ alive: true, hp: 100, maxHp: 100, callsign: `KESTREL ${i + 2}`, order: 'cover', combat: {}, aiState: 'covering' }));
+  game.enemies = [{ alive: true, hp: 100, maxHp: 100, callsign: 'DOGFIGHTER 1' }]; game.target = game.enemies[0];
+  game.input.clear = function () { this.keys.clear(); };
+  game.notify = () => {};
+  for (const method of ['action','openSquadronPanel','closeSquadronPanel','commandSquadron']) game[method] = Game.prototype[method];
+  ui.inGame(); ui.resetBattleTutorial();
+  return s;
+}
+
+test('Open Skies command UI exposes actual orders and custom labels, Esc restores flight without held keys', () => {
+  const { game, ui, document, window, settings } = battleScreen();
+  settings.keyBindings = { teamComms: 'KeyF', command2: 'KeyJ', pitchUp: 'KeyI', pitchDown: 'KeyK' };
+  game.input.keys.add('ArrowUp'); click(document, '[data-action="squadron"]');
+  assert.equal(ui.modalType, 'squadron'); assert.equal(game.state, 'paused'); assert.equal(game.input.keys.size, 0);
+  assert.match(ui.modal.textContent, /JAttack my target/); assert.match(ui.modal.textContent, /F \/ Esc closes/);
+  const key = new window.Event('keydown', { bubbles: true, cancelable: true }); key.code = 'KeyJ';
+  window.dispatchEvent(key); assert.equal(game.allies[0].order, 'attack'); assert.equal(game.state, 'playing'); assert.equal(ui.modalType, null);
+  click(document, '[data-action="squadron"]');
+  const esc = new window.Event('keydown', { cancelable: true }); esc.code = 'Escape'; window.dispatchEvent(esc);
+  assert.equal(game.state, 'playing'); assert.equal(ui.modalType, null);
+  ui.showControls(); assert.match(ui.modal.textContent, /I Nose up/); assert.match(ui.modal.textContent, /K Nose down/);
+  assert.match(ui.modal.textContent, /3 patrol fighters|Three waves: 3/); assert.match(ui.modal.textContent, /View\/Back/);
+});
+
+test('Open Skies touch buttons stay usable, dead/missing wingmen disable commands and coach can restart', () => {
+  const { game, ui, document, settings } = battleScreen();
+  assert.equal(document.querySelector('#battle-wing').hidden, false);
+  game.target = null; click(document, '[data-action="squadron"]'); assert.equal(document.querySelector('[data-order="attack"]').disabled, true);
+  game.closeSquadronPanel(); game.allies.forEach(j => j.alive = false); game.openSquadronPanel();
+  assert.ok([...document.querySelectorAll('[data-order]')].every(button => button.disabled));
+  game.closeSquadronPanel(); ui.action('battle-hint-skip'); assert.equal(settings.openSkiesGuideSeen, true);
+  game.state = 'paused'; ui.showControls(); click(document, '[data-action="battle-tutorial"]');
+  assert.equal(settings.openSkiesGuideSeen, false); assert.equal(ui.battleCoachStep, 0); assert.equal(game.state, 'playing');
+  game.openSkies = null; game.start(3); assert.equal(document.querySelector('#battle-wing').hidden, true); assert.equal(document.querySelector('#battle-coach').hidden, true);
+});
+
+test('controller View opens command panel once, navigation/confirm sends one order and cannot launch a missile', () => {
+  const { game, document, settings } = battleScreen(); settings.device = 'gamepad';
+  const actions = [], realAction = game.action.bind(game);
+  const input = new Input(document.getElementById('world'), action => { actions.push(action); realAction(action); }, () => game.state === 'playing' && !game.ui?.modalType, () => settings);
+  game.input = input;
+  // Use an explicit UI boundary to exercise Input → Game action routing without native focus assumptions.
+  game.ui = { modalType: null, showSquadron() { this.modalType = 'squadron'; }, inGame() { this.modalType = null; input.menuMode = null; }, showPause() { this.modalType = 'pause'; }, message() {}, navigateSquadron(action) { if (action === 'uiConfirm') game.commandSquadron('regroup'); } };
+  const pad = { connected: true, mapping: 'standard', axes: [0,0,0,0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+  pad.buttons[8].pressed = true; input.poll(1/60, [pad]); assert.equal(game.state, 'paused');
+  for (let i=0;i<20;i++) input.poll(1/60,[pad]); assert.equal(game.state, 'paused'); assert.equal(actions.filter(a=>a==='teamComms').length,1);
+  pad.buttons[8].pressed = false; input.poll(1/60,[pad]); pad.buttons[13].pressed = true; input.poll(1/60,[pad]);
+  assert.ok(actions.includes('uiNext')); pad.buttons[13].pressed = false; pad.buttons[0].pressed = true; input.poll(1/60,[pad]);
+  assert.equal(game.allies[0].order,'regroup'); assert.equal(game.state,'playing');
+  for(let i=0;i<20;i++)input.poll(1/60,[pad]); assert.equal(actions.filter(a=>a==='missile').length,0);
+  input.dispose();
+});
+
+test('battle debrief displays the finite medal breakdown and promotion notices do not interrupt combat', () => {
+  const { game, ui } = battleScreen(); game.ui = ui; game.stats = { kills: 8, shots: 0, hits: 0, missiles: 0 }; game.elapsed = 400; game.score = 8000;
+  game.battleResult = scoreOpenSkies({ success: true, stats: game.stats, allies: game.allies, elapsed: game.elapsed, seed: 15 });
+  ui.showResult(true); assert.match(ui.modal.textContent, /SILVER/); assert.match(ui.modal.textContent, /ACCURACY · 0%/); assert.match(ui.modal.textContent, /Seed 15/);
+  assert.ok(!/NaN|Infinity/.test(ui.modal.textContent));
+  ui.inGame(); ui.showLevelUpModal({ newRank: { name: 'Flying Officer', unlockName: 'Ghost' } }); assert.equal(ui.modalType, null);
+});
 
 test('world atlas remains available with region, world and city selection', async () => {
   const {document,ui,window}=screen();

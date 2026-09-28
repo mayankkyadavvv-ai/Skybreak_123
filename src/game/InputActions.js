@@ -25,7 +25,7 @@ export const ACTIONS = Object.freeze({
   levelFlight: { label: 'Assisted recovery', key: 'KeyA', kind: 'press' },
   timeOfDay: { label: 'Cycle time of day', key: 'KeyT', kind: 'press' },
   scoreboard: { label: 'Multiplayer scoreboard', key: 'Tab', kind: 'held' },
-  teamComms: { label: 'Team quick commands', key: 'KeyY', kind: 'press' },
+  teamComms: { label: 'Squadron / team commands', key: 'KeyY', kind: 'press' },
   allComms: { label: 'All quick commands', key: 'KeyU', kind: 'press' },
   ...Object.fromEntries(Array.from({length:7},(_,i)=>[`command${i+1}`,{label:`Quick command ${i+1}`,key:`Digit${i+1}`,kind:'press'}])),
   help: { label: 'Controls / help', key: 'KeyH', kind: 'press' },
@@ -39,7 +39,7 @@ export function bindingsFor(action, settings = {}) {
   const custom = settings.keyBindings?.[action];
   return [custom || definition.key, !custom && definition.alternate, definition.mouse].filter(Boolean);
 }
-export const GAMEPAD_LABELS=Object.freeze({pitchUp:'LS down',pitchDown:'LS up',rollLeft:'LS left',rollRight:'LS right',yawLeft:'LB',yawRight:'RB',throttleUp:'D-pad ↑',throttleDown:'D-pad ↓',afterburner:'LS click',airBrake:'LT',cannon:'RT',missile:'A',flare:'B',targetNext:'X',landingGear:'D-pad →',tacticalMap:'D-pad ←',camera:'Y',freeLook:'RS',pause:'Menu'});
+export const GAMEPAD_LABELS=Object.freeze({pitchUp:'LS down',pitchDown:'LS up',rollLeft:'LS left',rollRight:'LS right',yawLeft:'LB',yawRight:'RB',throttleUp:'D-pad ↑',throttleDown:'D-pad ↓',afterburner:'LS click',airBrake:'LT',cannon:'RT',missile:'A',flare:'B',targetNext:'X',landingGear:'D-pad →',tacticalMap:'D-pad ←',camera:'Y',freeLook:'RS',teamComms:'View / Back',pause:'Menu'});
 export function bindingLabel(action, settings = {}, mouse = true) {
   if(settings.device==='gamepad'){
     const labelAction=settings.gamepadInvert && ['pitchUp','pitchDown'].includes(action)?(action==='pitchUp'?'pitchDown':'pitchUp'):action;
@@ -86,7 +86,7 @@ export function curveAxis(value, deadzone = .08, curve = 1.35) {
   const amount = Math.max(0, (Math.abs(value) - deadzone) / (1 - deadzone));
   return amount === 0 ? 0 : Math.sign(value) * amount ** curve;
 }
-export const GAMEPAD_BUTTONS = Object.freeze({ 0: 'missile', 1: 'flare', 2: 'targetNext', 3: 'camera', 4: 'yawLeft', 5: 'yawRight', 6: 'airBrake', 7: 'cannon', 9: 'pause', 10: 'afterburner', 12: 'throttleUp', 13: 'throttleDown', 14: 'tacticalMap', 15: 'landingGear' });
+export const GAMEPAD_BUTTONS = Object.freeze({ 0: 'missile', 1: 'flare', 2: 'targetNext', 3: 'camera', 4: 'yawLeft', 5: 'yawRight', 6: 'airBrake', 7: 'cannon', 8: 'teamComms', 9: 'pause', 10: 'afterburner', 12: 'throttleUp', 13: 'throttleDown', 14: 'tacticalMap', 15: 'landingGear' });
 export function readGamepad(pad, deadzone = .14) {
   const state = { supported: pad?.mapping === 'standard', axes: { pitch: 0, roll: 0, lookX: 0, lookY: 0, brake: 0 }, held: new Set() };
   if (!state.supported) return state;

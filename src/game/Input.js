@@ -87,7 +87,12 @@ class Input {
     const playing=this.isPlaying();
     if(settings.device==='gamepad'){
       if(this.padConnected && !pad && playing){this.clear();this.action('Blur');}
-      if(playing){
+      if (this.menuMode === 'squadron') {
+        const buttons = new Set(Object.entries({ 0:'uiConfirm', 1:'pause', 8:'teamComms', 9:'pause', 12:'uiPrevious', 13:'uiNext' }).filter(([i]) => pad?.buttons?.[i]?.pressed).map(([, name]) => name));
+        for (const name of buttons) if (!this.menuButtons?.has(name)) this.action(name);
+        this.menuButtons = buttons;
+      } else if(playing){
+        this.menuButtons = null;
         this.axes=state.axes;this.heldActions=new Set(state.held);
         for(const name of state.held)if(!this.padHeld.has(name) && !['held','axis'].includes(ACTIONS[name].kind))this.dispatch(name);
         this.freeLook=Math.abs(state.axes.lookX)+Math.abs(state.axes.lookY)>.03;

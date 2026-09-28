@@ -1,3 +1,4 @@
+import { normalizeOpenSkiesProgress } from './OpenSkiesProgress.js';
 /**
  * Progression.js - Pilot Career & Progression System for Skybreak
  * Implements 8 Indian Air Force-inspired ranks, XP gain tracking, unlocks, and statistics.
@@ -134,13 +135,20 @@ export class ProgressionManager {
         const data = localStorage.getItem(STORAGE_KEY);
         if (data) {
           const parsed = JSON.parse(data);
-          return { ...DEFAULT_PROFILE, ...parsed };
+          if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Invalid profile');
+          const profile = { ...DEFAULT_PROFILE, ...parsed };
+          for (const [key, value] of Object.entries(DEFAULT_PROFILE)) {
+            if (typeof value === 'number') profile[key] = Number.isFinite(profile[key]) ? Math.max(0, Math.min(1e12, profile[key])) : value;
+          }
+          profile.callsign = typeof profile.callsign === 'string' ? profile.callsign.slice(0, 16) : DEFAULT_PROFILE.callsign;
+          profile.openSkies = normalizeOpenSkiesProgress(profile.openSkies);
+          return profile;
         }
       }
     } catch {
       // Fallback on error
     }
-    return { ...DEFAULT_PROFILE };
+    return { ...DEFAULT_PROFILE, openSkies: normalizeOpenSkiesProgress() };
   }
 
   saveProfile() {
@@ -199,7 +207,7 @@ export class ProgressionManager {
   }
 
   awardXP(amount, reason = "COMBAT ACTION") {
-    if (amount <= 0) return null;
+    if (!Number.isFinite(amount) || amount <= 0) return null;
     const prevRank = this.getCurrentRank();
     this.profile.xp += amount;
     const newRank = this.getCurrentRank();

@@ -31,9 +31,13 @@ class Weapons {
     for (const o of [...this.bullets, ...this.missiles]) {
       o.active = false;
       o.mesh.visible = false;
+      o.owner = null;
+      if ('target' in o) o.target = null;
     }
+    this.spatialGrid.clear();
+    this._queryResults.length = 0;
   }
-  cannon(owner, target = null) {
+  cannon(owner, target = null, { spread = .002, random = Math.random } = {}) {
     const b = this.bullets.find((b2) => !b2.active);
     if (!b) return false;
     b.active = b.mesh.visible = true;
@@ -45,8 +49,8 @@ class Weapons {
       const lead = target.position.clone().addScaledVector(target.velocity, owner.position.distanceTo(target.position) / 1700).sub(b.p).normalize();
       if (dir.dot(lead) > 0.994) dir.lerp(lead, 0.85).normalize();
     }
-    dir.x += (Math.random() - 0.5) * 2e-3;
-    dir.y += (Math.random() - 0.5) * 2e-3;
+    dir.x += (random() - 0.5) * spread;
+    dir.y += (random() - 0.5) * spread;
     b.v.copy(dir.normalize()).multiplyScalar(1700).add(owner.velocity);
     b.mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 0, -1), dir);
     this.effects.emit(b.p, owner.velocity, 16772789, 5, 0.06);

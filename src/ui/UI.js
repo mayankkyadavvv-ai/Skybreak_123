@@ -16,6 +16,7 @@ import { HangarUI } from "./HangarUI.js";
 import { JET_MODELS } from "../game/JetConfigs.js";
 import { MultiplayerUI } from "./MultiplayerUI.js";
 import { progression, RANKS } from "../game/Progression.js";
+import { battleHUD, squadronPanel, battleGuide, tutorialHint, battleDebrief } from './OpenSkiesUI.js';
 
 const time = (s) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
 
@@ -123,6 +124,8 @@ class UI {
           </div>
         </div>
 
+        <section id="battle-wing" class="battle-wing" aria-label="Squadron status" hidden><div id="battle-wing-status"></div><div class="battle-actions"><button data-action="squadron">WING <kbd data-bind="teamComms">Y</kbd></button><button data-action="battle-target">NEXT TARGET</button></div></section>
+        <aside id="battle-coach" class="battle-coach" hidden aria-label="Flight coach"></aside>
         <details class="hud-navigation"><summary>Navigation</summary><div id="hud-airspace" class="hud-airspace"></div><div id="hud-journey" class="hud-journey"></div></details>
         <div id="approach-instruments" class="approach-instruments" hidden></div>
 
@@ -228,6 +231,7 @@ class UI {
       this.game?.audio.play("click");
       if (b.dataset.preview) this.previewSound(b.dataset.preview);
       if (b.dataset.action) this.action(b.dataset.action);
+      if (b.dataset.order) this.game.commandSquadron(b.dataset.order);
       if (b.dataset.baseLand) {
         this.game.landAtBase(b.dataset.baseLand);
         this.closePanel();
@@ -281,6 +285,11 @@ class UI {
     this.modalKey=event=>{
       if(!this.modalType || this.cancelRebind)return;
       const action=actionForCode(chordFromEvent(event),this.settings);
+      if (this.modalType === 'squadron' && ['teamComms','command1','command2','command3'].includes(action)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (!event.repeat) this.game.action(action);
+        return;
+      }
       if(event.code==='Escape' || this.modalType==='map' && action==='tacticalMap'){
         event.preventDefault();event.stopImmediatePropagation();this.closePanel();return;
       }
@@ -306,10 +315,12 @@ class UI {
       move(e);
     });
     stick.addEventListener("pointermove", (e) => {
-      if (stick.hasPointerCapture(e.pointerId)) move(e);
+      if (game.state === 'playing' && !this.modalType && e.pointerId === stickPointer && stick.hasPointerCapture(e.pointerId)) move(e);
     });
     const release = (event) => {
-      if(event && event.pointerId!==stickPointer)return;stickPointer=null;
+      if(event && event.pointerId!==stickPointer)return;
+      const previous = stickPointer; stickPointer=null;
+      if (previous !== null && stick.hasPointerCapture?.(previous)) stick.releasePointerCapture?.(previous);
       if(!game.input)return;
       game.input.touchActive = false;
       game.input.mouse = { x: 0, y: 0 };
@@ -360,6 +371,7 @@ class UI {
     this.hudEl.style.setProperty('--hud-scale',String(this.settings.hudScale || 1));
     this.hudEl.style.setProperty('--hud-opacity',String(this.settings.highContrast ? Math.max(.97,this.settings.hudOpacity || .76) : this.settings.hudOpacity || .76));
     this.hudEl.classList.toggle('high-contrast',!!this.settings.highContrast);
+    this.hudEl.classList.toggle('reduced-motion',!!this.settings.reducedMotion);
     if (!audioOnly) this.game?.applySettings();
     this.game?.audio.syncMix?.();
   }
@@ -406,6 +418,19 @@ class UI {
   }
 
   action(a) {
+    if (a === 'squadron') { this.game.openSquadronPanel(); return; }
+    if (a === 'battle-target') { this.game.action('targetNext'); document.getElementById('world')?.focus?.(); return; }
+    if (a === 'battle-replay-seed') { this.game.start(2, { seed: this.game.battleResult?.seed }); return; }
+    if (a === 'battle-tutorial') {
+      this.battleCoachStep = 0; this.settings.openSkiesGuideSeen = false; this.saveSettings();
+      if (this.game.state === 'paused') this.game.resume();
+      return;
+    }
+    if (a === 'battle-hint-next' || a === 'battle-hint-skip') {
+      this.battleCoachStep = a === 'battle-hint-skip' ? 4 : (this.battleCoachStep || 0) + 1;
+      if (this.battleCoachStep >= 4) { this.settings.openSkiesGuideSeen = true; this.saveSettings(); }
+      document.getElementById('world')?.focus?.(); return;
+    }
     if (a === "play") {
       if (!this.settings.guideSeen) this.showPreflight();
       else this.game.start(this.selected);
@@ -488,6 +513,10 @@ class UI {
   }
 
   showLevelUpModal(e) {
+    if (this.game?.openSkies) {
+      this.game.notify('PROMOTION', `${e.newRank.name} · ${e.newRank.unlockName} unlocked. Inspect it in the Hangar after the sortie.`, 5);
+      return;
+    }
     this.game?.audio.play?.("warning");
     this.panel(
       "🎖️ PROMOTION NOTICE · INDIAN AIR FORCE COMMAND",
@@ -878,12 +907,19 @@ class UI {
     this.hudEl.hidden = false;
     this.modal.innerHTML = "";
     this.modalType = null;
+    this.game.input.menuMode = null;
     const m = this.game.mission;
     this.text("mission-code", m.code + " / " + m.region);
     this.text("mission-name", m.name);
     this.text("mission-objective", m.objective);
     const free = !!m.freeFlight;
     this.hudEl.classList.toggle("free-flight", free);
+    this.hudEl.classList.toggle('open-skies', !!this.game.openSkies);
+    this.dom['battle-wing'].hidden = !this.game.openSkies;
+    this.dom['battle-coach'].hidden = !this.game.openSkies || this.settings.openSkiesGuideSeen;
+    this.html('battle-wing-status', this.game.openSkies ? battleHUD(this.game) : '');
+    this.html('battle-coach', this.game.openSkies && !this.settings.openSkiesGuideSeen ? tutorialHint(this.battleCoachStep || 0, this.settings) : '');
+    this.hudStarted = false;
     this.root.querySelector(".hud-weapons").hidden = free;
     this.dom["practice-help"].hidden = !free;
     this.dom["hud-score"].hidden = free;
@@ -910,6 +946,7 @@ class UI {
         <button data-action="sounds">Sounds</button>
         <button data-action="settings">Settings</button>
         <button data-action="controls">How to Play</button>
+        ${this.game.openSkies ? '<button data-action="squadron">Squadron orders</button>' : ''}
         <button data-action="menu">Main menu</button>
       </div>
       `,
@@ -918,6 +955,7 @@ class UI {
   }
 
   closePanel() {
+    if (this.modalType === 'squadron') { this.game.closeSquadronPanel(); return; }
     this.releaseModalFocus();
     this.cancelRebind?.();
     this.game?.input?.clear?.();
@@ -1008,8 +1046,25 @@ class UI {
 
   showControls() {
     this.modalType = "controls";
-    this.panel("BEGINNER FLIGHT GUIDE", "How to Play", beginnerGuide(this.settings, true));
+    this.panel("BEGINNER FLIGHT GUIDE", "How to Play", beginnerGuide(this.settings, true) + (this.game.openSkies || this.selected === 2 ? battleGuide(this.settings) : ''));
   }
+
+  showSquadron() {
+    this.modalType = 'squadron';
+    this.panel('SQUADRON RADIO · FLIGHT PAUSED', 'Your wing. Your call.', squadronPanel(this.game));
+    this.game.input.menuMode = 'squadron';
+    this.modal.querySelector('[data-order]:not([disabled])')?.focus();
+  }
+
+  navigateSquadron(action) {
+    const buttons = [...this.modal.querySelectorAll('[data-order]:not([disabled])')];
+    if (!buttons.length) return;
+    const index = Math.max(0, buttons.indexOf(document.activeElement));
+    if (action === 'uiConfirm') buttons[index].click();
+    else buttons[(index + (action === 'uiNext' ? 1 : buttons.length - 1)) % buttons.length].focus();
+  }
+
+  resetBattleTutorial() { this.battleCoachStep = this.settings.openSkiesGuideSeen ? 4 : 0; }
 
   showSettings(section = this.settingsSection || 'graphics') {
     this.settingsSection = section;
@@ -1183,6 +1238,7 @@ class UI {
       success ? "Area clear." : "Sortie compromised.",
       `
       <p>${success ? "Excellent flying. The operation is complete." : reason}</p>
+      ${this.game.battleResult ? battleDebrief(this.game) : ''}
       <div class="result-score">
         <span>FINAL SCORE</span>
         <strong>${finalScore.toLocaleString()}</strong>
@@ -1264,8 +1320,15 @@ class UI {
     this.text("compact-altitude", Math.round(p.position.y) + " M");
     const remaining = g.enemies.filter((e) => e.alive).length,
       total = g.enemies.length;
-    this.text("objective-count", g.mission.freeFlight ? "NO ENEMIES · NO TIME LIMIT" : `${total - remaining} / ${total} HOSTILES DOWN`);
-    this.dom["objective-fill"].style.width = `${total ? ((total - remaining) / total) * 100 : 0}%`;
+    const battle = g.openSkies?.snapshot();
+    this.text("objective-count", battle ? `${battle.defeated} / ${battle.total} TOTAL · ${battle.remaining} IN WAVE` : g.mission.freeFlight ? "NO ENEMIES · NO TIME LIMIT" : `${total - remaining} / ${total} HOSTILES DOWN`);
+    this.dom["objective-fill"].style.width = `${battle ? battle.defeated / battle.total * 100 : total ? ((total - remaining) / total) * 100 : 0}%`;
+    if (battle) {
+      this.text('mission-objective', battle.state === 'recovery' ? `Next phase in ${battle.recovery}s · regroup` : battle.objective);
+      this.html('battle-wing-status', battleHUD(g));
+      this.dom['battle-coach'].hidden = this.settings.openSkiesGuideSeen || (this.battleCoachStep || 0) >= 4 || g.state !== 'playing';
+      if (!this.dom['battle-coach'].hidden) this.html('battle-coach', tutorialHint(this.battleCoachStep || 0, this.settings));
+    }
     this.text("hud-score", String(g.score).padStart(6, "0"));
     const maxHp = p.maxHp || 100;
     const hpPct = Math.round((p.hp / maxHp) * 100);
@@ -1606,12 +1669,12 @@ class UI {
           }
         }
         if (selected) {
-          c.fillText((j.bomber ? "HOSTILE BOMBER" : "HOSTILE BANDIT") + " " + String(j.id).padStart(2, "0"), sx, sy - r - 12);
+          c.fillText(j.callsign || (j.bomber ? "HOSTILE BOMBER" : "HOSTILE BANDIT") + " " + String(j.id).padStart(2, "0"), sx, sy - r - 12);
           c.fillText((dist / 1e3).toFixed(1) + " KM", sx, sy + r + 18);
           c.fillStyle = "rgba(0, 0, 0, 0.75)";
           c.fillRect(sx - r, sy + r + 24, r * 2, 4);
           c.fillStyle = color;
-          c.fillRect(sx - r, sy + r + 24, (r * 2 * Math.max(0, j.hp)) / (j.bomber ? 160 : 100), 4);
+          c.fillRect(sx - r, sy + r + 24, r * 2 * Math.min(1, Math.max(0, j.hp) / (j.maxHp || 100)), 4);
         }
       } else if (selected) {
         const local = j.position.clone().sub(p.position).applyQuaternion(p.quaternion.clone().invert());

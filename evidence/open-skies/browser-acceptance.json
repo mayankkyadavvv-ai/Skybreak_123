@@ -1,0 +1,35 @@
+{
+  "origin": "http://localhost:4173",
+  "started": "2026-09-28T10:56:41.025Z",
+  "status": "blocked",
+  "environment": {
+    "os": "linux",
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "node": "v24.19.0"
+  },
+  "errors": [
+    "No usable Chrome/Edge/Chromium executable. GPU playthrough, layouts and FPS are unverified."
+  ],
+  "layouts": [],
+  "performance": [],
+  "unverified": [
+    "human 6–10 minute mission pacing",
+    "physical controller/touch feel",
+    "screen-reader usability"
+  ],
+  "launchErrors": [
+    {
+      "channel": "chrome",
+      "error": "browserType.launch: Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome"
+    },
+    {
+      "channel": "msedge",
+      "error": "browserType.launch: Chromium distribution 'msedge' is not found at /opt/microsoft/msedge/msedge"
+    },
+    {
+      "channel": "bundled-chromium",
+      "error": "browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell"
+    }
+  ],
+  "finished": "2026-09-28T10:56:41.630Z"
+}

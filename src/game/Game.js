@@ -24,6 +24,11 @@ import { canTouchdown, assessTouchdown, runwayPoint, onRunway, GLIDE_ANGLE } fro
 import { configureRenderer, qualityFor } from "./Quality.js";
 import { EnvironmentLighting } from "./Environment.js";
 import { SpeedEffects } from "./SpeedEffects.js";
+import { OpenSkiesEncounter, OPEN_SKIES, scoreOpenSkies } from './OpenSkies.js';
+import { configureSquadronJet, updateSquadronAI, issueSquadronOrder } from './SquadronAI.js';
+import { recordOpenSkiesResult } from './OpenSkiesProgress.js';
+
+let sortieSequence = 0;
 
 class Game {
   constructor(canvas, ui, settings) {
@@ -121,9 +126,18 @@ class Game {
     const quality=configureRenderer(this,innerWidth,innerHeight,window.devicePixelRatio || 1);
     this.world?.setQuality?.(this.settings.quality);
     this.effects?.setQuality?.(quality.particles,this.settings.effectIntensity ?? .8);
-    this.speedEffects?.setQuality?.(quality.streaks,this.settings.effectIntensity ?? .8);
-    if(this.atmosphere && (!this.atmosphere.hasApplied || this.settings.timeOfDay!==this.atmosphere.timeOfDay))this.atmosphere.setTimeOfDay(this.settings.timeOfDay || "day");
-    if(this.atmosphere && this.settings.weather && this.settings.weather!==this.atmosphere.weather)this.atmosphere.setWeather(this.settings.weather);
+    this.speedEffects?.setQuality?.(quality.streaks,this.settings.reducedMotion ? 0 : this.settings.effectIntensity ?? .8);
+    this.applyMissionEnvironment();
+  }
+
+  applyMissionEnvironment() {
+    const time = this.openSkies ? 'midday' : this.settings.timeOfDay || 'day';
+    const weather = this.openSkies ? 'clear' : this.settings.weather || 'clear';
+    if (this.atmosphere) {
+      if (!this.atmosphere.hasApplied || this.atmosphere.timeOfDay !== time) this.atmosphere.setTimeOfDay(time);
+      if (this.atmosphere.weather !== weather) this.atmosphere.setWeather(weather);
+    }
+    if (this.bloomPass) this.bloomPass.strength = Math.min(qualityFor(this.settings.quality).bloom, this.openSkies ? .18 : 1);
   }
 
   equipJet(config) {
@@ -151,7 +165,14 @@ class Game {
   }
 
   action(code) {
-    const action = ACTIONS[code] ? code : actionForCode(code, this.settings);
+    const action = ACTIONS[code] || ['uiNext', 'uiPrevious', 'uiConfirm'].includes(code) ? code : actionForCode(code, this.settings);
+    if (this.openSkies && !this.multiplayer?.active && this.ui.modalType === 'squadron') {
+      if (action === 'pause' || action === 'teamComms') { this.closeSquadronPanel(); return; }
+      if (['command1', 'command2', 'command3'].includes(action)) {
+        this.commandSquadron(['cover', 'attack', 'regroup'][Number(action.at(-1)) - 1]); return;
+      }
+      if (action === 'uiNext' || action === 'uiPrevious' || action === 'uiConfirm') { this.ui.navigateSquadron?.(action); return; }
+    }
     if (action === "pause") {
       if (this.ui.modalType && this.state === "playing") { this.ui.closePanel(); return; }
       if (this.state === "playing" || this.state === "intro") this.pause();
@@ -185,6 +206,7 @@ class Game {
       if (action === 'tacticalMap' && this.ui.modalType === 'map') this.ui.closePanel();
       return;
     }
+    if (action === 'teamComms' && this.openSkies) { this.openSquadronPanel(); return; }
     if (action === 'help') { this.pause(); this.ui.showControls(); return; }
     if (action === 'tacticalMap') { this.input?.clear?.(); this.ui.toggleMap(); return; }
     if (action === 'missile') { this.launch(); return; }
@@ -193,6 +215,7 @@ class Game {
     if (action === 'landingGear') { this.toggleGear(); return; }
     if (action === 'landingAssist') { this.input?.clear?.(); this.ui.showAirbaseLandingModal(); return; }
     if (action === "timeOfDay" && this.atmosphere) {
+      if (this.openSkies) { this.ui.message('Aegis Strait uses clear daylight. Your sky preference returns after this sortie.', 3); return; }
       const cycle = { morning: "midday", midday: "day", day: "sunset", sunset: "night", night: "morning" };
       const next = cycle[this.atmosphere.timeOfDay] || "morning";
       this.atmosphere.setTimeOfDay(next);
@@ -220,15 +243,25 @@ class Game {
     this.combo = 0;
     this.damageFlash = 0;
     this.notifications = [];
-    this.stats = { kills: 0, hits: 0, shots: 0, missiles: 0, missileHits: 0 };
+    this.stats = { kills: 0, hits: 0, shots: 0, missiles: 0, missileHits: 0, damageTaken: 0 };
+    this.resultCommitted = false;
+    this.battleResult = null;
+    this.hostileLock = false;
     this.accumulator = 0;
     this.input.clear();
   }
 
-  start(id = this.selectedMission) {
+  start(id = this.selectedMission, options = {}) {
     this.audio.stopPreview?.();
     this.audio.init();
     this.mission = getMission(id);
+    this.openSkies?.abort();
+    this.openSkies = this.mission.id === 2 && !this.multiplayer?.active ? new OpenSkiesEncounter(options.seed) : null;
+    if (this.openSkies) this.openSkies.difficulty = this.settings.difficulty || 'easy';
+    this.sortieId = `skies-${Date.now().toString(36)}-${++sortieSequence}`;
+    this.squadronReturnState = null;
+    this.input.menuMode = null;
+    this.applyMissionEnvironment();
     this.selectedMission = this.mission.id;
     for (const j of [...this.enemies, ...this.allies]) {
       j.dispose?.();
@@ -240,6 +273,7 @@ class Game {
     this.input.clear();
     this.player.hp = this.player.stats?.maxHp || 100;
     this.player.maxHp = this.player.hp;
+    if (this.openSkies) this.openSkies.startMaxHp = this.player.maxHp;
     this.player.alive = true;
     this.player.deadTime = 0;
     this.player.speed = 245;
@@ -247,6 +281,7 @@ class Game {
     this.player.angular.set(0, 0, 0);
     this.player.quaternion.identity();
     this.player.position.set(0, id === 1 ? 1800 : 1550, id === 1 ? -500 : 5200);
+    if (this.openSkies) this.player.position.set(OPEN_SKIES.start.x, OPEN_SKIES.start.y, OPEN_SKIES.start.z);
     if (!this.lastPlayerPos) this.lastPlayerPos = new T.Vector3();
     this.lastPlayerPos.copy(this.player.position);
     this.currentAirspace = getAirspaceAt(this.player.position.x, this.player.position.z);
@@ -264,7 +299,7 @@ class Game {
     this.flaresLeft = this.player.stats?.flares ?? 20;
     this.resetSessionCounters();
     this.player.stall = false;
-    for (let i = 0; i < this.mission.fighters; i++) {
+    for (let i = 0; i < (this.openSkies ? 0 : this.mission.fighters); i++) {
       const j = new Jet("enemy");
       j.position.set((i % 3 - 1) * 850, 1650 + i % 2 * 250, this.player.position.z - 3600 - Math.floor(i / 3) * 1700 - i * 250);
       j.quaternion.setFromAxisAngle(new T.Vector3(0, 1, 0), i % 2 ? 0.4 : 2.7);
@@ -281,9 +316,15 @@ class Game {
     for (let i = 0; i < this.mission.allies; i++) {
       const j = new Jet("ally");
       j.position.copy(this.player.position).add(new T.Vector3(i ? 220 : -220, 60, -200));
+      if (this.openSkies) configureSquadronJet(j, { role: 'wingman', slot: i, seed: this.openSkies.seed + i + 101 }, this.elapsed);
       this.allies.push(j);
       this.scene.add(j.model);
     }
+    if (this.openSkies) {
+      this.player.setGear(false);
+      this.handleEncounterEvents(this.openSkies.start());
+    }
+    for (const jet of [this.player, ...this.enemies, ...this.allies]) jet.resetInterpolation?.();
     this.target = this.enemies.find((e) => Math.abs(e.position.x - this.player.position.x) < 400) || this.enemies[0] || null;
     this.cam.mode = "chase";
     this.state = "playing";
@@ -294,9 +335,60 @@ class Game {
     this.camera.view = null;
     this.camera.updateProjectionMatrix();
     this.cam?.reset?.(this.player);
+    this.ui.resetBattleTutorial?.();
     this.ui.inGame();
     this.ui.message(this.mission.name + " · " + this.mission.objective, 4.5);
     this.notify(this.mission.freeFlight ? "FLIGHT GUIDE" : "COMMAND", this.mission.freeFlight ? `Free flight active. ${bindingLabel("tacticalMap",this.settings)} opens the map.` : `Keep the target in the reticle. ${bindingLabel("missile",this.settings)} launches when LOCKED.`, 7);
+  }
+
+  handleEncounterEvents(events) {
+    for (const event of events) {
+      if (event.type === 'wave') {
+        const direction = this.player.forward;
+        const heading = Math.atan2(direction.x, -direction.z);
+        for (const unit of event.units) {
+          const jet = new Jet('enemy', false, unit.role === 'ace' ? { modelId: 'su57', liveryId: 'desert' } : null);
+          const bearing = heading + unit.bearing + (unit.slot - (event.units.length - 1) / 2) * .2;
+          const distance = 4300 + unit.slot * 450;
+          jet.position.set(this.player.position.x + Math.sin(bearing) * distance, this.player.position.y + 180 + unit.slot * 100, this.player.position.z - Math.cos(bearing) * distance);
+          jet.position.y = Math.max(jet.position.y, terrainHeight(jet.position.x, jet.position.z) + 850, 1200);
+          const toward = this.player.position.clone().sub(jet.position).normalize();
+          jet.quaternion.setFromUnitVectors(new T.Vector3(0, 0, -1), toward);
+          jet.velocity.copy(toward).multiplyScalar(jet.speed);
+          configureSquadronJet(jet, unit, this.elapsed);
+          this.enemies.push(jet); this.scene.add(jet.model); jet.resetInterpolation();
+        }
+        this.target = this.enemies.find(jet => jet.alive) || null;
+        this.lock = 0; this.lockSound = false;
+        this.notify('AEGIS CONTROL', event.radio, 6);
+      } else if (event.type === 'radio') this.notify('AEGIS CONTROL', event.text, 5);
+      else if (event.type === 'complete') this.finish(true);
+      else if (event.type === 'failed') this.finish(false, 'Your aircraft was destroyed.');
+    }
+  }
+
+  openSquadronPanel() {
+    if (!this.openSkies || this.multiplayer?.active || !['playing', 'paused'].includes(this.state) || !this.player.alive) return;
+    if (this.ui.modalType === 'squadron') { this.closeSquadronPanel(); return; }
+    this.squadronReturnState = this.state;
+    this.state = 'paused'; this.input.clear();
+    this.input.menuMode = 'squadron';
+    this.input.menuButtons = new Set(['teamComms', 'pause']);
+    if (typeof document !== 'undefined') document.exitPointerLock?.();
+    this.ui.showSquadron?.();
+  }
+  closeSquadronPanel() {
+    const previous = this.squadronReturnState || 'playing';
+    this.squadronReturnState = null; this.input.clear();
+    this.input.menuMode = null;
+    this.state = previous;
+    if (previous === 'paused') this.ui.showPause(); else this.ui.inGame();
+  }
+  commandSquadron(order) {
+    if (!this.openSkies || !['playing', 'paused'].includes(this.state)) return false;
+    const accepted = issueSquadronOrder(this, order);
+    if (accepted && this.ui.modalType === 'squadron') this.closeSquadronPanel();
+    return accepted;
   }
 
   pause() {
@@ -322,6 +414,11 @@ class Game {
       this.multiplayer.leaveMatch();
     }
     this.audio.stopPreview?.();
+    this.openSkies?.abort(); this.openSkies = null;
+    this.squadronReturnState = null; this.battleResult = null;
+    this.target = null; this.lock = 0; this.incoming = []; this.notifications = [];
+    this.input.menuMode = null;
+    this.applyMissionEnvironment();
     this.state = "menu";
     this.input.clear();
     this.weapons.clear();
@@ -498,12 +595,13 @@ class Game {
 
   damage(jet, amount, owner, weapon) {
     if (!jet.alive) return;
+    if (jet === this.player) this.stats.damageTaken = (this.stats.damageTaken || 0) + Math.min(jet.hp, Math.max(0, amount));
     jet.hp = Math.max(0, jet.hp - amount);
     if (owner === this.player) {
       if (weapon === "cannon") {
         this.stats.hits++;
         this.score += 20;
-      } else {
+      } else if (weapon === 'missile') {
         this.stats.missileHits++;
         this.score += 200;
       }
@@ -512,6 +610,9 @@ class Game {
       this.damageFlash = 0.5;
       this.cam.shake = 0.65;
       this.audio.play("hit");
+    }
+    if (jet.team === 'ally' && jet.hp > 0 && jet.hp < jet.maxHp * .45 && this.openSkies?.canRadio(`wing-help-${jet.id}`, 18)) {
+      this.notify(jet.callsign, 'Taking damage. Need cover! Regroup us or engage the fighter on our tail.', 4);
     }
     if (jet.hp === 0) {
       jet.alive = false;
@@ -523,6 +624,7 @@ class Game {
         this.state = "dying";
         this.cam.mode = "cinematic";
         this.input.clear();
+        this.input.menuMode = null;
       } else if (jet.team === "enemy") {
         if (owner === this.player) {
           this.stats.kills++;
@@ -534,6 +636,8 @@ class Game {
           progression.recordKill(weapon);
         }
         if (this.target === jet) this.cycleTarget();
+      } else if (jet.team === 'ally' && this.openSkies) {
+        this.notify('AEGIS CONTROL', `${jet.callsign} is down. Stay in the fight; the mission can still be completed.`, 4);
       }
     }
   }
@@ -545,17 +649,27 @@ class Game {
   }
 
   finish(success, reason = "") {
-    if (this.state === "result") return;
+    if (this.state === "result" || this.resultCommitted) return;
+    this.resultCommitted = true;
     this.state = "result";
     this.input.clear();
+    this.input.menuMode = null;
+    this.squadronReturnState = null;
+    if (this.openSkies) {
+      this.battleResult = scoreOpenSkies({ success, stats: this.stats, maxHp: this.openSkies.startMaxHp, allies: this.allies, elapsed: this.elapsed, seed: this.openSkies.seed });
+      this.battleResult.difficulty = this.openSkies.difficulty;
+      if (!success) this.openSkies.state = 'failed';
+      Object.assign(this.battleResult, recordOpenSkiesResult(progression, this.sortieId, this.battleResult, this.openSkies.difficulty));
+    }
     if (success) {
       this.score += 5e3;
-      progression.recordMissionWin(this.mission?.name || "SORTIE");
+      if (!this.openSkies) progression.recordMissionWin(this.mission?.name || "SORTIE");
     }
     this.ui.showResult(success, reason);
   }
 
   step(dt) {
+    if (this.state === 'paused' || this.state === 'result' || this.state === 'menu') return;
     this.player.beginStep?.();
     for (const jet of this.enemies) jet.beginStep?.();
     for (const jet of this.allies) jet.beginStep?.();
@@ -729,9 +843,9 @@ class Game {
         }
       }
 
-      const radius = Math.hypot(this.player.position.x, this.player.position.z);
-      const maxRadius = this.expandedMapMode ? 95e3 : 30500;
-      this.outOfArea = radius > (this.expandedMapMode ? 85e3 : 26e3);
+      const radius = this.openSkies ? Math.hypot(this.player.position.x - OPEN_SKIES.center.x, this.player.position.z - OPEN_SKIES.center.z) : Math.hypot(this.player.position.x, this.player.position.z);
+      const maxRadius = this.openSkies ? OPEN_SKIES.boundaryRadius : this.expandedMapMode ? 95e3 : 30500;
+      this.outOfArea = radius > (this.openSkies ? OPEN_SKIES.warningRadius : this.expandedMapMode ? 85e3 : 26e3);
       if (radius > maxRadius) {
         if (this.mission.freeFlight) this.resetPracticePosition();
         else this.damage(this.player, 1e3, null, "boundary");
@@ -772,8 +886,10 @@ class Game {
       if (this.lock === 0) this.lockSound = false;
     }
 
+    this.hostileLock = false;
     for (const j of [...this.enemies, ...this.allies]) {
-      updateAI(j, this, dt);
+      if (this.openSkies && j.combat) updateSquadronAI(j, this, dt);
+      else updateAI(j, this, dt);
       if (j.alive && this.world.collision(j.position)) this.damage(j, 1e3, null, "terrain");
     }
 
@@ -833,7 +949,9 @@ class Game {
       }
     }
 
-    if (this.state === "playing" && !this.mission.freeFlight && !this.multiplayer?.active) {
+    if (this.openSkies && !this.resultCommitted) {
+      this.handleEncounterEvents(this.openSkies.tick(dt, this.enemies, this.player.alive, ['playing', 'dying'].includes(this.state)));
+    } else if (this.state === "playing" && !this.mission.freeFlight && !this.multiplayer?.active) {
       const status = missionStatus(this.enemies, this.player, BASE);
       if (status === "complete") this.finish(true);
       if (status === "base-lost") this.finish(false, "A bomber reached the friendly airbase.");
@@ -914,11 +1032,12 @@ class Game {
 
   getPerformanceSnapshot(){
     const frames=[...(this.frameTimes || [])].sort((a,b)=>a-b),pick=q=>frames[Math.floor((frames.length-1)*q)] || 0;
-    return {sampleFrames:frames.length,frameP50ms:pick(.5),frameP95ms:pick(.95),fps:this.fps,quality:this.settings.quality,dpr:this.renderer.getPixelRatio(),drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,geometries:this.renderer.info.memory.geometries,textures:this.renderer.info.memory.textures,programs:this.renderer.info.programs?.length,terrainCache:this.world.terrainChunks.cache.size};
+    return {sampleFrames:frames.length,frameP50ms:pick(.5),frameP95ms:pick(.95),fps:this.fps,quality:this.settings.quality,dpr:this.renderer.getPixelRatio(),drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,geometries:this.renderer.info.memory.geometries,textures:this.renderer.info.memory.textures,programs:this.renderer.info.programs?.length,terrainCache:this.world.terrainChunks.cache.size,activeAircraft:[this.player,...this.enemies,...this.allies].filter(j=>j.alive).length,activeBullets:this.weapons.bullets.filter(b=>b.active).length,activeMissiles:this.weapons.missiles.filter(m=>m.active).length,encounter:this.openSkies?.snapshot() || null};
   }
   dispose(){
     if(this.disposed)return;this.disposed=true;cancelAnimationFrame(this.animationFrame);
     window.removeEventListener('resize',this.onResize);this.renderer.domElement.removeEventListener('webglcontextlost',this.onContextLost);
+    this.openSkies?.abort();this.openSkies=null;
     this.input.dispose();this.multiplayer.clearRemotePlayers();this.multiplayer.network.disconnect();
     for(const jet of [this.player,...this.enemies,...this.allies])jet.dispose();
     this.weapons.dispose();this.effects.dispose();this.speedEffects.dispose();this.atmosphere.dispose();this.environment?.dispose();this.world.dispose();

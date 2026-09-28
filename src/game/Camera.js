@@ -63,14 +63,14 @@ class CameraController {
     this.camera.up.lerp(this.desiredUp,1-Math.exp(-5*dt)).normalize();
     this.smoothLook.lerp(this.look,1-Math.exp(-(menu?3:10)*dt));
     this.shake=Math.max(0,this.shake-dt*2.6);
-    const intensity=settings.shake===false?0:settings.shakeIntensity ?? .35;
+    const intensity=settings.reducedMotion || settings.shake===false?0:settings.shakeIntensity ?? .35;
     if(intensity>0 && game.state==='playing') {
       const time=(game.elapsed || 0)*26, amount=(this.shake*.3+(p.boost ? .022 : 0))*intensity;
       this.camera.position.x+=Math.sin(time)*amount*.16;this.camera.position.y+=Math.cos(time*1.3)*amount*.12;
     }
     this.camera.lookAt(this.smoothLook);
     const speed=T.MathUtils.clamp(((p.speed ?? 180)-60)/480,0,1);
-    const target=(settings.fov ?? 64)+(menu?0:(speed*14+(p.boost?5.5:0))*(settings.speedFov ?? .65));
+    const target=(settings.fov ?? 64)+(menu || settings.reducedMotion?0:(speed*14+(p.boost?5.5:0))*(settings.speedFov ?? .65));
     const next=damp(this.camera.fov,target,3.5,dt);
     if(Math.abs(next-this.camera.fov)>.001){this.camera.fov=next;this.camera.updateProjectionMatrix();}
     this.camera.updateMatrixWorld();
