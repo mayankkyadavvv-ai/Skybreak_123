@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> skybreak-flight-combat@1.0.0 verify:site
+> node scripts/validate-site.mjs
+
+Static validation passed: 7 pages, local targets/fragments, IDs, metadata and 1200×630 social image. Browser accessibility/layout still needs verification.

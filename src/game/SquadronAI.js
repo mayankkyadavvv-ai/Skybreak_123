@@ -30,8 +30,8 @@ export function configureSquadronJet(jet, { role = 'wingman', seed = 1, slot = 0
 }
 
 export function issueSquadronOrder(game, order) {
-  if (!game.openSkies || game.multiplayer?.active || !SQUADRON_ORDERS[order]) return false;
-  const available = game.allies.filter(jet => jet.alive);
+  if (!(game.openSkies || game.operation) || game.multiplayer?.active || !SQUADRON_ORDERS[order]) return false;
+  const available = game.allies.filter(jet => jet.alive && jet.combat && !jet.isHuman);
   if (!available.length) { game.ui.message('No wingmen remain. You can still complete the mission.', 3); return false; }
   const target = game.target;
   if (order === 'attack' && (!target?.alive || !game.enemies.includes(target))) {
@@ -41,7 +41,7 @@ export function issueSquadronOrder(game, order) {
     jet.order = order; jet.orderTarget = order === 'attack' ? target : null;
     jet.combat.target = null; jet.combat.targetTimer = 0; jet.combat.lock = 0;
   }
-  if (game.openSkies.canRadio('order', 2)) game.notify('SQUADRON', `${SQUADRON_ORDERS[order]}${order === 'attack' ? ` · ${target.callsign}` : ''}. Acknowledged.`, 3);
+  if ((game.openSkies || game.operation).canRadio('order', 2)) game.notify('SQUADRON', `${SQUADRON_ORDERS[order]}${order === 'attack' ? ` · ${target.callsign}` : ''}. Acknowledged.`, 3);
   return true;
 }
 
@@ -59,32 +59,39 @@ export function selectSquadronTarget(jet, game) {
   if (jet.team === 'ally') {
     if (jet.order === 'regroup') return null;
     if (jet.order === 'attack') {
-      if (jet.orderTarget?.alive && game.enemies.includes(jet.orderTarget)) return jet.orderTarget;
+      if (jet.orderTarget?.alive && game.enemies.includes(jet.orderTarget)) return canSense(game, jet, jet.orderTarget) ? jet.orderTarget : null;
       jet.order = 'cover'; jet.orderTarget = null;
-      if (game.openSkies.canRadio('target-lost')) game.notify('SQUADRON', 'Assigned target is gone. Resuming cover.', 3);
+      if ((game.openSkies || game.operation)?.canRadio('target-lost')) game.notify('SQUADRON', 'Assigned target is gone. Resuming cover.', 3);
     }
-    return nearest(jet, game.enemies.filter(enemy => enemy.position.distanceToSquared(game.player.position) < 6500 ** 2), enemy => enemy.combat?.target === game.player ? .15 : 1);
+    const protectedJet = chooseProtectedAlly(jet, game);
+    jet.coverTarget = protectedJet;
+    const threats = game.enemies.filter(enemy => enemy.alive && canSense(game, jet, enemy) && enemy.position.distanceToSquared(protectedJet.position) < 7500 ** 2);
+    const reserved = new Set(game.allies.filter(ally => ally !== jet && ally.alive && ally.combat?.target).map(ally => ally.combat.target));
+    return nearest(jet, threats, enemy => (enemy.combat?.target === protectedJet || enemy.combat?.target === game.player ? .12 : 1) * (reserved.has(enemy) ? 2.4 : 1));
   }
-  const friendlies = [game.player, ...game.allies].filter(j => j.alive);
+  const friendlies = [game.player, ...game.allies].filter(j => j.alive && canSense(game, jet, j));
+  if (game.operationProtected?.alive && canSense(game, jet, game.operationProtected) && ['support', 'missile'].includes(jet.combatRole)) return game.operationProtected;
   if (jet.combatRole === 'support') {
     return nearest(jet, friendlies, target => target.team === 'ally' ? .25 + .4 * target.hp / target.maxHp : 1);
   }
-  if (jet.combatRole === 'ace') return game.player.alive ? game.player : nearest(jet, friendlies);
+  if (jet.combatRole === 'ace') return game.player.alive && canSense(game, jet, game.player) ? game.player : nearest(jet, friendlies);
   // Dogfighters defend a threatened teammate; missile fighters favour the player.
   const threat = game.allies.find(ally => ally.alive && game.enemies.some(enemy => enemy.alive && ally.combat?.target === enemy));
-  return jet.combatRole === 'dogfighter' && threat && jet.squadSlot % 2 ? threat : nearest(jet, friendlies, target => target === game.player ? .45 : 1);
+  return jet.combatRole === 'dogfighter' && threat && canSense(game, jet, threat) && jet.squadSlot % 2 ? threat : nearest(jet, friendlies, target => target === game.player ? .45 : 1);
 }
 
 export function updateSquadronAI(jet, game, dt) {
-  if (!jet.alive) return;
+  if (!jet.alive || jet.isHuman || jet.routeManaged) return;
   const c = jet.combat, role = COMBAT_ROLES[jet.combatRole];
-  const difficulty = game.openSkies.difficulty || game.settings.difficulty;
+  const encounter = game.openSkies || game.operation;
+  const difficulty = encounter?.difficulty || game.settings.difficulty;
   const tuning = COMBAT_DIFFICULTY[difficulty] || COMBAT_DIFFICULTY.easy;
   const ally = jet.team === 'ally';
   c.targetTimer -= dt; c.fire -= dt; c.missile -= dt; c.recovery -= dt; c.flare -= dt; c.evade -= dt;
   // A destroyed/missing target is dropped immediately; living targets are sticky.
+  const targetVisible = c.target && canSense(game, jet, c.target);
   const targetPresent = ally ? game.enemies.includes(c.target) : c.target === game.player || game.allies.includes(c.target);
-  if (c.targetTimer <= 0 || !c.target?.alive || !targetPresent || ally && jet.order === 'attack' && !jet.orderTarget?.alive) {
+  if (c.targetTimer <= 0 || !targetVisible || !c.target?.alive || !targetPresent || ally && jet.order === 'attack' && !jet.orderTarget?.alive) {
     const target = selectSquadronTarget(jet, game);
     if (target !== c.target) { c.target = target; c.reaction = 0; c.lock = 0; }
     c.targetTimer = tuning.switchDelay;
@@ -99,13 +106,14 @@ export function updateSquadronAI(jet, game, dt) {
       jet.flares--; c.flare = 8; game.weapons.deployFlares(jet);
     }
   }
-  if (ally && (jet.order === 'regroup' || !target || jet.position.distanceToSquared(game.player.position) > 8500 ** 2)) {
-    offset.set(jet.squadSlot ? 210 : -210, 65, 260).applyQuaternion(game.player.quaternion);
-    dest.copy(game.player.position).add(offset);
-    const forwardError = offset.copy(dest).sub(jet.position).dot(game.player.forward);
-    speed = Math.max(110, Math.min(460 * (jet.stats?.speedMult || 1), game.player.speed + Math.max(-75, Math.min(95, forwardError * .15))));
-    if (jet.position.distanceToSquared(dest) < 90 ** 2) dest.addScaledVector(game.player.forward, 700);
-    jet.aiState = jet.order === 'regroup' ? 'formation' : 'covering';
+  const formationLead = jet.order === 'regroup' ? game.player : jet.coverTarget?.alive ? jet.coverTarget : game.player;
+  if (ally && (jet.order === 'regroup' || !target || jet.position.distanceToSquared(formationLead.position) > 8500 ** 2)) {
+    offset.set(jet.squadSlot ? 210 : -210, 65, 260).applyQuaternion(formationLead.quaternion);
+    dest.copy(formationLead.position).add(offset);
+    const forwardError = offset.copy(dest).sub(jet.position).dot(formationLead.forward);
+    speed = Math.max(110, Math.min(460 * (jet.stats?.speedMult || 1), formationLead.speed + Math.max(-75, Math.min(95, forwardError * .15))));
+    if (jet.position.distanceToSquared(dest) < 90 ** 2) dest.addScaledVector(formationLead.forward, 700);
+    jet.aiState = jet.order === 'regroup' ? 'formation' : formationLead !== game.player ? `covering ${formationLead.callsign || 'teammate'}` : 'covering';
   } else if (c.evade > 0 || c.recovery > 0) {
     dest.copy(jet.position).addScaledVector(jet.forward, 1300);
     offset.set(Math.cos(jet.aiPhase) * 1100, 350, Math.sin(jet.aiPhase) * 1100); dest.add(offset);
@@ -114,6 +122,7 @@ export function updateSquadronAI(jet, game, dt) {
     const dist = jet.position.distanceTo(target.position);
     const facing = jet.forward.dot(offset.copy(target.position).sub(jet.position).normalize());
     dest.copy(target.position).addScaledVector(target.velocity, Math.min(.8, dist / 1800));
+    if (ally && jet.order === 'attack' && dist > 1400) { offset.copy(target.forward).cross(UP).multiplyScalar(jet.squadSlot % 2 ? 450 : -450); dest.add(offset); jet.aiState = 'pincer approach'; }
     // Standoff passes and ace repositioning create a visible attack/recovery rhythm.
     if ((jet.combatRole === 'missile' && c.missiles > 0 && dist < 1800) || dist < 420 || facing < -.5) {
       dest.addScaledVector(target.forward, -1600);
@@ -130,26 +139,28 @@ export function updateSquadronAI(jet, game, dt) {
       speed = 225; jet.aiState = 'break turn';
     }
     const ready = game.elapsed >= c.graceUntil && c.reaction >= (ally ? .8 : tuning.reaction);
-    const firingCone = facing > .97 && dist < 1650;
+    const firingCone = facing > .97 && dist < 1650 && canSense(game, jet, target, 'visual');
     if (ready && firingCone && c.fire <= 0 && c.cannon > 0 && (jet.combatRole !== 'missile' || !c.missiles)) {
       if (game.weapons.cannon(jet, target, { spread: ally ? .009 : tuning.aimError, random: c.random })) c.cannon--;
       c.fire = ally ? .18 : tuning.fireDelay;
       // Short bursts followed by recovery; no constant cannon hose on Easy.
       if (c.random() > tuning.aggression) c.recovery = tuning.recovery;
     }
-    const inLockCone = dist < role.range && dist > 950 && facing > .965;
+    const inLockCone = dist < role.range && dist > 950 && facing > .965 && canSense(game, jet, target, 'infrared');
     c.lock = ready && inLockCone ? Math.min(1.8, c.lock + dt) : Math.max(0, c.lock - 2 * dt);
     if (target === game.player && c.lock > .3 && c.missile <= 0 && c.missiles) game.hostileLock = true;
     const saturated = !ally && difficulty === 'easy' && game.weapons.missiles.some(m => m.active && m.target === target);
     if (c.lock >= 1.8 && c.missile <= 0 && c.missiles > 0 && !saturated && game.weapons.missile(jet, target)) {
       c.missiles--; c.lock = 0; c.missile = tuning.missileCooldown; c.recovery = tuning.recovery;
-      if (jet.combatRole === 'ace' && game.openSkies.canRadio('ace-launch', 8)) game.notify(game.allies.find(jet => jet.alive)?.callsign || 'AEGIS CONTROL', 'VIPER launched. Defend, then turn back in!', 3);
+      if (jet.combatRole === 'ace' && encounter?.canRadio('ace-launch', 8)) game.notify(game.allies.find(jet => jet.alive)?.callsign || 'AEGIS CONTROL', 'VIPER launched. Defend, then turn back in!', 3);
     }
   } else {
-    dest.set(OPEN_SKIES.center.x, 1800, OPEN_SKIES.center.z); jet.aiState = 'patrolling'; c.lock = 0;
+    const center = game.operation?.setup.center || OPEN_SKIES.center;
+    dest.set(center.x, center.y || 1800, center.z); jet.aiState = 'patrolling'; c.lock = 0;
   }
-  if (!ally && Math.hypot(jet.position.x - OPEN_SKIES.center.x, jet.position.z - OPEN_SKIES.center.z) > 11500) {
-    dest.set(OPEN_SKIES.center.x, 1800, OPEN_SKIES.center.z); jet.aiState = 'returning';
+  const center = game.operation?.setup.center || OPEN_SKIES.center;
+  if (!ally && Math.hypot(jet.position.x - center.x, jet.position.z - center.z) > 11500) {
+    dest.set(center.x, center.y || 1800, center.z); jet.aiState = 'returning';
   }
   const f = jet.forward;
   const floor = Math.max(terrainHeight(jet.position.x, jet.position.z), terrainHeight(jet.position.x + f.x * 1300, jet.position.z + f.z * 1300), terrainHeight(dest.x, dest.z)) + 450;
@@ -168,4 +179,16 @@ export function updateSquadronAI(jet, game, dt) {
   jet.velocity.copy(jet.forward).multiplyScalar(jet.speed);
   jet.position.addScaledVector(jet.velocity, dt);
   jet.animate(game.elapsed, c.evade > 0);
+}
+
+function canSense(game, observer, target, mode) {
+  if (!target?.alive) return false;
+  if (game.canDetect) return game.canDetect(observer, target, mode);
+  return true;
+}
+export function chooseProtectedAlly(jet, game) {
+  const friendlies = [game.player, ...game.allies].filter(ally => ally.alive && ally !== jet && !ally.routeManaged);
+  let damaged = null;
+  for (const ally of friendlies) if (ally.hp / ally.maxHp < .45 && (!damaged || ally.hp / ally.maxHp < damaged.hp / damaged.maxHp)) damaged = ally;
+  return damaged || (game.operationProtected?.alive ? game.operationProtected : game.player);
 }

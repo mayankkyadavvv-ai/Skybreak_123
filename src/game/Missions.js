@@ -1,3 +1,4 @@
+import { MISSION_TEMPLATES, MISSION_LOCATIONS } from '../shared/MissionGenerator.js';
 const MISSIONS = [
   { id: 0, name: "Air Patrol", code: "OPERATION 01", region: "TALON RIDGE", brief: "Hostile aircraft have crossed the northern ridge. Clear the airspace and bring your aircraft home.", objective: "Destroy 3 hostile fighters", fighters: 3, bombers: 0, allies: 0, tag: "PATROL", estimate: "3–5 MIN" },
   { id: 1, name: "Intercept", code: "OPERATION 02", region: "SABLE COAST", brief: "Two bombers are closing on the coastal airbase. Eliminate the bombers before they reach the runway, then clear their escorts.", objective: "Stop 2 bombers and destroy 2 escorts", fighters: 2, bombers: 2, allies: 0, tag: "TIME CRITICAL", estimate: "3–6 MIN" },
@@ -17,7 +18,13 @@ const FREE_FLIGHT = {
   tag: "NO ENEMIES",
   estimate: "NO TIME LIMIT"
 };
-const FLIGHT_MODES = [FREE_FLIGHT, ...MISSIONS];
+const OPERATION_MISSIONS = Object.entries(MISSION_TEMPLATES).map(([template, entry]) => ({
+  id: entry.id, name: entry.name, code: `OPERATION ${String(entry.id).padStart(2, '0')}`,
+  region: template === 'base-defence' ? MISSION_LOCATIONS.coast.name.toUpperCase() : MISSION_LOCATIONS.aegis.name.toUpperCase(),
+  brief: entry.brief, objective: entry.objective, template, operation: true, fighters: 0, bombers: 0, allies: 0,
+  tag: entry.role.toUpperCase(), estimate: '4–8 MIN', coopEligible: true,
+}));
+const FLIGHT_MODES = [FREE_FLIGHT, ...MISSIONS, ...OPERATION_MISSIONS];
 function getMission(id) {
   return FLIGHT_MODES.find((mission) => mission.id === id) || FREE_FLIGHT;
 }
@@ -31,6 +38,7 @@ export {
   MISSIONS,
   FREE_FLIGHT,
   FLIGHT_MODES,
+  OPERATION_MISSIONS,
   getMission,
   missionStatus
 };

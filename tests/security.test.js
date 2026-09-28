@@ -14,4 +14,5 @@ test('CSP allows exactly the configured secure multiplayer origin and forbids in
   assert.match(csp, /connect-src 'self' wss:\/\/skybreak-iota.vercel.app wss:\/\/multiplayer.test;/);
   assert.match(csp, /script-src 'self';/);
   assert.throws(() => securityHeaders('ws://multiplayer.test'));
+  assert.match(securityHeaders()['Permissions-Policy'],/microphone=\(self\)/);
 });

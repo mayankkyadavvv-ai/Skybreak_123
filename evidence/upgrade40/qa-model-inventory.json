@@ -1,0 +1,11 @@
+{
+  "kind": "Headless CPU scene-resource inventory; not renderer draws or a GPU benchmark",
+  "aircraft": 8,
+  "model": "x17",
+  "meshNodesIncludingHiddenLods": 832,
+  "uniqueGeometries": 832,
+  "geometryBufferBytes": 2435872,
+  "uniqueMaterials": 208,
+  "texturesCreatedWithoutCanvas": 0,
+  "actualVisibleEightAircraftBenchmark": false
+}

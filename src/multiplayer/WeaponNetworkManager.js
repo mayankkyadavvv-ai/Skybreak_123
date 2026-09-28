@@ -51,7 +51,7 @@ export class WeaponNetworkManager {
   }
 
   handleMissileLaunched({ mId, ownerId, targetId, pos, dir, speed }) {
-    if (!pos || !dir) return;
+    if (!pos || !dir || this.remoteMissiles.some(m => m.mId === mId)) return;
 
     const origin = new T.Vector3(pos.x, pos.y, pos.z);
     const direction = new T.Vector3(dir.x, dir.y, dir.z).normalize();
@@ -80,7 +80,7 @@ export class WeaponNetworkManager {
   }
 
   handleFlaresDeployed({ playerId, diverted }) {
-    const remoteJet = this.game.multiplayer?.remotePlayers.get(playerId);
+    const remoteJet = playerId===this.game.multiplayer?.localId?this.game.player:this.game.multiplayer?.remotePlayers.get(playerId);
     const jetPos = remoteJet?.model ? remoteJet.model.position : null;
     if (!jetPos) return;
 
@@ -96,6 +96,23 @@ export class WeaponNetworkManager {
 
     const dist = this.game.camera ? jetPos.distanceTo(this.game.camera.position) : 500;
     this.audio?.play("flare", { distance: dist });
+  }
+
+  syncMissiles(snapshots) {
+    const ids = new Set(snapshots.map(s => s.id));
+    for (let i = this.remoteMissiles.length - 1; i >= 0; i--) {
+      const missile = this.remoteMissiles[i];
+      if (!ids.has(missile.mId)) { this.scene.remove(missile.mesh); this.remoteMissiles.splice(i, 1); }
+    }
+    for (const state of snapshots) {
+      if (!Array.isArray(state.pos) || !Array.isArray(state.dir)) continue;
+      let missile = this.remoteMissiles.find(m => m.mId === state.id);
+      if (!missile) {
+        this.handleMissileLaunched({ mId: state.id, ownerId: state.ownerId, targetId: state.targetId, pos: { x: state.pos[0], y: state.pos[1], z: state.pos[2] }, dir: { x: state.dir[0], y: state.dir[1], z: state.dir[2] }, speed: state.speed });
+        missile = this.remoteMissiles.find(m => m.mId === state.id);
+      }
+      if (missile) { missile.position.fromArray(state.pos); missile.direction.fromArray(state.dir); missile.speed = state.speed; missile.targetId = state.targetId; missile.authoritative = true; missile.life = .3; }
+    }
   }
 
   update(dt) {
@@ -133,6 +150,8 @@ export class WeaponNetworkManager {
       }
     }
   }
+
+  dispose() { this.clear(); this.bulletGeo.dispose(); this.bulletMat.dispose(); this.missileGeo.dispose(); this.missileMat.dispose(); }
 
   clear() {
     for (const b of this.remoteBullets) {

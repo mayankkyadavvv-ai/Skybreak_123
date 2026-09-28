@@ -14,7 +14,7 @@ export function securityHeaders(wsUrl = '') {
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'SAMEORIGIN',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), gamepad=(self), fullscreen=(self)',
+    'Permissions-Policy': 'camera=(), microphone=(self), geolocation=(), payment=(), usb=(), gamepad=(self), fullscreen=(self)',
   };
 }
 

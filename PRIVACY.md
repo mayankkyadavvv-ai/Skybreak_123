@@ -17,12 +17,21 @@ This build stores the following data locally on your device. These entries are n
 | skybreak_pilot_profile_v1 | Pilot callsign, XP, rank, unlocks and career totals | Keep local progression |
 | skybreak_pilot_name | Multiplayer display name | Reuse your chosen callsign |
 | skybreak_server_url | Selected multiplayer WebSocket endpoint | Remember the selected server |
+| skybreak.campaign.v1 | Three-sector campaign outcomes and seed | Continue your local campaign |
+| skybreak-flight-school-v1 | Completed flight lessons | Remember training progress |
 
 ## Multiplayer
 
-When you choose multiplayer, the client opens a WebSocket connection to the selected server. It sends your display name, room and matchmaking choices, aircraft/loadout information, flight state and combat actions. The server relays relevant state, names, scores and quick commands to other players.
+When you choose multiplayer, the client opens a WebSocket connection to the selected server. It sends your display name, room and matchmaking choices, aircraft/loadout information, sequenced control intentions and combat actions. The server relays relevant state, names, scores and quick commands to other players.
 
 The supplied server keeps active clients, rooms and matches in memory. It logs connection/disconnection events using temporary client IDs and operational errors. This build does not add a persistent player database. Provider access logs and retention have not been verified. Other server operators may use different settings.
+
+
+## Optional voice and replay
+
+Voice starts only after you enable it and allow microphone access. Team audio travels over WebRTC to your teammates, directly or through a configured TURN relay. This build does not record or store voice. Push to talk, mute, deafen and leaving stop transmission; leaving releases microphone tracks. Other participants may record externally.
+
+Reconnect uses a private credential in sessionStorage (skybreak_resume_v2), scoped to the selected server. A disconnected seat is reserved for 45 seconds. The credential is rotated on resume and removed when leaving the room. Do not share it. Recorded tactical replay data stays in memory unless you export a local JSON or PNG file. It includes callsigns and sensor-visible aircraft state; it is not uploaded by this build.
 
 
 ## Hosting & connections
@@ -37,7 +46,7 @@ No analytics, advertising SDK, tracking pixel, third-party font or application c
 
 ## Your choices
 
-Play single-player without opening a multiplayer session. Choose a non-identifying callsign. Use [Storage settings](https://skybreak-iota.vercel.app/storage) to remove the five local entries, or clear site data in your browser. Close other Skybreak tabs before resetting so they do not save their current state again.
+Play single-player without opening a multiplayer session. Choose a non-identifying callsign. Use [Storage settings](https://skybreak-iota.vercel.app/storage) to remove the listed local entries, or clear site data in your browser. Close other Skybreak tabs before resetting so they do not save their current state again.
 
 
 ## Operator & requests

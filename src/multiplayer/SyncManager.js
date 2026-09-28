@@ -1,195 +1,68 @@
-// SyncManager: Hermite cubic position interpolation and SLERP quaternion smoothing
-import * as T from "three";
+import * as T from 'three';
+const now = () => globalThis.performance?.now?.() ?? Date.now();
+const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 
+// Server timestamps, rather than packet arrival times, define the motion curve.
 export class SyncManager {
-  constructor(interpDelay = 100) {
-    this.interpDelay = interpDelay; // 100ms buffer for 30Hz network tick
-    this.buffers = new Map(); // playerId -> [ snapshots ]
-    this.maxBufferSize = 15;
-
-    // Scratch math objects to avoid garbage collection allocations
-    this._p0 = new T.Vector3();
-    this._p1 = new T.Vector3();
-    this._v0 = new T.Vector3();
-    this._v1 = new T.Vector3();
-    // Client-side prediction buffer
-    this.predictionBuffer = [];
-    this.maxPredictionSize = 60;
+  constructor(interpDelay = 100, { clock = now } = {}) {
+    this.clock = clock; this.interpDelay = interpDelay; this.baseDelay = interpDelay;
+    this.buffers = new Map(); this.maxBufferSize = 40; this.offset = null;
+    this.lastArrival = null; this.lastServerTime = null; this.jitter = 0; this.epoch = null;
+    this.predictionBuffer = []; this.maxPredictionSize = 180;
+    this.metrics = { staleSnapshots: 0, extrapolations: 0, frozenFrames: 0, corrections: 0, correctionDistance: 0, maxCorrection: 0 };
   }
-
-  addSnapshot(playerId, serverTime, data) {
-    if (!this.buffers.has(playerId)) {
-      this.buffers.set(playerId, []);
+  beginEpoch(epoch) { if (epoch === this.epoch) return false; this.epoch = epoch; this.clearAll(); this.offset = null; this.lastArrival = this.lastServerTime = null; return true; }
+  observeClock(serverTime, arrival = this.clock(), serverOffset) {
+    if (!Number.isFinite(serverTime)) return;
+    if (Number.isFinite(serverOffset)) this.offset = serverOffset;
+    else if (this.offset == null) this.offset = serverTime - arrival;
+    else this.offset += clamp(serverTime - arrival - this.offset, -5, 5) * .03;
+    if (this.lastServerTime != null && serverTime > this.lastServerTime) {
+      const variation = Math.abs((arrival - this.lastArrival) - (serverTime - this.lastServerTime));
+      this.jitter += (variation - this.jitter) * .12;
+      const desired = clamp(this.baseDelay + this.jitter * 2, 75, 250);
+      this.interpDelay += (desired - this.interpDelay) * (desired > this.interpDelay ? .3 : .03);
     }
-    const buf = this.buffers.get(playerId);
-
-    const snapshot = {
-      t: serverTime,
-      localTime: performance.now(),
-      pos: new T.Vector3(data.pos[0], data.pos[1], data.pos[2]),
-      quat: new T.Quaternion(data.quat[0], data.quat[1], data.quat[2], data.quat[3]),
-      vel: new T.Vector3(data.vel[0], data.vel[1], data.vel[2]),
-      spd: data.spd,
-      thr: data.thr,
-      hp: data.hp,
-      alive: data.alive,
-      boost: data.boost,
-      gear: data.gear,
-      landed: data.landed,
-      shield: data.shield,
-      respawn: data.respawn
-    };
-
-    buf.push(snapshot);
+    if (this.lastServerTime == null || serverTime > this.lastServerTime) { this.lastArrival = arrival; this.lastServerTime = serverTime; }
+  }
+  addSnapshot(id, serverTime, data) {
+    if (!Array.isArray(data?.pos) || !Array.isArray(data?.quat) || !data.pos.every(Number.isFinite) || !data.quat.every(Number.isFinite)) return false;
+    if (!this.buffers.has(id)) this.buffers.set(id, []);
+    const buf = this.buffers.get(id);
+    if (buf.length && serverTime <= buf.at(-1).t) { this.metrics.staleSnapshots++; return false; }
+    if (this.offset == null) this.observeClock(serverTime);
+    buf.push({ ...data, t: serverTime, localTime: this.clock(), pos: new T.Vector3().fromArray(data.pos), quat: new T.Quaternion().fromArray(data.quat).normalize(), vel: new T.Vector3().fromArray(data.vel || [0, 0, 0]) });
     if (buf.length > this.maxBufferSize) buf.shift();
+    return true;
   }
-
-  clearPlayer(playerId) {
-    this.buffers.delete(playerId);
-  }
-
-  clearAll() {
-    this.buffers.clear();
-  }
-
-  getInterpolatedState(playerId, targetPos, targetQuat) {
-    const buf = this.buffers.get(playerId);
-    if (!buf || buf.length === 0) return null;
-
-    // Single snapshot: return directly
-    if (buf.length === 1) {
-      const s = buf[0];
-      targetPos.copy(s.pos);
-      targetQuat.copy(s.quat);
-      return s;
-    }
-
-    const now = performance.now();
-    const renderTime = now - this.interpDelay;
-
-    // Find surrounding snapshots
-    let s0 = null;
-    let s1 = null;
-
-    for (let i = buf.length - 1; i >= 0; i--) {
-      if (buf[i].localTime <= renderTime) {
-        s0 = buf[i];
-        s1 = buf[i + 1] || null;
-        break;
-      }
-    }
-
-    // Extrapolation: if renderTime is past newest snapshot
-    if (!s0) {
-      // All snapshots in buffer are newer than renderTime, use oldest
-      s0 = buf[0];
-      targetPos.copy(s0.pos);
-      targetQuat.copy(s0.quat);
-      return s0;
-    }
-
+  clearPlayer(id) { this.buffers.delete(id); }
+  clearAll() { this.buffers.clear(); this.predictionBuffer.length = 0; }
+  getInterpolatedState(id, targetPos, targetQuat, at = this.clock()) {
+    const buf = this.buffers.get(id); if (!buf?.length) return null;
+    const renderTime = at + (this.offset || 0) - this.interpDelay;
+    let s0 = buf[0], s1 = null;
+    for (let i = 0; i < buf.length; i++) { if (buf[i].t <= renderTime) { s0 = buf[i]; s1 = buf[i + 1]; } }
+    if (renderTime <= buf[0].t) { targetPos.copy(s0.pos); targetQuat.copy(s0.quat); return s0; }
     if (!s1) {
-      // Extrapolate beyond newest snapshot using velocity dead-reckoning
-      const newest = buf[buf.length - 1];
-      const dt = Math.min(0.2, (renderTime - newest.localTime) / 1000);
-      targetPos.copy(newest.pos).addScaledVector(newest.vel, dt);
-      targetQuat.copy(newest.quat);
-      return newest;
+      const elapsed = Math.max(0, (renderTime - s0.t) / 1000);
+      const dt = Math.min(.15, elapsed); targetPos.copy(s0.pos).addScaledVector(s0.vel, s0.alive === false ? 0 : dt); targetQuat.copy(s0.quat);
+      if (elapsed > .15) this.metrics.frozenFrames++; else this.metrics.extrapolations++;
+      return { ...s0, stalled: elapsed > .15 };
     }
-
-    // Teleport threshold: if distance between consecutive packets > 350m (e.g. respawn)
-    if (s0.pos.distanceToSquared(s1.pos) > 350 * 350) {
-      targetPos.copy(s1.pos);
-      targetQuat.copy(s1.quat);
-      return s1;
+    if (s0.inputEpoch !== s1.inputEpoch || s0.alive !== s1.alive || s0.pos.distanceToSquared(s1.pos) > 500 ** 2) {
+      const s = renderTime < s1.t ? s0 : s1; targetPos.copy(s.pos); targetQuat.copy(s.quat); return s;
     }
-
-    // Smooth Interpolation
-    const total = s1.localTime - s0.localTime;
-    const alpha = total > 0 ? Math.max(0, Math.min(1, (renderTime - s0.localTime) / total)) : 1;
-
-    // Position: Hermite smoothstep / lerp
-    targetPos.lerpVectors(s0.pos, s1.pos, alpha);
-
-    // Orientation: Slerp
-    targetQuat.copy(s0.quat).slerp(s1.quat, alpha);
-
-    return {
-      spd: T.MathUtils.lerp(s0.spd, s1.spd, alpha),
-      thr: T.MathUtils.lerp(s0.thr, s1.thr, alpha),
-      hp: s1.hp,
-      alive: s1.alive,
-      boost: s1.boost,
-      gear: s1.gear,
-      landed: s1.landed,
-      shield: s1.shield,
-      respawn: s1.respawn,
-      vel: s1.vel
-    };
+    const seconds = Math.max(.001, (s1.t - s0.t) / 1000), a = clamp((renderTime - s0.t) / (s1.t - s0.t), 0, 1), a2 = a * a, a3 = a2 * a;
+    targetPos.copy(s0.pos).multiplyScalar(2 * a3 - 3 * a2 + 1).addScaledVector(s0.vel, (a3 - 2 * a2 + a) * seconds).addScaledVector(s1.pos, -2 * a3 + 3 * a2).addScaledVector(s1.vel, (a3 - a2) * seconds);
+    targetQuat.copy(s0.quat).slerp(s1.quat, a);
+    return { ...s1, spd: T.MathUtils.lerp(s0.spd || 0, s1.spd || 0, a), thr: T.MathUtils.lerp(s0.thr || 0, s1.thr || 0, a) };
   }
-
-  /**
-   * Record local predicted frame in client-side prediction buffer.
-   */
-  recordLocalPrediction(seq, input, pos, quat, vel, dt) {
-    this.predictionBuffer.push({
-      seq,
-      time: performance.now(),
-      input: { ...input },
-      pos: pos.clone(),
-      quat: quat.clone(),
-      vel: vel.clone(),
-      dt
-    });
-    if (this.predictionBuffer.length > this.maxPredictionSize) {
-      this.predictionBuffer.shift();
-    }
+  // Compatibility for existing tools. Live full-state prediction lives in FlightPrediction.
+  recordLocalPrediction(seq, input, pos, quat, vel, dt) { this.predictionBuffer.push({ seq, input: { ...input }, pos: pos.clone(), quat: quat.clone(), vel: vel.clone(), dt }); if (this.predictionBuffer.length > this.maxPredictionSize) this.predictionBuffer.shift(); }
+  reconcilePrediction(ackSeq, serverPos, serverQuat, player, replay) {
+    const ack = this.predictionBuffer.find(f => f.seq === ackSeq); this.predictionBuffer = this.predictionBuffer.filter(f => f.seq > ackSeq);
+    if (!ack || !player) return;
+    if (ack.pos.distanceTo(serverPos) > .01) { player.position.copy(serverPos); player.quaternion.copy(serverQuat); for (const frame of this.predictionBuffer) replay?.(player, frame.input, frame.dt); }
   }
-
-  /**
-   * Reconcile local prediction with authoritative server packet.
-   * If server position diverges by more than tolerance, replay remaining inputs.
-   */
-  reconcilePrediction(ackSeq, serverPos, serverQuat, localPlayer, reapplyInputFn) {
-    const idx = this.predictionBuffer.findIndex(f => f.seq === ackSeq);
-    if (idx === -1) return;
-
-    const acknowledged = this.predictionBuffer[idx];
-    const diff = acknowledged.pos.distanceTo(serverPos);
-
-    // Remove acknowledged frames up to ackSeq
-    this.predictionBuffer.splice(0, idx + 1);
-
-    // If divergence exceeds 1.6 meters, correct and replay unacknowledged frames
-    if (diff > 1.6 && localPlayer) {
-      localPlayer.position.copy(serverPos);
-      localPlayer.quaternion.copy(serverQuat);
-
-      if (typeof reapplyInputFn === "function") {
-        for (const frame of this.predictionBuffer) {
-          reapplyInputFn(localPlayer, frame.input, frame.dt);
-          frame.pos.copy(localPlayer.position);
-          frame.quat.copy(localPlayer.quaternion);
-        }
-      }
-    }
-  }
-
-  /**
-   * Search historical snapshots for backward-reconciliation hit checks.
-   */
-  getHistoricalSnapshot(playerId, timestamp) {
-    const buf = this.buffers.get(playerId);
-    if (!buf || buf.length === 0) return null;
-    let closest = buf[0];
-    let minDiff = Math.abs(buf[0].t - timestamp);
-    for (let i = 1; i < buf.length; i++) {
-      const diff = Math.abs(buf[i].t - timestamp);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = buf[i];
-      }
-    }
-    return closest;
-  }
+  getHistoricalSnapshot(id, timestamp) { return this.buffers.get(id)?.reduce((best, s) => !best || Math.abs(s.t - timestamp) < Math.abs(best.t - timestamp) ? s : best, null) || null; }
 }

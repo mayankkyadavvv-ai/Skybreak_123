@@ -1,0 +1,13 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> skybreak-flight-combat@2.0.0-rc.1 package:lan
+> node scripts/lan-package.mjs
+
+{
+  "package": "/workspace/scratch/661a3d6457c2/skybreak-review/qa-artifacts/Skybreak-2.0.0-rc.1-LAN",
+  "zip": "/workspace/scratch/661a3d6457c2/skybreak-review/qa-artifacts/Skybreak-2.0.0-rc.1-LAN.zip",
+  "protocol": 2,
+  "files": 38,
+  "bytes": 2693246,
+  "verification": "Run verify:lan against this package; two physical LAN devices remain a separate acceptance gate."
+}

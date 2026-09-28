@@ -54,3 +54,9 @@ Multiplayer protocol, rooms, scores and progression are preserved. Saved data st
 - `DATA_INVENTORY.md`: observed storage and network flows.
 
 The requested Vercel update is blocked here: the connected deploy action returns “Tool not found”. No deployment was performed for this upgrade. Use **Verify and Deploy Skybreak.cmd** from the extracted source on a capable Windows PC to run the prepared verification and upload workflow. Actual GPU frame rate, real browser screenshots/visual behavior, physical controller behavior and a manual five-minute playthrough remain unverified. No licensed external GLB was provided; the enhanced procedural X-17 is the active model.
+
+## F01–F40 candidate upgrade (2.0.0-rc.1)
+
+This branch contains the upgrade candidate. It is not a claim that every visual, device and external multiplayer release gate passed. See [UPGRADE40_MATRIX.md](UPGRADE40_MATRIX.md) for one row per feature and actual evidence/blockers, [PLAYING_GUIDE_HINGLISH.md](PLAYING_GUIDE_HINGLISH.md) for playing instructions, [LAN_PLAY_GUIDE.md](LAN_PLAY_GUIDE.md) for the offline package, and [UPGRADE40_RELEASE.md](UPGRADE40_RELEASE.md) for worker configuration and gated promotion. Protocol 2 replaces trusted position telemetry with server-owned simulation; it is incompatible with the previous match server.
+
+Verification: `npm test`, `npm run build`, `npm run verify:network`, `npm run package:lan`, `npm run verify:lan`. Real browser/device evidence: `npm run verify:upgrade40`. The Vercel production site remains unchanged until the required release gates pass.

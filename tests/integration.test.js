@@ -61,6 +61,7 @@ test("two clients create, join, ready, and start a real WebSocket match", async 
   });
   await Promise.all([once(a, "open"), once(b, "open")]);
   await Promise.all([pilotA.waitFor((m) => m.type === "welcome"), pilotB.waitFor((m) => m.type === "welcome")]);
+  a.send(JSON.stringify({type:'hello',protocol:2}));b.send(JSON.stringify({type:'hello',protocol:2}));
 
   a.send(JSON.stringify({ type: "set_name", name: "Pilot A" }));
   b.send(JSON.stringify({ type: "set_name", name: "Pilot B" }));
@@ -72,6 +73,7 @@ test("two clients create, join, ready, and start a real WebSocket match", async 
   b.send(JSON.stringify({ type: "join_room", code: created.room.roomCode }));
   const joined = await pilotB.waitFor((m) => m.type === "room_joined");
   assert.equal(joined.room.players.length, 2);
+  a.send(JSON.stringify({type:'loaded'}));b.send(JSON.stringify({type:'loaded'}));
   b.send(JSON.stringify({ type: "set_ready", ready: true }));
   await pilotA.waitFor((m) => m.type === "lobby_update" && m.players.length === 2 && m.players.every((p) => p.ready));
   a.send(JSON.stringify({ type: "start_match" }));
@@ -79,7 +81,10 @@ test("two clients create, join, ready, and start a real WebSocket match", async 
     pilotA.waitFor((m) => m.type === "game_started"),
     pilotB.waitFor((m) => m.type === "game_started")
   ]);
-  assert.equal(startedA.snapshot.players.length, 2);
+  assert.equal(startedA.snapshot.roster.length, 2);
+  assert.ok(startedA.snapshot.players.some(p => p.id === startedA.myId));
+  assert.ok(startedB.snapshot.players.some(p => p.id === startedB.myId));
+  assert.ok(startedA.snapshot.roster.every(p => !('pos' in p) && !('flight' in p)));
   assert.notEqual(startedA.myTeam, startedB.myTeam);
   assert.ok(startedA.snapshot.players.every((p) => p.ammo.cannon === 1200));
 
@@ -97,7 +102,7 @@ test("server rejects teleport, bad aim, and remote airbase rearm", () => {
   const b = state.initPlayer({ id: "b", team: "red" });
   const spawn = { ...a.position };
   state.updateTelemetry("a", { position: { x: 90000, y: 1500, z: 90000 }, velocity: { x: NaN, y: 0, z: 0 } });
-  assert.deepEqual(a.position, spawn);
+  assert.deepEqual({...a.position}, spawn);
   assert.ok(Number.isFinite(a.velocity.x));
 
   assert.equal(state.handleFireCannon("a", { origin: { x: b.position.x, y: b.position.y, z: b.position.z }, direction: { x: 0, y: 0, z: 1 } }), null);

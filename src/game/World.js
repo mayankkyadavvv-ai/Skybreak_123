@@ -7,101 +7,15 @@ import { rng } from "./math.js";
 import { create3DBorderBeacons, CITIES, IAF_BASES } from "./GeoWorld.js";
 import { createGeoTexture } from "./GeoTexture.js";
 import { runwayLocal, onRunway } from "./Landing.js";
+import { terrainHeight } from "../shared/WorldGeometry.js";
+import { CLOUD_VOLUMES, cloudDensityAt } from "./CloudField.js";
+import { CoastalDetail } from "./CoastalDetail.js";
+import { AirfieldDetail } from "./AirfieldDetail.js";
+import { terrainDetail } from "./SurfaceDetail.js";
+import { createCoastDepthMap, createCloudShadowMap } from "./WorldDetailMaps.js";
 
 const BASE = new T.Vector3(-4200, 45, -12500);
 
-
-// Real Topographical Relief Features
-const peaks = [
-  // Western / Central ridges
-  [-7500, 4500, 2400, 5e3, 3600],
-  [6900, 2e3, 2600, 4400, 5200],
-  [-7200, -7500, 2200, 4100, 5800],
-  [8200, -11500, 2800, 4700, 4700],
-  [0, -20500, 2200, 5100, 3400],
-  [16500, 11e3, 2400, 5e3, 4e3],
-  [-16600, 13500, 2800, 4e3, 7e3],
-  // Aravalli Ridge running northeast from Rajasthan toward Delhi
-  [14000, 14000, 1600, 4000, 8000],
-  [18000, 4000, 1400, 3500, 7000],
-  [22000, -5000, 1200, 3000, 6000],
-  [26000, -14000, 1100, 2500, 5000],
-  // Western Ghats (Sahyadri Range running south along Maharashtra)
-  [13000, 42000, 1800, 3500, 9000],
-  [15000, 54000, 1900, 3200, 8500],
-  // Balochistan & Sulaiman Mountain Ranges
-  [-32000, -22000, 2400, 7000, 12000],
-  [-26000, -38000, 3100, 6000, 9000],
-  [-42000, 4000, 2100, 8000, 11000],
-  // Northern Himalayan & Karakoram Mountain Range (K2, Nanga Parbat, Siachen, Pir Panjal)
-  [8000, -46000, 4800, 11000, 7500],
-  [-6000, -50000, 5200, 10000, 8500],
-  [20000, -52000, 5600, 12000, 8500],
-  [6000, -62000, 6800, 14000, 9500],
-  [12000, -65000, 6200, 12000, 9000],
-  [-6000, -56000, 5800, 11000, 8500],
-  [22000, -58000, 6400, 13000, 8500],
-  [-2000, -48000, 4900, 10000, 7500],
-  [18000, -42000, 5200, 11000, 8000],
-  [-14000, -58000, 5100, 11000, 9000]
-];
-
-function terrainHeight(x, z) {
-  let h = -160;
-  for (const [px, pz, ph, sx, sz] of peaks) {
-    const d = ((x - px) / sx) ** 2 + ((z - pz) / sz) ** 2;
-    h += ph * Math.exp(-d * 1.45);
-  }
-  const ridges = Math.sin(x * 23e-4 + Math.sin(z * 8e-4) * 2) * Math.sin(z * 17e-4) + 0.45 * Math.sin(x * 6e-3 + z * 3e-3);
-  h += Math.max(0, h) * ridges * 0.18;
-
-  // Thar Desert Sand Dunes modulation (gentle 40-75m rolling relief)
-  if (x > -14000 && x < 22000 && z > -12000 && z < 26000) {
-    const duneWaves = Math.sin(x * 0.0035 + z * 0.0018) * Math.cos(z * 0.0028) * 45;
-    h = Math.max(40, h + duneWaves);
-  }
-
-  // Flatten home military airbase
-  const b = Math.hypot((x - BASE.x) / 850, (z - BASE.z) / 1900);
-  if (b < 1.5) h = T.MathUtils.lerp(38, h, T.MathUtils.smoothstep(b, 0.85, 1.5));
-
-  // Flatten forward operating IAF military airbase runways
-  for (let i = 0; i < IAF_BASES.length; i++) {
-    const ab = IAF_BASES[i];
-    const q = runwayLocal(ab, {x, z});
-    const edge = Math.max(Math.abs(q.x) - ab.runwayWidth / 2 - 220, Math.abs(q.z) - ab.runwayLength / 2 - 250, 0);
-    if (edge < 600) h = T.MathUtils.lerp(ab.elevation, h, T.MathUtils.smoothstep(edge, 0, 600));
-  }
-
-  // Flatten Practice flight spawn area (x: ~0, z: ~5200)
-  const ps = Math.hypot(x / 1400, (z - 5200) / 1400);
-  if (ps < 1.5) h = T.MathUtils.lerp(55, h, T.MathUtils.smoothstep(ps, 0.8, 1.5));
-
-  // Coastal / Arabian sea gradient in south-west
-  if (z > 38000 && x < 4000) {
-    const oceanDepth = -40 - (z - 38000) * 0.015 - Math.max(0, -x) * 0.008;
-    h = Math.min(h, oceanDepth);
-
-    // 4 Scenic Coastal Islands (Beaches, rocky bluffs, atolls)
-    const islands = [
-      [-18000, 46000, 2600, 180],
-      [-11000, 52000, 2200, 150],
-      [-25000, 43000, 1900, 130],
-      [-6000, 45000, 1800, 160]
-    ];
-    for (const [ix, iz, ir, ih] of islands) {
-      const idist = Math.hypot(x - ix, z - iz);
-      if (idist < ir) {
-        const factor = Math.cos((idist / ir) * Math.PI * 0.5);
-        const islandH = factor * ih + Math.sin(x * 0.007 + z * 0.005) * 12;
-        h = Math.max(h, islandH);
-      }
-    }
-  }
-
-  for (const base of IAF_BASES) if (onRunway(base, {x, z}, 30)) return base.elevation;
-  return h;
-}
 
 function createTerrainNormalMap(size = 512) {
   try {
@@ -175,6 +89,7 @@ class World {
     this.scene = scene;
     this.buildings = [];
     this.clouds = [];
+    this.cloudVolumes=CLOUD_VOLUMES;
     this.nightLights = [];
     this.time = 0;
 
@@ -348,12 +263,17 @@ class World {
       metalness: 0.04,
       flatShading: false
     });
+    this.cloudShadowMap=createCloudShadowMap();
+    terrainDetail(this.landMat,{cloudShadow:this.cloudShadowMap});
+    this.coastDepthMap=createCoastDepthMap(terrainHeight);
     this.terrainChunks=new TerrainChunks(scene,this.landMat,terrainHeight);
     this.terrain=this.terrainChunks.group;
 
     // Multi-Octave Trochoidal Gerstner Wave Ocean Shader with Shoreline Breaking Surf & Sun Glint
     const waterMat = new T.ShaderMaterial({
       uniforms: {
+        coastDepth: { value: this.coastDepthMap },
+        cloudShadow: { value: this.cloudShadowMap },
         time: { value: 0 },
         eye: { value: new T.Vector3() },
         sunDir: { value: new T.Vector3(-0.6, 0.35, -0.7).normalize() },
@@ -411,6 +331,8 @@ class World {
         uniform float time;
         uniform vec3 eye;
         uniform vec3 sunDir;
+        uniform sampler2D coastDepth;
+        uniform sampler2D cloudShadow;
         uniform vec3 waterDeep;
         uniform vec3 waterShallow;
         uniform vec3 waterSun;
@@ -442,31 +364,20 @@ class World {
           oceanCol += waterSun * (sunGlint + sunSheen);
 
           // 1. Trochoidal Wave Crest Foam
-          float waveFoam = smoothstep(1.7, 3.1, vWaveHeight + micro1 * 0.7) * 1.5 * distFade;
+          float waveFoam = smoothstep(2.5, 4.1, vWaveHeight + micro1 * 0.7) * .3 * distFade;
 
-          // 2. Shoreline Breaking Surf Foam around Islands & Coastlines
-          // Islands at: [-18000, 46000], [-11000, 52000], [-25000, 43000], [-6000, 45000]
-          float dCoast = min(
-            min(
-              abs(length(wp.xz - vec2(-18000.0, 46000.0)) - 2600.0),
-              abs(length(wp.xz - vec2(-11000.0, 52000.0)) - 2200.0)
-            ),
-            min(
-              abs(length(wp.xz - vec2(-25000.0, 43000.0)) - 1900.0),
-              abs(length(wp.xz - vec2(-6000.0, 45000.0)) - 1800.0)
-            )
-          );
-
-          if (wp.z > 36000.0 && wp.x < 3000.0) {
-            float contDist = abs(wp.x - (3000.0 - (wp.z - 36000.0) * 0.85));
-            dCoast = min(dCoast, contDist);
-          }
-
-          float shorelineFoam = 0.0;
-          if (dCoast < 450.0) {
-            float shoreWave = sin(dCoast * 0.045 - time * 2.8) * 0.5 + 0.5;
-            shorelineFoam = pow(shoreWave, 3.0) * smoothstep(450.0, 40.0, dCoast) * 1.8 * distFade;
-          }
+          // Bathymetry samples the authoritative terrain function at startup.
+          // It colours water only: terrain positions and collision never change.
+          vec2 coastUV=(wp.xz-vec2(-28500.,39500.))/vec2(25500.,15500.);
+          float inCoast=step(0.,coastUV.x)*step(coastUV.x,1.)*step(0.,coastUV.y)*step(coastUV.y,1.);
+          float bed=texture2D(coastDepth,clamp(coastUV,0.,1.)).r*1024.-512.;
+          float depth=max(0.,wp.y-bed);
+          float shallows=(1.-smoothstep(4.,65.,depth))*inCoast;
+          oceanCol=mix(oceanCol,waterShallow*.66+vec3(.015,.12,.10),shallows*.74);
+          float shorePulse=.5+.5*sin(depth*.38-time*1.25+micro1*.5);
+          float shorelineFoam=pow(shorePulse,4.)*(1.-smoothstep(1.,18.,depth))*inCoast*distFade*.55;
+          vec2 shadowUV=(wp.xz-vec2(-85000.,-75000.))/130000.;
+          oceanCol*=1.-texture2D(cloudShadow,clamp(shadowUV,0.,1.)).r*.10;
 
           vec3 foamColor = vec3(0.95, 0.98, 1.0);
           oceanCol = mix(oceanCol, foamColor, clamp(waveFoam + shorelineFoam, 0.0, 0.92));
@@ -493,6 +404,11 @@ class World {
     this.createCityMarkers();
     this.createILSGates();
     this.borderBeacons = create3DBorderBeacons(scene);
+    this.coastalDetail=new CoastalDetail(scene);
+    this.landmarks=this.coastalDetail.landmarks;
+    this.landmarkColliders=this.coastalDetail.collisionBoxes;
+    this.buildings.push(...this.landmarkColliders);
+    this.airfieldDetail=new AirfieldDetail(scene);
     this.staticBatchStats=batchStaticScenery(scene);
 
     this.quality = null;
@@ -597,61 +513,23 @@ class World {
       }
     } catch {}
 
-    const rand = rng(29);
-    const clusters=Array.from({length:26},()=>({x:(rand()-.5)*76000,z:(rand()-.5)*76000,y:2300+rand()*1100}));
-    // 1. Lower Cumulus Cloud Deck (2,200m - 3,800m)
-    for (let i = 0; i < 130; i++) {
-      const mat = new T.SpriteMaterial({ map: tex, transparent: true, opacity: 0.72, depthWrite: false, color: 0xf5f9fd });
-      const s = new T.Sprite(mat);
-      const center=clusters[Math.floor(i/5)];
-      s.position.set(center.x+(rand()-.5)*3200,center.y+(rand()-.5)*450,center.z+(rand()-.5)*2400);
-      mat.rotation=(rand()-.5)*.22;
-      s.scale.set(1800 + rand() * 2800, 580 + rand() * 950, 1);
-      this.scene.add(s);
-      this.clouds.push(s);
-    }
-
-    // 2. Mid-Altitude Stratus Cloud Deck (4,400m - 6,200m)
-    for (let i = 0; i < 50; i++) {
-      const mat = new T.SpriteMaterial({ map: midTex || tex, transparent: true, opacity: 0.55, depthWrite: false, color: 0xeff5fb });
-      const s = new T.Sprite(mat);
-      s.position.set((rand() - 0.5) * 90e3, 4400 + rand() * 1800, (rand() - 0.5) * 90e3);
-      s.scale.set(3600 + rand() * 5200, 800 + rand() * 1100, 1);
-      this.scene.add(s);
-      this.clouds.push(s);
-    }
-
-    // 3. High Stratospheric Cirrus Streaks (8,200m - 11,500m)
-    for (let i = 0; i < 40; i++) {
-      const mat = new T.SpriteMaterial({ map: cirrusTex || tex, transparent: true, opacity: 0.42, depthWrite: false, color: 0xeaf2ff });
-      const s = new T.Sprite(mat);
-      s.position.set((rand() - 0.5) * 95e3, 8200 + rand() * 3200, (rand() - 0.5) * 95e3);
-      s.scale.set(6000 + rand() * 8500, 1050 + rand() * 1600, 1);
-      this.scene.add(s);
-      this.clouds.push(s);
-    }
-
-    // 4. Towering Cumulonimbus Cloud Canyons (Epic stacked formations from 2,000m to 5,500m)
-    const towerCenters = [
-      [-12000, 15000],
-      [18000, -8000],
-      [-5000, -22000],
-      [8000, 24000],
-      [-22000, -5000],
-      [25000, 18000]
-    ];
-    for (const [tcx, tcz] of towerCenters) {
-      for (let step = 0; step < 7; step++) {
-        const mat = new T.SpriteMaterial({ map: tex, transparent: true, opacity: 0.78, depthWrite: false, color: 0xf6faff });
-        const s = new T.Sprite(mat);
-        const offsetX = (rand() - 0.5) * 1800;
-        const offsetZ = (rand() - 0.5) * 1800;
-        s.position.set(tcx + offsetX, 2000 + step * 520, tcz + offsetZ);
-        s.scale.set(2400 + rand() * 1800, 850 + rand() * 650, 1);
-        this.scene.add(s);
-        this.clouds.push(s);
+    // Every quality level retains one cosmetic shell for every canonical volume.
+    // Additional lobes improve depth only; fog/sensors query CloudField directly.
+    const rand=rng(29);let detailIndex=0;
+    for(const volume of CLOUD_VOLUMES){
+      const map=volume.layer==='cirrus'?(cirrusTex||tex):volume.layer==='stratus'?(midTex||tex):tex;
+      const layerOpacity=volume.layer==='cirrus'?.42:volume.layer==='stratus'?.7:1;
+      for(let lobe=0;lobe<3;lobe++){
+        const mat=new T.SpriteMaterial({map,transparent:true,opacity:.64*layerOpacity,depthWrite:false,color:0xe8f0f5});
+        mat.rotation=(rand()-.5)*.13;
+        const sprite=new T.Sprite(mat),scale=lobe===0?1:.68;
+        sprite.position.set(volume.x+(lobe?(rand()-.5)*volume.radiusX*.85:0),volume.y+(lobe?(rand()-.5)*volume.radiusY*.5:0),volume.z+(lobe?(rand()-.5)*volume.radiusZ*.7:0));
+        sprite.scale.set(volume.radiusX*2*scale,volume.radiusY*2*scale,1);
+        sprite.userData={cloudId:volume.id,layerOpacity,baseOpacity:.64,detailIndex:lobe?detailIndex++:-1,qualityVisible:lobe===0};
+        sprite.visible=lobe===0;this.scene.add(sprite);this.clouds.push(sprite);
       }
     }
+    this.cloudVolumeCount=CLOUD_VOLUMES.length;
   }
 
   createBase() {
@@ -1001,7 +879,7 @@ class World {
     const size=q.shadow || 1024;
     this.sun.shadow.mapSize.set(size,size);
     if(this.sun.shadow.map){this.sun.shadow.map.dispose();this.sun.shadow.map=null;}
-    this.clouds.forEach((cloud,i)=>{cloud.userData.qualityVisible=i<q.clouds;cloud.visible=i<q.clouds;});
+    this.setCloudDetail(this.adaptiveCosmetics?.clouds??1);
     this.terrainChunks?.setQuality(name);
     this.landMat.normalScale.setScalar(name==='low'?.08:.2);
   }
@@ -1017,20 +895,21 @@ class World {
     if(this.buildings.some(box=>this._sunRay.intersectsBox(box)))return 0;
     return 1-this.cloudDensityAt(origin);
   }
-  cloudDensityAt(position) {
-    let density=0;
-    for(const c of this.clouds){
-      if(!c.userData.qualityVisible)continue;
-      const dx=(position.x-c.position.x)/(c.scale.x*.35),dy=(position.y-c.position.y)/(c.scale.y*.36),dz=(position.z-c.position.z)/(c.scale.x*.23);
-      const d=dx*dx+dy*dy+dz*dz;
-      if(d<1)density=Math.max(density,(1-d)*.9);
-    }
-    return density;
+  setCloudDetail(fraction=1){
+    const extras=Math.max(0,Math.floor((qualityFor(this.quality).clouds-this.cloudVolumeCount)*fraction));
+    for(const cloud of this.clouds){cloud.userData.qualityVisible=cloud.userData.detailIndex<extras;cloud.visible=cloud.userData.qualityVisible;}
   }
-  dispose(){this.terrainChunks?.dispose();disposeObject(this.scene);this.sun.shadow.map?.dispose();}
+  setAdaptiveQuality(cosmetics={}){
+    this.adaptiveCosmetics=cosmetics;this.setCloudDetail(cosmetics.clouds??1);
+    const base=qualityFor(this.quality).shadow,size=Math.max(256,Math.round(base*(cosmetics.shadows??1)));
+    if(this.sun.shadow.mapSize.x!==size){this.sun.shadow.mapSize.set(size,size);this.sun.shadow.map?.dispose();this.sun.shadow.map=null;}
+  }
+  cloudDensityAt(position) { return cloudDensityAt(position,{weather:this.weather,volumes:this.cloudVolumes||this.clouds}); }
+  dispose(){this.terrainChunks?.dispose();this.coastalDetail?.dispose();this.airfieldDetail?.dispose();this.cloudShadowMap?.dispose();this.coastDepthMap?.dispose();disposeObject(this.scene);this.sun.shadow.map?.dispose();}
 
   collision(p, isLanded = false, gearDown = false) {
     // If jet is landed or in ground rollout on a runway/tarmac, exempt from terrain collision
+    if(this.landmarkColliders?.some(box=>box.containsPoint(p)))return true;
     if (isLanded) return false;
 
     // 1. Over runway envelope: exempt from collision when gear is down or above runway base
@@ -1063,6 +942,8 @@ class World {
 
   update(dt, p, camera) {
     this.time += dt;
+    this.coastalDetail?.update(this.time,p,{reducedMotion:this.reducedMotion});
+    this.airfieldDetail?.update({position:p},dt,{time:this.time,night:this.timeOfDay==='night',wind:this.wind});
     this.terrainChunks.update(dt,p);
     this.water.material.uniforms.time.value = this.time;
     this.water.material.uniforms.eye.value.copy(camera.position);
@@ -1117,11 +998,11 @@ class World {
       const distance=c.position.distanceTo(camera.position);
       const farFade=1-T.MathUtils.smoothstep(distance,52000,80000);
       const nearFade=T.MathUtils.smoothstep(distance,100,Math.max(220,c.scale.y*.5));
-      c.material.opacity=(c.userData.baseOpacity || .65)*farFade*nearFade;
+      c.material.opacity=(c.userData.baseOpacity || .65)*(c.userData.layerOpacity??1)*farFade*nearFade;
       c.visible=farFade>0 && nearFade>.01;
     }
     const targetDensity=T.MathUtils.lerp(this.baseFogDensity || 14e-6,55e-5,inside);
-    this.scene.fog.density = T.MathUtils.lerp(this.scene.fog.density, targetDensity, dt * 3.5);
+    this.scene.fog.density = T.MathUtils.damp(this.scene.fog.density, targetDensity, 3.5, dt);
   }
 }
 

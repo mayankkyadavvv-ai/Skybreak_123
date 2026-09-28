@@ -7,12 +7,14 @@ export class Matchmaker {
       "2v2": [],
       "3v3": [],
       "4v4": [],
-      "free_flight": []
+      "free_flight": [],
+      "open_skies_coop": [],
+      "air_superiority": []
     };
   }
 
   getCapacity(mode) {
-    return mode === "1v1" || mode === "free_flight" ? 2 : mode === "2v2" ? 4 : mode === "3v3" ? 6 : 8;
+    return mode === "1v1" || mode === "free_flight" || mode === "open_skies_coop" ? 2 : mode === "2v2" ? 4 : mode === "3v3" ? 6 : 8;
   }
 
   enqueue(client, mode = "1v1", name = "Pilot") {
@@ -92,7 +94,7 @@ export class Matchmaker {
     // Balance teams: split evenly
     let blueIdx = 0;
     for (const player of room.players.values()) {
-      player.team = blueIdx % 2 === 0 ? "blue" : "red";
+      player.team = ['open_skies_coop','free_flight'].includes(mode) ? "blue" : blueIdx % 2 === 0 ? "blue" : "red";
       player.ready = true; // Auto-ready in quick match
       blueIdx++;
     }

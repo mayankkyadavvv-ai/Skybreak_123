@@ -1,6 +1,6 @@
 {
   "name": "skybreak-flight-combat",
-  "version": "1.0.0",
+  "version": "2.0.0-rc.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,9 +12,15 @@
     "predev": "node scripts/build-public.mjs",
     "audit:secrets": "node scripts/audit-secrets.mjs",
     "verify:site": "node scripts/validate-site.mjs",
-    "headers": "node scripts/security.mjs"
+    "headers": "node scripts/security.mjs",
+    "lan": "node server/lan-launcher.js",
+    "package:lan": "node scripts/lan-package.mjs",
+    "verify:lan": "node scripts/lan-acceptance.mjs",
+    "verify:upgrade40": "node scripts/upgrade40-browser.mjs",
+    "verify:network": "node scripts/upgrade40-network-soak.mjs"
   },
   "dependencies": {
+    "qrcode": "1.5.4",
     "three": "0.180.0",
     "ws": "^8.21.3"
   },

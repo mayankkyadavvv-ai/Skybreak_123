@@ -1,3 +1,4 @@
+import { bindingLabel } from '../game/InputActions.js';
 import { JET_PROFILES, CANNON_PROFILES, PREVIEW_LABELS } from '../game/SoundDesign.js';
 
 export function soundSettingsMarkup(settings) {
@@ -8,9 +9,9 @@ export function soundSettingsMarkup(settings) {
     <div class="sound-section-heading"><h3>Preview Sounds</h3><button data-action="sound-stop" disabled>■ Stop preview</button></div>
     <div class="sound-preview-grid">${Object.entries(PREVIEW_LABELS).map(([key, label]) => `<button data-preview="${key}" aria-label="Preview ${label}" aria-pressed="false"><span>${label}</span><small>▶ Play</small></button>`).join('')}</div>
     <p id="sound-preview-status" class="sound-status" role="status" aria-live="polite">Press any ▶ Play button to preview.</p>
-    <h3 class="sound-mix-heading">Volume & Audio Mix</h3><div class="settings-list sound-mix">${range('volume', 'Master Volume')}${range('sound', 'All sound effects')}${range('engineVolume', 'Engine & afterburner')}${range('weaponsVolume', 'Weapons & explosions')}${range('warningVolume', 'Warnings & target lock')}${range('music', 'Background music')}</div>
+    <h3 class="sound-mix-heading">Volume & Audio Mix</h3><div class="settings-list sound-mix">${range('volume', 'Master Volume')}${range('sound', 'All sound effects')}${range('engineVolume', 'Engine & afterburner')}${range('weaponsVolume', 'Weapons & explosions')}${range('warningVolume', 'Warnings & target lock')}${range('radioVolume','Radio acknowledgements')}${range('music', 'Background music')}<label class="setting"><span>Warning priority / duck other audio</span><input data-audio-setting="warningDucking" type="checkbox" ${settings.warningDucking!==false?'checked':''}></label><label class="setting"><span>Subtitles (also available when muted)</span><input data-audio-setting="subtitles" type="checkbox" ${settings.subtitles!==false?'checked':''}></label></div>
     <p class="panel-footnote">0% = mute. Master controls overall volume; Sound effects controls all sounds except music. Sound preview respects these volume levels.</p>
-    <div class="sound-flight-tip"><p><kbd>SHIFT</kbd> = afterburner boost.<br><kbd>SPACE</kbd> = 20mm cannon in combat missions.</p><p>You can preview all audio profiles in Free Flight. Previews do not consume ammunition or disrupt flight.</p></div>`;
+    <div class="sound-flight-tip"><p><kbd>${bindingLabel('afterburner',settings)}</kbd> = afterburner boost.<br><kbd>${bindingLabel('cannon',settings)}</kbd> = 20mm cannon in combat missions.</p><p>You can preview all audio profiles in Free Flight. Previews do not consume ammunition or disrupt flight.</p></div>`;
 }
 
 export function previewMuteReason(settings, type) {

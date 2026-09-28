@@ -28,6 +28,9 @@ Generated from src/game/InputActions.js. Custom bindings and device labels appea
 | Recenter mouse stick | Z | press |
 | Assisted recovery | A | press |
 | Cycle time of day | T | press |
+| Target tracking camera | K | toggle |
+| Select priority threat | F | press |
+| Push to talk | P | held |
 | Multiplayer scoreboard | Tab | held |
 | Squadron / team commands | Y | press |
 | All quick commands | U | press |

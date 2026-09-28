@@ -1,8 +1,12 @@
 import "./style.css";
 import "./upgrade.css";
+import "./ui/MultiplayerUpgrade.css";
+import "./ui/LocalCoop.css";
 import { Game } from "./game/Game.js";
 import { UI } from "./ui/UI.js";
 import { normalizeSettings } from './game/Settings.js';
+import { RELEASE_VERSION, PROTOCOL_VERSION } from './shared/Protocol.js';
+window.skybreakVersion=RELEASE_VERSION;window.skybreakProtocol=PROTOCOL_VERSION;
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('skybreak-settings') || '{}'); } catch {}
 const { settings, notices } = normalizeSettings(saved, window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);

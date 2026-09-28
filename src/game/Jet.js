@@ -2,6 +2,9 @@ import { disposeObject } from "./Resources.js";
 import { FLAGSHIP_ASSET, loadJetAsset } from "./JetAsset.js";
 import * as T from "three";
 import { forward } from "./math.js";
+import { createCockpit } from "./Cockpit.js";
+import { buildAircraftLOD, batchAircraftDetails } from "./AircraftLOD.js";
+import { aircraftDetail } from "./SurfaceDetail.js";
 import { JET_MODELS, LIVERIES, computeJetStats, DEFAULT_PLAYER_CONFIG } from "./JetConfigs.js";
 
 function poly(points, depth, material) {
@@ -112,7 +115,9 @@ function getAircraftPanelTexture() {
 
 function applyAviationRimLighting(mat) {
   if (!mat) return;
-  mat.onBeforeCompile = (shader) => {
+  const originalCompile=mat.onBeforeCompile;
+  mat.onBeforeCompile = (shader,renderer) => {
+    originalCompile?.(shader,renderer);
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <dithering_fragment>",
       `#include <dithering_fragment>
@@ -160,6 +165,7 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
 
   glassMat.metalness=.05;glassMat.roughness=.14;glassMat.opacity=.62;glassMat.depthWrite=false;glassMat.envMapIntensity=1.25;
   if(modelId==='x17'){bodyMat.roughness=Math.max(.48,bodyMat.roughness);bodyMat.metalness=Math.min(.48,bodyMat.metalness);bodyMat.bumpScale=.018;}
+  aircraftDetail(bodyMat);
   applyAviationRimLighting(bodyMat);
   applyAviationRimLighting(darkMat);
   applyAviationRimLighting(metalMat);
@@ -254,16 +260,8 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
   frameArch.rotation.x = -0.15;
   g.add(frameArch);
 
-  // Cockpit Interior: Instrument Glare Shield, Ejection Seat & HUD
-  const cockpitGroup = new T.Group();
-  cockpitGroup.name = "cockpit_interior";
-  const glareShield = mesh(new T.BoxGeometry(0.72, 0.16, 1.2), darkMat, 0, modelId === "a10x" ? 0.88 : 0.76, canopyZ - 1.1);
-  glareShield.rotation.x = 0.18;
-  const hudGlass = mesh(new T.BoxGeometry(0.28, 0.22, 0.04), glassMat, 0, modelId === "a10x" ? 1.08 : 0.95, canopyZ - 0.9);
-  hudGlass.rotation.x = -0.35;
-  const seatHeadrest = mesh(new T.BoxGeometry(0.36, 0.42, 0.26), darkMat, 0, modelId === "a10x" ? 1.05 : 0.92, canopyZ + 0.6);
-  const seatBack = mesh(new T.BoxGeometry(0.44, 0.72, 0.24), darkMat, 0, modelId === "a10x" ? 0.65 : 0.54, canopyZ + 0.52);
-  cockpitGroup.add(glareShield, hudGlass, seatHeadrest, seatBack);
+  const cockpit=createCockpit();
+  const cockpitGroup=cockpit.group;
   g.add(cockpitGroup);
 
   // A-10X 30mm Rotary Cannon Protrusion
@@ -678,7 +676,7 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
   // High-G Wing Condensation Vapor Sheet
   const wingSpan = JET_MODELS[modelId]?.geometry?.wingSpan || 16;
   const wingVaporMat = new T.MeshBasicMaterial({
-    color: 0xf2f8ff,
+    color: 0xa6c6d1,
     transparent: true,
     opacity: 0,
     side: T.DoubleSide,
@@ -700,7 +698,7 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
   const vaporCone = mesh(
     vaporGeo,
     new T.MeshBasicMaterial({
-      color: 0xffffff,
+      color: 0xb1cbd4,
       transparent: true,
       opacity: 0,
       side: T.DoubleSide,
@@ -777,12 +775,35 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       const panel=mesh(new T.BoxGeometry(.8,.025,1.2),darkMat,side*2.4,.27,2.3);detailGroup.add(panel);
     }
     const antenna=mesh(new T.BoxGeometry(.065,.35,.5),darkMat,0,1.04,2.3);detailGroup.add(antenna);
+    // Deep intake faces, segmented titanium exhaust collars and understated markings.
+    const black=new T.MeshStandardMaterial({color:0x060b11,roughness:.92});
+    const mark=new T.MeshStandardMaterial({color:0xaec2ca,roughness:.6,metalness:.1});
+    for(const side of [-1,1]){
+      const intake=mesh(new T.BoxGeometry(.68,.58,.06),black,side*1.2,-.3,-3.24);detailGroup.add(intake);
+      const splitter=mesh(new T.BoxGeometry(.065,.57,.8),metalMat,side*1.03,-.28,-2.95);detailGroup.add(splitter);
+      const collar=mesh(new T.CylinderGeometry(.61,.54,.95,16,1,true),titaniumHeatMat,side*.86,-.15,7.7);collar.rotation.x=Math.PI/2;detailGroup.add(collar);
+      for(let i=0;i<12;i++){
+        const a=i*Math.PI/6;
+        const petal=mesh(new T.BoxGeometry(.15,.06,.56),metalMat,side*.86+Math.cos(a)*.57,-.15+Math.sin(a)*.57,8.05);petal.rotation.z=a;detailGroup.add(petal);
+      }
+      const marking=mesh(new T.BoxGeometry(.95,.015,.12),mark,side*3.6,.1,1.85);marking.rotation.y=side*.2;detailGroup.add(marking);
+      for(let i=0;i<3;i++){const tick=mesh(new T.BoxGeometry(.12,.018,.48),mark,side*(3.22+i*.23),.12,2.25);detailGroup.add(tick);}
+      const door=mesh(new T.BoxGeometry(.55,.04,1.3),bodyMat,side*1.83,-.6,1.22);gearGroup.add(door);
+      const link=mesh(new T.BoxGeometry(.06,.7,.08),metalMat,side*1.8,-1.04,1.42);link.rotation.x=.34;gearGroup.add(link);
+    }
+
   }
+  batchAircraftDetails(detailGroup);
   g.add(detailGroup);
-  const anchors={};for(const [name,position] of Object.entries({wingtip_left:[-(modelDef.geometry.wingSpan || 16)/2,0,3.5],wingtip_right:[(modelDef.geometry.wingSpan || 16)/2,0,3.5],exhaust:[0,0,6]})){
+  const anchors={};for(const [name,position] of Object.entries({wingtip_left:[-(modelDef.geometry.wingSpan || 16)/2,0,3.5],wingtip_right:[(modelDef.geometry.wingSpan || 16)/2,0,3.5],exhaust:[0,0,6],cannon:[0,-.4,-9.5],camera_eye:[0,1.36,-3.95]})){
     const anchor=new T.Object3D();anchor.name=name;anchor.position.fromArray(position);g.add(anchor);anchors[name]=anchor;
   }
-  g.userData = { detailGroup,anchors,flames, elevators, canards, ailerons, rudders, vaporCone, muzzleLight, gearGroup, modelId, liveryId, shockDiamonds, exhaustLight, wingVapor, wingVaporMat, navLights, airBrakeMesh };
+  const exteriorGroup=new T.Group();exteriorGroup.name='airframe_exterior';
+  for(const child of [...g.children])if(child!==cockpitGroup&&!Object.values(anchors).includes(child))exteriorGroup.add(child);
+  g.add(exteriorGroup);
+  const lod=modelId==='x17'?buildAircraftLOD(exteriorGroup,bodyMat,modelDef.geometry.wingSpan||16):null;
+  if(lod)g.add(lod.middle,lod.far);
+  g.userData = { cockpit,cockpitGroup,exteriorGroup,lod,detailGroup,anchors,flames, elevators, canards, ailerons, rudders, vaporCone, muzzleLight, gearGroup, modelId, liveryId, shockDiamonds, exhaustLight, wingVapor, wingVaporMat, navLights, airBrakeMesh };
   g.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true;
@@ -879,7 +900,25 @@ export class Jet {
       const parent=this.model.parent;disposeObject(this.model,new Set([_panelTexture]));this.model=visual;parent?.add(visual);this.updateGearVisual();this.resetInterpolation();this.assetError=null;return true;
     }catch(error){this.assetError=error.message;return false;}
   }
-  updateVisualLOD(distance){if(this.model.userData.detailGroup)this.model.userData.detailGroup.visible=distance<350;}
+  updateVisualLOD(distance){
+    const u=this.model.userData,previous=u.lod?.level||'near';
+    const level=previous==='far'?(distance<2000?'mid':'far'):previous==='mid'?(distance>2500?'far':distance<600?'near':'mid'):(distance>800?'mid':'near');
+    if(u.lod){u.lod.level=level;u.lod.middle.visible=!this.cockpitView&&level==='mid';u.lod.far.visible=!this.cockpitView&&level==='far';}
+    if(u.exteriorGroup)u.exteriorGroup.visible=!this.cockpitView&&(!u.lod||level==='near');
+    if(u.detailGroup)u.detailGroup.visible=distance<400;
+    if(u.cockpitGroup)u.cockpitGroup.visible=this.cockpitView||distance<90;
+  }
+  setCockpitView(enabled){
+    this.cockpitView=!!enabled;const u=this.model.userData;
+    this.model.visible=this.alive!==false;
+    if(u.exteriorGroup)u.exteriorGroup.visible=!enabled&&(!u.lod||u.lod.level==='near');
+    if(u.cockpitGroup)u.cockpitGroup.visible=!!enabled;
+    if(u.lod){u.lod.middle.visible=!enabled&&u.lod.level==='mid';u.lod.far.visible=!enabled&&u.lod.level==='far';}
+  }
+  getCockpitPose(){return this.model.userData.cockpit?.pose;}
+  updateCockpit(extra={},now=0){return this.model.userData.cockpit?.update(this,extra,now);}
+  setVisualEffects({intensity=1,reducedMotion=false}={}){this.visualIntensity=Math.max(0,Math.min(1,intensity));this.reducedMotion=!!reducedMotion;}
+
   dispose(){this.disposed=true;this.assetGeneration=(this.assetGeneration || 0)+1;disposeObject(this.model,new Set([_panelTexture]));}
   get forward() {
     return forward(this.quaternion);
@@ -952,20 +991,21 @@ export class Jet {
   animate(t, boost = false, pitch = 0, roll = 0, speed = 245, firing = false, yaw = 0, airBrake = false) {
     const u = this.model.userData;
     if (!u) return;
+    const effectIntensity=this.visualIntensity??1, motionPulse=this.reducedMotion?0:1;
 
     if (u.flames) {
       u.flames.forEach((f, i) => {
         const isInnerCore = i % 2 !== 0;
         if (boost) {
-          f.scale.set(1, 1.85 + Math.sin(t * 60 + i) * 0.22, 1);
+          f.scale.set(1, 1.85 + Math.sin(t * 60 + i) * 0.12 * motionPulse, 1);
           // Inner core = incandescent cyan-white plasma; Outer sheath = supersonic amber-orange
           f.material.color.setHex(isInnerCore ? 0x99ddff : 0xff7711);
-          f.material.opacity = isInnerCore ? 0.95 : 0.85;
+          f.material.opacity = (isInnerCore ? 0.85 : 0.5)*effectIntensity;
         } else {
-          const th = this.throttle || 0.58;
+          const th = this.throttle ?? 0.58;
           f.scale.set(1, 0.6 + th * 0.8, 1);
           f.material.color.setHex(isInnerCore ? 0x55aaff : 0x2266cc);
-          f.material.opacity = 0.25 + th * 0.45;
+          f.material.opacity = (.06 + th * .32)*effectIntensity;
         }
       });
     }
@@ -976,7 +1016,7 @@ export class Jet {
     }
 
     if (u.navLights?.strobe) {
-      const isStrobeOn = (Math.sin(t * 7.5) > 0.65) ? 1.0 : 0.15;
+      const isStrobeOn = this.reducedMotion?.55:(Math.sin(t * 7.5) > 0.65) ? .9 : .15;
       u.navLights.strobe.material.opacity = isStrobeOn;
     }
 
@@ -984,7 +1024,7 @@ export class Jet {
       const showDiamonds = boost || this.throttle > 0.82;
       const diaOpacity = boost ? 0.88 + Math.sin(t * 60) * 0.12 : this.throttle > 0.82 ? 0.5 : 0;
       u.shockDiamonds.forEach((dia, i) => {
-        dia.material.opacity = diaOpacity;
+        dia.material.opacity = diaOpacity*effectIntensity;
         if (showDiamonds) {
           const pulse = 1.0 + Math.sin(t * 45 + i * 1.5) * 0.12;
           dia.scale.set(0.88 * pulse, 0.88 * pulse, 1.45 * pulse);
@@ -994,10 +1034,10 @@ export class Jet {
 
     if (u.exhaustLight) {
       if (boost) {
-        u.exhaustLight.intensity = 3.6 + Math.sin(t * 40) * 0.6;
+        u.exhaustLight.intensity = (2.4 + Math.sin(t * 40) * 0.25*motionPulse)*effectIntensity;
         u.exhaustLight.color.setHex(0x5599ff);
       } else if (this.throttle > 0.7) {
-        u.exhaustLight.intensity = (this.throttle - 0.7) * 3.2;
+        u.exhaustLight.intensity = (this.throttle - 0.7) * 3.2*effectIntensity;
         u.exhaustLight.color.setHex(0xffaa44);
       } else {
         u.exhaustLight.intensity = 0;
@@ -1010,7 +1050,7 @@ export class Jet {
       const isHighG = (gPull > 0.32 || Math.abs(roll) > 0.5) && speed > 130;
       if (isHighG) {
         const vaporIntensity = Math.min(0.65, (gPull - 0.32) * 1.8 + Math.abs(roll) * 0.22);
-        u.wingVaporMat.opacity = vaporIntensity * (0.85 + Math.sin(t * 26) * 0.15);
+        u.wingVaporMat.opacity = vaporIntensity * (0.85 + Math.sin(t * 26) * 0.15*motionPulse)*effectIntensity;
       } else {
         u.wingVaporMat.opacity = 0;
       }
@@ -1057,7 +1097,7 @@ export class Jet {
         const machPeak = Math.max(0, 1.0 - machDist / 260);
         const pulse = 0.88 + Math.sin(t * 38) * 0.12;
         const opacity = (machPeak * 0.75 + Math.max(0, (kmh - 1200) / 800) * 0.25) * pulse;
-        u.vaporCone.material.opacity = Math.min(0.85, opacity);
+        u.vaporCone.material.opacity = Math.min(0.48, opacity)*effectIntensity;
         const coneScale = 1.0 + machPeak * 0.35 + Math.sin(t * 30) * 0.05;
         u.vaporCone.scale.set(coneScale, coneScale, 1.0 + Math.min(0.8, (kmh - 980) / 1200));
       } else {
@@ -1072,7 +1112,7 @@ export class Jet {
     }
 
     if (u.muzzleLight) {
-      u.muzzleLight.intensity = firing ? (Math.random() > 0.3 ? 4.5 : 1.5) : 0;
+      u.muzzleLight.intensity = firing && !this.reducedMotion ? (Math.random() > 0.3 ? 3.5 : 1.2)*effectIntensity : 0;
     }
   }
 }

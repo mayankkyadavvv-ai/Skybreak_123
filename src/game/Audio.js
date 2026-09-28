@@ -10,6 +10,7 @@ class AudioManager {
     this.previewSerial = 0;
     this.variant = 0;
     this.lastCamera = 'chase';
+    this.duckUntil=0;this.subtitles=[];this.radioRecent=new Map();
   }
   init() {
     if (this.ready) { this.ctx.resume()?.catch(() => {});return true; }
@@ -31,6 +32,7 @@ class AudioManager {
       this.engineBus = ctx.createGain();this.engineBus.connect(this.sfx);
       this.weaponsBus = ctx.createGain();this.weaponsBus.connect(this.sfx);
       this.warningBus = ctx.createGain();this.warningBus.connect(this.sfx);
+      this.radioBus=ctx.createGain();this.radioBus.connect(this.sfx);
       this.musicBus = ctx.createGain();this.musicBus.connect(this.compressor);
       this.engineGain = ctx.createGain();this.engineGain.gain.value = 0;this.engineGain.connect(this.engineBus);
       this.cabinFilter = ctx.createBiquadFilter();this.cabinFilter.type = 'lowpass';this.cabinFilter.frequency.value = 12000;this.cabinFilter.connect(this.engineGain);
@@ -48,7 +50,7 @@ class AudioManager {
       this.musicVoices.forEach(v => v.gain.gain.value = .028);
       this.samples = new Map();
       for (const style of ['rotary', 'heavy']) for (let i = 0; i < 4; i++) this.samples.set(`cannon:${style}:${i}`, this.buffer(makeEffect('cannon', ctx.sampleRate, i, style)));
-      for (const type of ['missile', 'explosion', 'flare', 'hit', 'lock', 'warning', 'click', 'pullup', 'sonicboom']) this.samples.set(type, this.buffer(makeEffect(type, ctx.sampleRate)));
+      for (const type of ['missile', 'explosion', 'flare', 'hit', 'lock', 'warning', 'click', 'pullup', 'sonicboom', 'radio', 'flyby']) this.samples.set(type, this.buffer(makeEffect(type, ctx.sampleRate)));
       this.ready = true;this.syncMix();ctx.resume()?.catch(() => {});
       return true;
     } catch {
@@ -78,10 +80,12 @@ class AudioManager {
     if (!this.ready) return;
     this.param(this.master.gain, this.settings.volume, .015);
     this.param(this.sfx.gain, this.settings.sound);
-    this.param(this.engineBus.gain, this.settings.engineVolume);
-    this.param(this.weaponsBus.gain, this.settings.weaponsVolume);
+    const duck=this.settings.warningDucking && this.ctx.currentTime<this.duckUntil;
+    this.param(this.engineBus.gain, this.settings.engineVolume*(duck?.48:1));
+    this.param(this.weaponsBus.gain, this.settings.weaponsVolume*(duck?.6:1));
+    this.param(this.radioBus.gain,this.settings.radioVolume*(duck?.35:1));
     this.param(this.warningBus.gain, this.settings.warningVolume);
-    this.param(this.musicBus.gain, this.settings.music * (this.previewState ? .2 : 1));
+    this.param(this.musicBus.gain, this.settings.music * (this.previewState ? .2 : duck ? .22 : 1));
   }
   get previewType() {
     return this.ready && this.previewState && this.ctx.currentTime < this.previewState.end ? this.previewState.type : null;
@@ -94,8 +98,8 @@ class AudioManager {
     const demo = this.previewState && ['engine', 'afterburner'].includes(this.previewState.type);
     const sample = demo ? { throttle: .55 + Math.min(.45, (t - this.previewState.start) * .18), speed: 250, boost: this.previewState.type === 'afterburner' && t - this.previewState.start > .5 } : player;
     const profile = JET_PROFILES[this.settings.jetSound] || JET_PROFILES.turbine;
-    const throttle = Math.max(0, Math.min(1, sample.throttle));
-    const speed = Math.max(0, Math.min(590, sample.speed));
+    const throttle = Math.max(0, Math.min(1, sample?.throttle || 0));
+    const speed = Math.max(0, Math.min(590, sample?.speed || 0));
     const cockpit = !demo && camera === 'cockpit';
     const active = playing || demo;
     this.syncMix();
@@ -112,19 +116,21 @@ class AudioManager {
     this.param(this.whine.gain.gain, profile.whine * .45 * (.5 + throttle));
     this.param(this.beat.source.frequency, (61 + throttle * 45) * profile.pitch, .3);
     this.param(this.beat.gain.gain, profile.rumble * .09);
-    this.param(this.burner.gain.gain, sample.boost ? profile.burner * 1.7 : 0, .17);
-    this.param(this.burner.filter.frequency, sample.boost ? 1750 : 350, .23);
+    this.param(this.burner.gain.gain, sample?.boost ? profile.burner * 1.7 : 0, .17);
+    this.param(this.burner.filter.frequency, sample?.boost ? 1750 : 350, .23);
   }
   play(type, options = {}) {
     if (!this.ready || this.ctx.state === 'closed') return false;
-    if (this.voices.size >= 48) return false;
+    const urgent=['warning','pullup'].includes(type);
+    if(urgent && !options.preview){this.duckUntil=Math.max(this.duckUntil,this.ctx.currentTime+1.25);if(options.subtitle)this.subtitle(options.subtitle,4,2);}
+    if (this.voices.size >= 48) {const replace=urgent?[...this.voices].find(v=>!v.urgent):null;if(!replace)return false;try{replace.source.stop();}catch{}replace.source.disconnect();replace.gain.disconnect();replace.pan.disconnect();this.voices.delete(replace);}
     const key = type === 'cannon' ? `cannon:${this.settings.cannonSound}:${this.variant++ % 4}` : type;
     const buffer = this.samples.get(key);if (!buffer) return false;
     const t = options.at ?? this.ctx.currentTime;
     const source = this.ctx.createBufferSource(), gain = this.ctx.createGain();
     const pan = this.ctx.createStereoPanner();
     const warnings = ['lock', 'warning', 'click', 'pullup'].includes(type);
-    const bus = warnings ? this.warningBus : this.weaponsBus;
+    const bus = type==='radio'?this.radioBus:warnings ? this.warningBus : this.weaponsBus;
 
     let distance = Math.max(0, options.distance || 0);
     let panValue = options.pan || 0;
@@ -165,12 +171,24 @@ class AudioManager {
     source.playbackRate.value = Math.max(0.5, Math.min(2.0, rate));
     
     source.connect(gain);gain.connect(pan);pan.connect(bus);
-    const voice = { source, gain, pan, preview: !!options.preview };
+    const voice = { source, gain, pan, preview: !!options.preview,urgent };
     this.voices.add(voice);
     source.onended = () => { source.disconnect();gain.disconnect();pan.disconnect();this.voices.delete(voice); };
     source.start(t);
     return true;
   }
+  now(){return this.ready?this.ctx.currentTime:(globalThis.performance?.now?.() || Date.now())/1000;}
+  subtitle(text,priority=1,ttl=4){
+    const now=this.now(),value=String(text).slice(0,240);this.subtitles=this.subtitles.filter(s=>s.expires>now && s.text!==value);this.subtitles.push({text:value,priority,expires:now+Math.min(10,Math.max(1,ttl))});if(this.subtitles.length>8)this.subtitles.shift();
+  }
+  currentSubtitle(){const now=this.now();this.subtitles=this.subtitles.filter(s=>s.expires>now);return this.subtitles.reduce((best,s)=>!best||s.priority>=best.priority?s:best,null);}
+  radio(who,text,{ttl=4}={}){
+    const now=this.now(),key=`${who}:${text}`;if(now-(this.radioRecent.get(key) ?? -Infinity)<8)return false;
+    this.radioRecent.set(key,now);for(const [id,t] of this.radioRecent)if(now-t>20)this.radioRecent.delete(id);while(this.radioRecent.size>32)this.radioRecent.delete(this.radioRecent.keys().next().value);
+    this.subtitle(`${who}: ${text}`,1,ttl);return this.play('radio');
+  }
+  alert(text,{pan=0,play=false}={}){this.subtitle(text,4,1.5);if(this.ready){this.duckUntil=Math.max(this.duckUntil,this.ctx.currentTime+1.25);if(play)this.play('warning',{pan});} }
+  stopFlight(){this.subtitles=[];this.radioRecent.clear();this.duckUntil=0;if(!this.ready)return;for(const voice of [...this.voices])if(!voice.preview){try{voice.source.stop();}catch{}voice.source.disconnect();voice.gain.disconnect();voice.pan.disconnect();this.voices.delete(voice);}this.param(this.engineGain.gain,0,.02);this.syncMix();}
   stopPreview() {
     this.previewSerial++;
     const wasEngine = this.previewState && ['engine', 'afterburner'].includes(this.previewState.type);

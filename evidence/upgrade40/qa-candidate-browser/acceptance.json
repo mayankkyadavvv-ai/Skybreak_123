@@ -1,0 +1,59 @@
+{
+  "label": "candidate",
+  "origin": "http://localhost:4173",
+  "started": "2026-09-28T17:40:48.111Z",
+  "status": "blocked",
+  "revision": "30b15dfadc8ec5dd8a314dcdb8c97c1fd3235264",
+  "environment": {
+    "os": "linux 6.18.44",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCPUs": 9,
+    "memoryGiB": 10,
+    "node": "v24.19.0"
+  },
+  "configuration": {
+    "preset": "medium",
+    "seed": 4422,
+    "dpr": 1,
+    "sampleSeconds": 600,
+    "warmUpSeconds": 5,
+    "emulatedMobile": true
+  },
+  "console": [],
+  "errors": [
+    "No usable local Chrome/Edge/Chromium. No rendered evidence or frame-time measurements were collected."
+  ],
+  "checks": [],
+  "layouts": [],
+  "captures": [],
+  "samples": [],
+  "restarts": [],
+  "unverified": [
+    "human screenshot review and visual-readability judgement",
+    "physical laptop/mobile GPU performance",
+    "physical controller and touchscreen feel",
+    "audible audio and microphone capture",
+    "two-network human co-op/PvP session",
+    "two physical LAN devices with internet disconnected",
+    "two humans using actual split-screen controllers"
+  ],
+  "launchErrors": [
+    {
+      "choice": {
+        "channel": "chrome"
+      },
+      "error": "browserType.launch: Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome"
+    },
+    {
+      "choice": {
+        "channel": "msedge"
+      },
+      "error": "browserType.launch: Chromium distribution 'msedge' is not found at /opt/microsoft/msedge/msedge"
+    },
+    {
+      "choice": {},
+      "error": "browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell"
+    }
+  ],
+  "finished": "2026-09-28T17:40:48.414Z"
+}

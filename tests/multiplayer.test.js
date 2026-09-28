@@ -97,7 +97,12 @@ test("MatchState: missile tracking and flare countermeasures", () => {
   p1.position = { x: 0, y: 1500, z: 500 };
   p2.position = { x: 0, y: 1500, z: 0 };
 
-  // Launch missile
+  p1.position = { x: -14500, y: 2200, z: 52000 };
+  p2.position = { x: -14500, y: 2200, z: 51500 };
+  assert.equal(state.handleFireMissile('p1', {targetId:'p2'}), null, 'Client target claim cannot bypass lock acquisition');
+  p1.targetId = 'p2';
+  state.updateLock(p1, 1.5);
+  assert.equal(p1.lock.locked, true, 'Authority acquires lock over simulation time');
   const missile = state.handleFireMissile("p1", {
     targetId: "p2",
     origin: p1.position,

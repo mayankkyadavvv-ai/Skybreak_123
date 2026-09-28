@@ -1,4 +1,5 @@
 import * as T from "three";
+export const CONTRAIL_PALETTE=Object.freeze([0x8ba9b7,0x81b0b5,0x9ebcc4,0x88a7b8]);
 
 /**
  * Effects Engine: Manages particle systems, signature aerodynamic contrails,
@@ -24,12 +25,13 @@ class Effects {
     this.positions = new Float32Array(this.capacity * 3);
     this.colors = new Float32Array(this.capacity * 3);
     this.sizes = new Float32Array(this.capacity);
-    this.channels=new Float32Array(this.capacity);this.alphas=new Float32Array(this.capacity);
+    this.channels=new Float32Array(this.capacity);this.alphas=new Float32Array(this.capacity);this.shapes=new Float32Array(this.capacity);
     geo.setAttribute("position", new T.BufferAttribute(this.positions, 3));
     geo.setAttribute("color", new T.BufferAttribute(this.colors, 3));
     geo.setAttribute("size", new T.BufferAttribute(this.sizes, 1));
     geo.setAttribute("channel",new T.BufferAttribute(this.channels,1));
     geo.setAttribute("alpha",new T.BufferAttribute(this.alphas,1));
+    geo.setAttribute("shape",new T.BufferAttribute(this.shapes,1));
     this.geometry = geo;
 
     const mat = new T.ShaderMaterial({
@@ -39,23 +41,27 @@ class Effects {
       blending: T.AdditiveBlending,
       uniforms:{selectedChannel:{value:1}},
       vertexShader: `
-        attribute float size; attribute float channel; attribute float alpha;
+        attribute float size; attribute float channel; attribute float alpha; attribute float shape;
         uniform float selectedChannel;
-        varying vec3 vColor; varying float vAlpha; varying float vVisible;
+        varying vec3 vColor; varying float vAlpha; varying float vVisible; varying float vShape;
         void main() {
-          vColor = color;vAlpha=alpha;vVisible=abs(channel-selectedChannel)<.1?1.0:0.0;
+          vColor = color;vAlpha=alpha;vShape=shape;vVisible=abs(channel-selectedChannel)<.1?1.0:0.0;
           vec4 mv = modelViewMatrix * vec4(position, 1.0);
           gl_Position = projectionMatrix * mv;
           gl_PointSize = abs(channel-selectedChannel)<.1 ? clamp(size * 580.0 / max(1.0, -mv.z), 0.0, 100.0) : 0.0;
         }
       `,
       fragmentShader: `
-        varying vec3 vColor; varying float vAlpha; varying float vVisible;
+        varying vec3 vColor; varying float vAlpha; varying float vVisible; varying float vShape;
         void main() {
           if(vVisible<.5)discard;
           float r = length(gl_PointCoord - 0.5) * 2.0;
           if (r > 1.0) discard;
           float alpha = pow(1.0 - r, 1.6) * 0.82;
+          // Flares have a four-point star and compact core; aerodynamic trails
+          // retain round soft puffs, so the distinction survives monochrome.
+          if(vShape>.5){vec2 p=abs(gl_PointCoord-.5);float rays=exp(-min(p.x,p.y)*55.)*(1.-r);alpha=max(alpha*.55,rays*.9);}
+
           gl_FragColor = vec4(vColor, alpha*vAlpha);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
@@ -97,13 +103,13 @@ class Effects {
     }
 
     // Pre-allocated vector for zero garbage collection
-    this._tempV = new T.Vector3();
+    this._tempV = new T.Vector3();this._tempP=new T.Vector3();this._tempW=new T.Vector3();
   }
 
-  emit(pos, vel, color = 16753477, size = 20, life = 0.6, expandRate = 1.5, gravity = 0, glow = true) {
+  emit(pos, vel, color = 16753477, size = 20, life = 0.6, expandRate = 1.5, gravity = 0, glow = true, shape = 0) {
     if(this.intensity<=0)return;
     const index=this.cursor++ % this.budget;const p = this.particles[index];
-    this.channels[index]=glow?1:0;p.glow=glow;
+    this.channels[index]=glow?1:0;p.glow=glow;this.shapes[index]=shape;
     p.p.copy(pos);
     p.v.copy(vel);
     p.color.set(color);
@@ -122,7 +128,7 @@ class Effects {
     sw.life = sw.maxLife = 0.65;
     sw.maxRadius = maxRadius;
     sw.mesh.scale.set(1.5, 1.5, 1.5);
-    sw.mat.opacity = 0.85;
+    sw.mat.opacity = (this.reducedMotion?.15:.5)*Math.min(1,this.intensity);
   }
 
   /**
@@ -134,7 +140,7 @@ class Effects {
    */
   burst(pos, count = 45, size = 24) {
     // Stage 1: Intense core flash
-    this.emit(pos, new T.Vector3(0, 0, 0), 0xffffff, size * 2.5, 0.08, 0.5, 0);
+    if(!this.reducedMotion)this.emit(pos, this._tempV.set(0,0,0), 0xffe3b0, size * 1.8, .08, .5, 0);
 
     // Stage 2: 3D shockwave ring
     if (count >= 25) {
@@ -196,9 +202,9 @@ class Effects {
     const finalLife = life * altFactor;
 
     // Outer Aerodynamic Vortex (Icy Blue / Pale Teal)
-    const palette = [0x92e5f8, 0x7ae2d4, 0xabe8f8, 0x88d4e8];
+    const palette = CONTRAIL_PALETTE;
     const aeroColor = palette[Math.floor(Math.random() * palette.length)];
-    const driftVel = new T.Vector3(
+    const driftVel = this._tempV.set(
       (Math.random() - 0.5) * 1.5,
       (Math.random() - 0.5) * 1.2,
       (Math.random() - 0.5) * 1.5
@@ -214,15 +220,15 @@ class Effects {
    */
   missileTrail(pos, dir, speed = 400) {
     // Intense incandescent motor exhaust point
-    this.emit(pos, new T.Vector3(0, 0, 0), 0xfff0bb, 18, 0.09, 0.5, 0);
+    this.emit(pos, this._tempV.set(0,0,0), 0xffc781, 12, 0.09, 0.5, 0);
 
     // Expanding rocket propellant smoke puff
-    const wakeVel = dir.clone().multiplyScalar(-speed * 0.08).add(new T.Vector3(
+    const wakeVel = this._tempV.copy(dir).multiplyScalar(-speed * 0.08).add(this._tempW.set(
       (Math.random() - 0.5) * 3,
       1.5 + Math.random() * 2,
       (Math.random() - 0.5) * 3
     ));
-    this.emit(pos, wakeVel, 0x909aa2, 14, 1.3, 2.5, 0, false);
+    this.emit(pos, wakeVel, 0xa19b89, 10, 1.3, 2.5, 0, false);
   }
 
   waterWake(pos, vel, speed = 250) {
@@ -296,7 +302,7 @@ class Effects {
     this.geometry.attributes.position.needsUpdate = true;
     this.geometry.attributes.color.needsUpdate = true;
     this.geometry.attributes.size.needsUpdate = true;
-    this.geometry.attributes.channel.needsUpdate=true;this.geometry.attributes.alpha.needsUpdate=true;
+    this.geometry.attributes.channel.needsUpdate=true;this.geometry.attributes.alpha.needsUpdate=true;this.geometry.attributes.shape.needsUpdate=true;
 
     // Update 3D shockwave rings
     if (this.shockwaves) {
@@ -307,14 +313,22 @@ class Effects {
           // Ease-out expansion
           const r = Math.max(2, sw.maxRadius * Math.sin(progress * Math.PI * 0.5));
           sw.mesh.scale.set(r, r, r);
-          sw.mat.opacity = Math.max(0, (sw.life / sw.maxLife) * 0.85);
+          sw.mat.opacity = Math.max(0, (sw.life / sw.maxLife) * (this.reducedMotion?.15:.5))*Math.min(1,this.intensity);
           if (sw.life <= 0) sw.mesh.visible = false;
         }
       }
     }
   }
 
-  setQuality(budget,intensity=1){this.budget=Math.min(this.capacity,Math.max(1,budget));this.intensity=intensity;this.quality=this.budget/this.capacity;this.geometry.setDrawRange(0,this.budget);for(let i=this.budget;i<this.capacity;i++){this.particles[i].life=0;this.sizes[i]=0;}if(intensity===0)this.clear();}
+  setReducedMotion(value){this.reducedMotion=!!value;}
+  flareBurst(jet){
+    const count=Math.max(6,Math.floor(18*this.quality));
+    for(let i=0;i<count;i++){
+      this._tempV.set((i%2?1:-1)*(28+(i%4)*11),-8-(i%3)*5,38+(i%5)*12).applyQuaternion(jet.quaternion).addScaledVector(jet.velocity,.65);
+      this.emit(jet.position,this._tempV,0xffc46c,7,.85+(i%4)*.16,.35,-5,true,1);
+    }
+  }
+  setQuality(budget,intensity=1){this.budget=Math.min(this.capacity,Math.max(1,Math.floor(budget)));this.intensity=intensity;this.quality=this.budget/this.capacity;this.geometry.setDrawRange(0,this.budget);for(let i=this.budget;i<this.capacity;i++){this.particles[i].life=0;this.sizes[i]=0;}if(intensity===0)this.clear();}
   dispose(){this.points.removeFromParent();this.smokePoints.removeFromParent();this.geometry.dispose();this.points.material.dispose();this.smokePoints.material.dispose();const geometries=new Set();for(const sw of this.shockwaves){sw.mesh.removeFromParent();geometries.add(sw.mesh.geometry);sw.mat.dispose();}for(const geo of geometries)geo.dispose();}
   clear() {
     this.particles.forEach((p) => (p.life = 0));

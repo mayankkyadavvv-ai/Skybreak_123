@@ -16,6 +16,8 @@ import { HangarUI } from "./HangarUI.js";
 import { JET_MODELS } from "../game/JetConfigs.js";
 import { MultiplayerUI } from "./MultiplayerUI.js";
 import { progression, RANKS } from "../game/Progression.js";
+import { experienceMethods } from './ExperienceUI.js';
+import { canDisplayContact } from './ThreatDisplay.js';
 import { battleHUD, squadronPanel, battleGuide, tutorialHint, battleDebrief } from './OpenSkiesUI.js';
 
 const time = (s) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
@@ -58,14 +60,15 @@ class UI {
         <div class="menu-main">
           <div class="eyebrow"><span></span> ALL SYSTEMS READY</div>
           <h1>OWN THE<br><em>OPEN SKY.</em></h1>
-          <p class="intro-copy">First flight? Start with Free Flight.<br>Arrow keys to steer, auto-assist handles the rest.</p>
+          <p class="intro-copy">Your squadron. Your open sky.<br>Fly solo, learn the aircraft or bring your friends.</p>
           <button class="launch" data-action="play">
             <span class="play-triangle">▶</span> PLAY <span class="launch-meta">FREE FLIGHT</span><span>↗</span>
           </button>
+          <div class="play-routes"><button data-action="continue" disabled>Continue · fly a sortie first</button><button data-action="solo">Solo operations</button><button data-action="multiplayer">Play with Friends</button><button data-action="training">Training</button></div>
           <nav class="menu-nav">
-            <button class="primary-nav-btn multiplayer-nav-btn" data-action="multiplayer">${icon("network")} Multiplayer</button>
+            <button class="primary-nav-btn multiplayer-nav-btn" data-action="multiplayer">${icon("network")} Friends lobby</button>
             <button class="primary-nav-btn" data-action="hangar">${icon("plane")} Hangar &amp; Jets</button>
-            <button data-action="missions">Missions</button>
+            <button data-action="local-coop">Local split-screen</button><button data-action="missions">Missions</button>
             <button data-action="atlas">World Atlas</button>
             <button data-action="controls">How to Play</button>
             <button data-action="sounds">Sounds</button>
@@ -92,7 +95,7 @@ class UI {
             </div>
           </div>
           <div class="missions">
-            ${FLIGHT_MODES.map((m, i) => `
+            ${FLIGHT_MODES.filter(m=>m.id<=3).map((m, i) => `
               <button class="mission-card ${i === 0 ? "selected" : ""}" data-mission="${m.id}">
                 <span class="mission-num">${m.freeFlight ? "∞" : "0" + (m.id + 1)}</span>
                 <div>
@@ -133,10 +136,10 @@ class UI {
           <div id="hud-score"></div>
           <button class="icon-btn" data-action="toggle-map" aria-label="Tactical World Map">${icon("map")} <small data-bind="tacticalMap">N</small></button>
           <button class="icon-btn help-btn" data-action="flight-help" aria-label="Controls and help">${icon("help")} <small data-bind="help">H</small></button>
-          <button class="icon-btn" data-action="pause" aria-label="Pause game">Ⅱ</button>
+          <button class="icon-btn" data-action="hud-detail" aria-label="Switch Compact or Full HUD">HUD</button><button class="icon-btn" data-action="pause" aria-label="Pause game">Ⅱ</button>
         </div>
 
-        <div id="border-alert" class="border-alert" hidden></div>
+        <div id="border-alert" class="border-alert" hidden></div><aside id="threat-awareness" class="threat-awareness" aria-label="Directional sensor contacts" hidden></aside><aside id="flight-school" class="flight-school" aria-label="Active flight lesson" hidden></aside><div id="audio-subtitle" class="audio-subtitle" role="status" aria-live="polite" hidden></div>
         <div id="threat" class="threat" hidden>⚠ MISSILE WARNING <small>DEPLOY FLARES</small></div>
         
         <div class="compact-telemetry">
@@ -276,12 +279,14 @@ class UI {
     });
 
     this.resize();
+    this.initExperience();
   }
 
   attach(game) {
     this.game = game;
     if (this.multiplayerUI) this.multiplayerUI.game = game;
     this.updateAircraftCaption();
+    if(this.settings.lastSoloPlayed){this.selected=getMission(this.settings.lastMissionId).id;game.selectedMission=this.selected;this.updateMissionCards();}
     this.modalKey=event=>{
       if(!this.modalType || this.cancelRebind)return;
       const action=actionForCode(chordFromEvent(event),this.settings);
@@ -372,6 +377,7 @@ class UI {
     this.hudEl.style.setProperty('--hud-opacity',String(this.settings.highContrast ? Math.max(.97,this.settings.hudOpacity || .76) : this.settings.hudOpacity || .76));
     this.hudEl.classList.toggle('high-contrast',!!this.settings.highContrast);
     this.hudEl.classList.toggle('reduced-motion',!!this.settings.reducedMotion);
+    this.hudEl.dataset.detail=this.settings.hudDetail || 'full';
     if (!audioOnly) this.game?.applySettings();
     this.game?.audio.syncMix?.();
   }
@@ -418,6 +424,7 @@ class UI {
   }
 
   action(a) {
+    if(this.experienceAction(a))return;
     if (a === 'squadron') { this.game.openSquadronPanel(); return; }
     if (a === 'battle-target') { this.game.action('targetNext'); document.getElementById('world')?.focus?.(); return; }
     if (a === 'battle-replay-seed') { this.game.start(2, { seed: this.game.battleResult?.seed }); return; }
@@ -786,6 +793,7 @@ class UI {
 
     // Hostiles and Allies
     for (const enemy of g.enemies) {
+      if(!canDisplayContact(g,enemy))continue;
       if (!enemy.alive) continue;
       const ex = toSx(enemy.position.x);
       const ey = toSy(enemy.position.z);
@@ -889,6 +897,9 @@ class UI {
   releaseModalFocus() {this.menuEl.inert=false;this.hudEl.inert=false;this.returnFocus?.focus?.();}
 
   showMenu() {
+    this.flightSchool?.stop();this.game?.audio?.stopFlight?.();
+    if(this.recorder?.active && this.recorder.frames.length)this.lastReplay=this.recorder.finish({success:false,reason:'Returned to menu',stats:this.game?.stats});
+    this.replayPlayer=null;this.refreshContinue();
     this.releaseModalFocus();
     this.stopSoundPreview();
     this.modal.innerHTML = "";
@@ -901,6 +912,7 @@ class UI {
   }
 
   inGame() {
+    this.beginExperienceFlight();
     this.releaseModalFocus();
     this.stopSoundPreview();
     this.menuEl.hidden = true;
@@ -912,7 +924,7 @@ class UI {
     this.text("mission-code", m.code + " / " + m.region);
     this.text("mission-name", m.name);
     this.text("mission-objective", m.objective);
-    const free = !!m.freeFlight;
+    const free = !!m.freeFlight && !this.game.trainingCombat;
     this.hudEl.classList.toggle("free-flight", free);
     this.hudEl.classList.toggle('open-skies', !!this.game.openSkies);
     this.dom['battle-wing'].hidden = !this.game.openSkies;
@@ -932,10 +944,10 @@ class UI {
   showPause() {
     this.modalType = "pause";
     this.panel(
-      "SORTIE ON HOLD",
-      "Flight paused.",
+      this.game.multiplayer?.active ? 'PILOT MENU · MATCH CONTINUES' : "SORTIE ON HOLD",
+      this.game.multiplayer?.active ? 'Your squadron is still flying.' : "Flight paused.",
       `
-      <p>Flight paused. Click Resume to fly, or check Help for controls.</p>
+      <p>${this.game.multiplayer?.active?'The match continues while this menu is open. Your aircraft remains in the world.':'Flight paused.'} Click Resume to fly, or check Help for controls.</p>
       <div class="stack-buttons">
         <button class="primary" data-action="resume">Resume flight <span>↗</span></button>
         <button data-action="land-bases" style="border-color:#ffa751;color:#ffdfa9;">Airbases · ${bindingLabel("landingAssist",this.settings)}</button>
@@ -946,7 +958,8 @@ class UI {
         <button data-action="sounds">Sounds</button>
         <button data-action="settings">Settings</button>
         <button data-action="controls">How to Play</button>
-        ${this.game.openSkies ? '<button data-action="squadron">Squadron orders</button>' : ''}
+        ${this.game.openSkies || this.game.operation ? '<button data-action="squadron">Squadron orders</button>' : ''}
+        ${this.game.mission?.freeFlight ? '<button data-action="activities">Flight activities & results</button>' : ''}
         <button data-action="menu">Main menu</button>
       </div>
       `,
@@ -955,6 +968,8 @@ class UI {
   }
 
   closePanel() {
+    if (this.modalType === 'replay') {this.experienceAction('replay-close');return;}
+    if (this.modalType === 'touch-layout') {this.touchDraft=null;this.showSettings('controls');return;}
     if (this.modalType === 'squadron') { this.game.closeSquadronPanel(); return; }
     this.releaseModalFocus();
     this.cancelRebind?.();
@@ -1071,9 +1086,11 @@ class UI {
     this.modalType = 'settings';
     this.panel('PILOT PREFERENCES', 'Make it your flight.', settingsMarkup(this.settings,section));
     this.modal.querySelector('.panel').classList.add('settings-panel');
+    if(section==='controls')this.attachControlStudio();
     this.modal.querySelectorAll('[data-setting]').forEach(el => el.addEventListener('input', () => {
       const key = el.dataset.setting;
       this.settings[key] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? Number(el.value) : el.value;
+      if(key==='adaptiveTargetFps')this.settings[key]=Number(el.value);
       if (key === 'device') { this.settings.input = this.settings.device; this.game?.input?.clear?.(); }
       if (key === 'shakeIntensity') this.settings.shake = this.settings.shakeIntensity > 0;
       const out = el.parentElement.querySelector('output');
@@ -1112,7 +1129,9 @@ class UI {
 
   showHangar() {
     if (this.hangarUI) return;
+    if(this.game.multiplayer?.active || this.game.localCoop?.active){this.message('Aircraft loadout can be changed between sorties.',3);return;}
     const prevState = this.game.state;
+    this.game.beginHangarPreview?.();
     this.game.state = "hangar";
     this.closePanel();
     const menuEl = this.root.querySelector("#menu");
@@ -1122,9 +1141,11 @@ class UI {
 
     this.hangarUI = new HangarUI(this.root, this.game, (launch) => {
       this.hangarUI = null;
+      this.game.endHangarPreview?.();
       if (launch) {
         this.game.start(this.selected);
       } else if (prevState === "playing" || prevState === "paused") {
+        this.game.state='playing';
         this.game.pause();
       } else {
         this.game.state = "menu";
@@ -1162,7 +1183,7 @@ class UI {
       el.addEventListener("input", () => {
         const key = el.dataset.audioSetting;
         if (el.tagName === "SELECT") this.stopSoundPreview();
-        this.settings[key] = el.tagName === "INPUT" ? Number(el.value) : el.value;
+        this.settings[key] = el.type==='checkbox'?el.checked:el.tagName === "INPUT" ? Number(el.value) : el.value;
         normalizeAudioSettings(this.settings);
         const output = el.parentElement.querySelector("output");
         if (output) {
@@ -1229,6 +1250,7 @@ class UI {
   }
 
   showResult(success, reason = "") {
+    this.finalizeReplay(success,reason);
     this.modalType = "result";
     const s = this.game.stats;
     const timeBonus = Math.max(0, Math.round((360 - this.game.elapsed) * 10));
@@ -1239,6 +1261,7 @@ class UI {
       `
       <p>${success ? "Excellent flying. The operation is complete." : reason}</p>
       ${this.game.battleResult ? battleDebrief(this.game) : ''}
+      ${this.replayDebriefMarkup()}
       <div class="result-score">
         <span>FINAL SCORE</span>
         <strong>${finalScore.toLocaleString()}</strong>
@@ -1273,6 +1296,7 @@ class UI {
   html(id,value) { this.htmlCache ||= {}; if(this.htmlCache[id]!==value && this.dom[id]) {this.dom[id].innerHTML=value;this.htmlCache[id]=value;} }
 
   update(g, dt) {
+    this.updateExperience(g,dt);
     if (this.hangarUI) {
       this.hangarUI.update(dt);
     }
@@ -1584,8 +1608,9 @@ class UI {
 
     if (g.settings.device === "mouse" && !g.input.freeLook) {
       c.strokeStyle="rgba(150,230,220,.5)";c.beginPath();c.ellipse(x,y,(g.settings.mouseDeadzone || .08)*w*.18,(g.settings.mouseDeadzone || .08)*h*.2,0,0,Math.PI*2);c.stroke();
-      const mx = x + g.input.mouse.x * w * 0.18,
+      let mx = x + g.input.mouse.x * w * 0.18,
         my = y + g.input.mouse.y * h * 0.2;
+      if(g.settings.mouseMode==='point-to-fly' && g.input.pointAim){const aim=new T.Vector3().copy(g.input.pointAim).multiplyScalar(10000).add(g.camera.position).project(g.camera);mx=(aim.x+1)*w/2;my=(1-aim.y)*h/2;c.fillText('FLY TO',mx+10,my-9);}
       c.strokeStyle = "rgba(0, 240, 255, 0.45)";
       c.beginPath();
       c.moveTo(x, y);
@@ -1622,6 +1647,7 @@ class UI {
     }
 
     for (const j of [...g.enemies, ...g.allies]) {
+      if(!canDisplayContact(g,j))continue;
       if (!j.alive) continue;
       const dist = j.position.distanceTo(p.position);
       if (dist > 16e3) continue;
@@ -2242,7 +2268,7 @@ class UI {
       }
     };
 
-    for (const j of [...g.enemies, ...g.allies]) if (j.alive) plot(j.position, j.team === "ally" ? "#65d8ff" : "#ff796c", j === g.target);
+    for (const j of [...g.enemies, ...g.allies]) if (j.alive && canDisplayContact(g,j)) plot(j.position, j.team === "ally" ? "#65d8ff" : "#ff796c", j === g.target);
     if (g.mission.id === 1) plot(BASE, "#ffdf84");
     for (const m of g.weapons.missiles) if (m.active && m.owner.team === "enemy") plot(m.p, "#ffcd5a");
 
@@ -2273,6 +2299,8 @@ class UI {
     this.multiplayerUI?.showMultiplayerResult(msg);
   }
 }
+
+Object.assign(UI.prototype,experienceMethods);
 
 export {
   UI

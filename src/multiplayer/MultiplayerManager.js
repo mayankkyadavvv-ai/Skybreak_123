@@ -8,6 +8,12 @@ import { WeaponNetworkManager } from "./WeaponNetworkManager.js";
 import { QuickComms } from "./QuickComms.js";
 import { SpectatorManager } from "./SpectatorManager.js";
 import { createJet } from "../game/Jet.js";
+import { flightCommands } from '../game/FlightPhysics.js';
+import { FlightPrediction } from './FlightPrediction.js';
+import { VoiceManager } from './VoiceManager.js';
+import { terrainHeight, RUNWAYS } from '../shared/WorldGeometry.js';
+import { FIXED_DT } from '../shared/Protocol.js';
+import { clearMissionExtensions } from '../game/MissionIntegration.js';
 
 export class MultiplayerManager {
   constructor(game) {
@@ -25,6 +31,12 @@ export class MultiplayerManager {
     this.weapons = new WeaponNetworkManager(game);
     this.comms = new QuickComms(game);
     this.spectator = new SpectatorManager(game);
+    this.voice = new VoiceManager(this.network);
+    this.prediction = new FlightPrediction({ environment: { terrainHeight, runways: RUNWAYS } });
+    this.pings = new Map(); this.room = null; this.missionState = null; this.zoneState = null;
+    this.inputSendTimer = 0; this.snapshotTick = -1; this.matchEpoch = null;
+    this.authoritativeLock = { locked: false, progress: 0, targetId: null };
+    this.matchRewardIds = new Set();
 
     this.remotePlayers = new Map(); // id -> { id, name, team, jetModel, model, hp, alive, ... }
     this.teamScores = { blue: 0, red: 0 };
@@ -50,25 +62,44 @@ export class MultiplayerManager {
       if (this.active) this.lostConnectionDuringMatch = true;
     });
 
-    this.network.on("connected", () => {
-      if (!this.lostConnectionDuringMatch || !this.active) return;
+    this.network.on('welcome', msg => {
+      if (!msg.pendingResume) this.localId = msg.id;
+      this.network.send('set_name', { name: this.localName });
+    });
+    this.network.on('session_resumed', msg => {
+      this.localId = msg.id; this.lostConnectionDuringMatch = false;
+      this.room = msg.room || this.room; this.roomCode = this.room?.roomCode || this.roomCode;
+      this.isHost = this.room?.hostId === this.localId;
+      if (this.room?.state !== 'in_game') { this.active = false; this.game.state = 'menu'; this.game.ui?.multiplayerUI?.showLobby?.(this.room); }
+      this.game.ui?.message?.('SQUADRON CONNECTION RESTORED · SAME SORTIE', 3);
+    });
+    this.network.on('resume_error', msg => {
       this.lostConnectionDuringMatch = false;
-      this.leaveMatch();
-      this.game.ui?.message?.("Connection restored. Rejoin a room to start a new match.", 4);
+      this.active = false; this.prediction.clear(); this.clearRemotePlayers();
+      this.game.ui?.message?.(`Session could not resume: ${msg.reason || msg.message || 'reservation expired'}. Join the room again.`, 5);
+      this.game.state = 'menu'; this.game.ui?.showMenu?.();
     });
-
-    this.network.on("welcome", (msg) => {
-      this.localId = msg.id;
-      this.network.send("set_name", { name: this.localName });
+    this.network.on('room_joined', msg => { this.rememberRoom(msg.room || msg); this.network.send('loaded'); });
+    this.network.on('countdown', msg => this.game.ui?.message?.(`SQUADRON LAUNCH IN ${msg.count}`, 1.1));
+    this.network.on('countdown_cancelled', msg => this.game.ui?.message?.(msg.reason || 'Launch cancelled. Check party readiness.', 4));
+    this.network.on('room_expired', msg => { this.network.forgetSession(); this.room = null; this.roomCode = null; this.game.ui?.message?.(msg.reason || 'Party expired.', 4); });
+    this.network.on('activity_snapshot', msg => { this.game.activitySnapshot = msg.activity || msg.snapshot; });
+    this.network.on('lobby_update', msg => this.rememberRoom(msg));
+    for (const event of ['join_error', 'room_error', 'action_error', 'action_rejected', 'settings_error', 'start_error', 'protocol_error', 'endpoint_error']) this.network.on(event, msg => this.game.ui?.message?.(msg.reason || msg.message || 'Room action was rejected.', 4));
+    this.network.on('team_ping', msg => {
+      const ping = msg.ping || msg;
+      if (!ping.id || !ping.position) return;
+      this.pings.set(ping.id, { ...ping, expiresAt: ping.expiresAt || this.network.serverNow() + 8000 });
+      while (this.pings.size > 12) this.pings.delete(this.pings.keys().next().value);
+      this.game.audio?.play?.('lock');
     });
+    this.network.on('ping_ack', msg => { const ping = this.pings.get(msg.pingId); if (ping) ping.acknowledged = true; });
 
     this.network.on("game_started", (msg) => {
       this.onGameStarted(msg);
     });
 
-    this.network.on("snapshot", (msg) => {
-      this.onSnapshot(msg.s);
-    });
+    this.network.on("snapshot", (msg) => { this.onSnapshot(msg.s); });
 
     this.network.on("cannon_fired", (msg) => {
       if (msg.ownerId !== this.localId) {
@@ -93,14 +124,13 @@ export class MultiplayerManager {
     });
 
     this.network.on("flares_deployed", (msg) => {
-      if (msg.playerId !== this.localId) {
-        this.weapons.handleFlaresDeployed(msg);
-      }
+      this.weapons.handleFlaresDeployed(msg);
     });
 
-    this.network.on("player_killed", (msg) => {
+    this.network.on("kill", (msg) => {
       this.onPlayerKilled(msg);
     });
+    this.network.on('damage',msg=>{if(msg.victimId===this.localId){this.game.damageFlash=.5;this.game.cam.shake=.5;this.game.audio?.play?.('hit');}this.game.ui?.recordReplayEvent?.('damage',`${msg.victimId} hit`,msg.victimId);});
 
     this.network.on("quick_comm", (msg) => {
       this.comms.addFeedItem({
@@ -128,7 +158,7 @@ export class MultiplayerManager {
 
   setPilotName(name) {
     if (!name) return;
-    this.localName = name.trim().slice(0, 16);
+    this.localName = name.replace(/[\x00-\x1f\x7f<>]/g, '').trim().slice(0, 16) || 'Ace Pilot';
     try {
       localStorage.setItem("skybreak_pilot_name", this.localName);
     } catch {}
@@ -136,12 +166,18 @@ export class MultiplayerManager {
   }
 
   onGameStarted(msg) {
+    this.game.stopLocalCoop?.();clearMissionExtensions(this.game);
     this.game.openSkies?.abort();
     this.game.openSkies = null;
     this.game.squadronReturnState = null;
     this.game.input.menuMode = null;
     this.game.applyMissionEnvironment?.();
+    this.game.hostileLock=false;
     this.active = true;
+    this.localId = msg.myId || this.localId;
+    this.matchEpoch = msg.snapshot?.epoch || msg.epoch;
+    this.snapshotTick = -1; this.sync.beginEpoch(this.matchEpoch);
+    this.prediction.clear(); this.pings.clear();
     this.lostConnectionDuringMatch = false;
     this.matchOptions = msg.options;
     this.matchStatus = "playing";
@@ -179,7 +215,7 @@ export class MultiplayerManager {
     this.game.cannonLeft = 1200;
     this.game.missilesLeft = 6;
     this.game.flaresLeft = 20;
-    this.game.resetSessionCounters();
+    if (!msg.resumed) this.game.resetSessionCounters();
     this.game.target = null;
     this.game.weapons.clear();
     this.game.effects.clear();
@@ -193,6 +229,8 @@ export class MultiplayerManager {
         this.game.player.velocity.set(myP.vel[0], myP.vel[1], myP.vel[2]);
       }
     }
+    if (msg.snapshot) this.onSnapshot(msg.snapshot);
+    this.game.player.resetInterpolation?.();
     this.game.lastPlayerPos.copy(this.game.player.position);
 
     // Set atmosphere from room options
@@ -211,13 +249,26 @@ export class MultiplayerManager {
   }
 
   onSnapshot(snapshot) {
-    if (!snapshot || !this.active) return;
-
+    if (!snapshot || !this.active || !Array.isArray(snapshot.players)) return;
+    if (this.matchEpoch && snapshot.epoch && snapshot.epoch !== this.matchEpoch) return;
+    if (Number.isFinite(snapshot.tick) && snapshot.tick <= this.snapshotTick) return;
+    this.snapshotTick = snapshot.tick ?? this.snapshotTick + 1;
+    this.matchEpoch = snapshot.epoch || this.matchEpoch;
+    this.sync.observeClock(snapshot.t, undefined, this.network.serverOffset);
+    this.missionState = snapshot.mission || snapshot.coop || null;
+    this.zoneState = snapshot.zone || snapshot.objective || null;
+    this.game.activitySnapshot = snapshot.activity || null;
+    this.publicRoster=snapshot.roster || [];
+    this.game.hostileLock=(snapshot.threats || []).some(t=>t.kind==='lock');
+    this.threats=snapshot.threats || [];
+    if (Array.isArray(snapshot.pings)) for (const ping of snapshot.pings) if (ping.team === this.localTeam) this.pings.set(ping.id, { ...this.pings.get(ping.id), ...ping });
+    if (Array.isArray(snapshot.missiles)) this.weapons.syncMissiles?.(snapshot.missiles);
     this.teamScores = snapshot.scores || this.teamScores;
     this.timeRemaining = snapshot.rem;
     const serverTime = snapshot.t || Date.now();
 
     const activeIds = new Set(snapshot.players.map((p) => p.id));
+    if(this.game.target && !activeIds.has(this.game.target.id)){this.game.target=null;this.game.lock=0;this.authoritativeLock={targetId:null,progress:0,locked:false};}
     for (const [id, remote] of this.remotePlayers) {
       if (activeIds.has(id)) continue;
       if (remote.model) {
@@ -229,22 +280,34 @@ export class MultiplayerManager {
 
     for (const p of snapshot.players) {
       if (p.id === this.localId) {
-        // Authoritative health and state confirmation for local player
+        const wasAlive=this.game.player.alive;
+        // Roll back every complete state, then replay every unacknowledged intent.
+        if (p.model && p.model !== this.game.player.modelId) this.game.equipJet?.({ modelId: p.model, liveryId: p.livery || 'grey' });
+        if (p.flight) {
+          const newGeneration = this.prediction.inputEpoch !== p.inputEpoch;
+          this.prediction.reconcile(p, { epoch: this.matchEpoch, tick: this.snapshotTick });
+          this.prediction.applyToJet(this.game.player);
+          if (newGeneration) this.game.player.resetInterpolation?.();
+        }
+        if (p.lock) { this.authoritativeLock = p.lock; this.game.lock = p.lock.targetId === this.game.target?.id ? (p.lock.progress || 0)*1.4 : 0; }
         if (Number.isFinite(p.hp)) {
           this.game.player.hp = p.hp;
+          this.game.player.maxHp=p.maxHp || 100;
         }
         if (p.ammo) {
           this.game.cannonLeft = p.ammo.cannon;
           this.game.missilesLeft = p.ammo.missiles;
           this.game.flaresLeft = p.ammo.flares;
         }
+        this.localStats = p;
         this.game.stats.kills = p.kills || 0;
         this.game.score = p.score || 0;
-        if (!p.alive && this.game.player.alive) {
+        if (!p.alive && wasAlive) {
           // Local player was destroyed by server
           this.game.player.alive = false;
+          this.game.input.clear();this.spectator.startSpectating();
         }
-        if (p.alive && !this.game.player.alive) {
+        if (p.alive && !wasAlive) {
           // Local player respawned
           this.onLocalRespawn(p);
         }
@@ -269,8 +332,10 @@ export class MultiplayerManager {
       remote.assists = p.assists;
       remote.score = p.score;
       remote.ping = p.ping;
-      remote.respawn = p.respawn;
-      remote.shield = p.shield;
+      remote.respawn = p.respawn; remote.shield = p.shield;
+      remote.connected = p.connected !== false; remote.bot = !!p.bot;
+      remote.role = p.role; remote.name = p.name || remote.name; remote.maxHp = p.maxHp || 100;
+      remote.callsign=remote.name;if(p.vel)remote.velocity.fromArray(p.vel);remote.systems={...(p.systems || p.flight?.systems)};
     }
   }
 
@@ -297,7 +362,8 @@ export class MultiplayerManager {
       boost: false,
       gearDown: false,
       alive: p.alive !== false,
-      hp: p.hp || 100,
+      hp: p.hp ?? 100,
+      maxHp: p.maxHp || 100, bot: !!p.bot, role: p.role, connected: p.connected !== false,
       kills: 0,
       deaths: 0,
       assists: 0,
@@ -310,6 +376,7 @@ export class MultiplayerManager {
   }
 
   onLocalRespawn(p) {
+    this.game.input.clear();this.game.target=null;this.game.lock=0;this.authoritativeLock={locked:false,progress:0,targetId:null};
     this.game.player.resetInterpolation?.();
     this.game.cam?.reset?.(this.game.player);
     this.game.player.alive = true;
@@ -332,12 +399,14 @@ export class MultiplayerManager {
       this.game.player.velocity.set(p.vel[0], p.vel[1], p.vel[2]);
     }
 
+    this.prediction.applyToJet(this.game.player);
     this.spectator.stopSpectating();
     this.game.cam?.reset?.(this.game.player);
     this.game.ui?.message?.("RESPAWNED · 3S SPAWN SHIELD ACTIVE 🛡️", 3.0);
   }
 
   onPlayerKilled(msg) {
+    this.game.ui?.recordReplayEvent?.('destroyed',`${msg.victimName || 'Aircraft'} down`,msg.victimId);
     const isVictimMe = msg.victimId === this.localId;
     const isKillerMe = msg.killerId === this.localId;
 
@@ -373,9 +442,13 @@ export class MultiplayerManager {
   }
 
   onMatchEnded(msg) {
+    this.lastResult=msg;
+    this.game.ui?.finalizeReplay?.((msg.winner?.team || msg.winner)===this.localTeam,msg.mission?.reason || 'Shared match ended');
     this.active = false;
     this.matchStatus = "ended";
     this.matchWinner = msg.winner;
+    if (this.room) this.room = { ...this.room, state: 'post_match' };
+    this.missionState = msg.mission || this.missionState; this.teamScores = msg.teamScores || this.teamScores;
     this.scoreboard = msg.scoreboard || [];
     this.game.state = "result";
     this.game.input.clear();
@@ -388,12 +461,7 @@ export class MultiplayerManager {
   step(dt) {
     if (!this.active) return;
 
-    // Send local telemetry (throttled to 25-30 packets/sec)
-    const now = performance.now();
-    if (now - this.lastTelemetry > 33) {
-      this.lastTelemetry = now;
-      this.sendLocalTelemetry();
-    }
+    for (const [id, ping] of this.pings) if (ping.expiresAt < this.network.serverNow()) this.pings.delete(id);
 
     // Update weapon network manager (remote tracer bullets and missiles)
     this.weapons.update(dt);
@@ -445,31 +513,61 @@ export class MultiplayerManager {
     }
   }
 
-  sendLocalTelemetry() {
-    const p = this.game.player;
-    this.network.send("telemetry", {
-      t: {
-        position: { x: p.position.x, y: p.position.y, z: p.position.z },
-        quaternion: { x: p.quaternion.x, y: p.quaternion.y, z: p.quaternion.z, w: p.quaternion.w },
-        velocity: { x: p.velocity.x, y: p.velocity.y, z: p.velocity.z },
-        speed: p.speed,
-        throttle: p.throttle,
-        boost: p.boost,
-        gearDown: p.gearDown,
-        isLanded: p.isLanded
-      }
+  rememberRoom(room) {
+    if (!room || !(room.roomCode || room.code)) return;
+    this.room = room; this.roomCode = room.roomCode || room.code; this.isHost = room.hostId === this.localId;
+    const me = room.players?.find(p => p.id === this.localId); if (me) this.localTeam = me.team;
+  }
+
+  // Game.step calls this INSTEAD of offline updateFlight at the fixed simulation rate.
+  predictLocalFlight(dt = FIXED_DT) {
+    if (!this.active || !this.game.player.alive || this.lostConnectionDuringMatch || this.network.pendingResume) return false;
+    const player = this.game.player, input = this.game.input, settings = this.game.settings;
+    if (!this.prediction.state) return false;
+    const suppressed = !!this.game.ui?.modalType || !!input.menuMode || this.comms.isOpen;
+    const command = suppressed ? { pitch: 0, roll: 0, yaw: 0, throttle: 0, brake: 0, boost: false } : flightCommands(input, settings);
+    Object.assign(command, { gearDown: player.gearDown, landingMode: player.landingMode, flaps: player.flaps, assisted: settings.flightMode !== 'manual', recover: !suppressed && input.levelTimer > 0, targetId: this.game.target?.alive ? this.game.target.id : null });
+    if(!suppressed && settings.autoCruise && !command.throttle && !player.isLanded && !player.landingMode)command.throttleSet=player.throttle+((settings.cruiseThrottle ?? .58)-player.throttle)*(1-Math.exp(-1.3*dt));
+    if (!suppressed && Number.isFinite(input.touchThrottle)) command.throttleSet = input.touchThrottle;
+    input.levelTimer = Math.max(0, (input.levelTimer || 0) - dt);
+    const advanced = this.prediction.predict(command, dt);
+    this.inputSendTimer += dt;
+    if (this.inputSendTimer >= 1 / 30) { this.inputSendTimer = 0; this.prediction.flush(this.network); }
+    this.prediction.applyToJet(player);
+    player.animate?.(performance.now() / 1000, player.boost, command.pitch, command.roll, player.speed);
+    return advanced;
+  }
+
+  startActivity(activity, options = {}) { return this.network.send('activity_start', { activity, options }); }
+  cancelActivity() { return this.network.send('activity_cancel'); }
+
+  sendPing(kind = 'attack', target = this.game.target) {
+    if (!this.active) return false;
+    const position = target?.alive ? target.position : this.game.player.position;
+    return this.network.send('team_ping', { kind, ...(target?.alive && target.id ? { targetId: target.id } : { position: { x: position.x, y: position.y, z: position.z } }) });
+  }
+  acknowledgePing(id) { if (this.pings.has(id)) this.network.send('ping_ack', { pingId: id }); }
+  getScreenPings(camera, width, height) {
+    return [...this.pings.values()].map(ping => {
+      const target = this.remotePlayers.get(ping.targetId), pos = target?.alive ? target.position : new T.Vector3(ping.position.x, ping.position.y, ping.position.z);
+      const screen = pos.clone().project(camera);
+      return { ...ping, visible: screen.z <= 1, x: Math.max(40, Math.min(width - 40, (screen.x + 1) * width / 2)), y: Math.max(90, Math.min(height - 130, (1 - screen.y) * height / 2)), distance: this.game.player.position.distanceTo(pos) };
     });
+  }
+  returnToParty() {
+    this.active = false; this.game.state = 'menu'; this.clearRemotePlayers(); this.weapons.clear(); this.prediction.clear();
+    this.game.input.clear(); this.game.ui?.multiplayerUI?.showLobby?.(this.room || {});
   }
 
   // Weapon Actions
   fireCannon(origin, direction) {
     if (!this.active) return;
-    this.network.send("fire_cannon", { origin, direction });
+    this.network.send("fire_cannon", { origin, direction, epoch: this.matchEpoch, inputSeq: this.prediction.seq, serverTime: this.network.serverNow() });
   }
 
   fireMissile(targetId, origin, direction) {
     if (!this.active || !targetId) return;
-    this.network.send("fire_missile", { targetId, origin, direction });
+    this.network.send("fire_missile", { targetId, origin, direction, epoch: this.matchEpoch, inputSeq: this.prediction.seq });
   }
 
   deployFlares() {
@@ -547,12 +645,17 @@ export class MultiplayerManager {
     this.sync.clearAll();
   }
 
+  dispose() {
+    this.active = false; this.clearRemotePlayers(); this.weapons.dispose?.(); this.voice.dispose(); this.network.dispose(); this.prediction.clear(); this.pings.clear();
+  }
+
   leaveMatch() {
     this.active = false;
     this.clearRemotePlayers();
     this.weapons.clear();
     this.spectator.stopSpectating();
-    this.network.send("leave_room");
+    this.network.send("leave_room"); this.network.forgetSession(); this.voice.disable();
+    this.room = null; this.roomCode = null; this.prediction.clear(); this.pings.clear(); this.comms.close();
     this.game.state = "menu";
     this.game.ui?.showMenu();
   }
