@@ -13,6 +13,7 @@ export class NetworkManager {
     this.connected = false; this.reconnecting = false; this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 7; this.manualDisconnect = false;
     this.reconnectTimer = null; this.pingInterval = null; this.connectPromise = null;
+    this.sessionReady = false; this.stableTimer = null; this.stableConnectionMs = 10000;
     this.listeners = new Map(); this.ping = 0; this.pingHistory = [];
     this.quality = 'CONNECTING'; this.serverOffset = null; this.jitter = 0;
     this.maxBufferedBytes = 128 * 1024; this.droppedSends = 0; this.generation = 0;
@@ -40,7 +41,9 @@ export class NetworkManager {
     catch (error) { this.emit('endpoint_error', { message: error.message }); return Promise.resolve(false); }
     if (this.ws?.readyState === 1) return Promise.resolve(true);
     if (this.ws?.readyState === 0 && this.connectPromise) return this.connectPromise;
+    if (this.manualDisconnect || !this.reconnecting) this.reconnectAttempts = 0;
     this.manualDisconnect = false;
+    this.sessionReady = false; clearTimeout(this.stableTimer);
     const generation = ++this.generation;
     this.connectPromise = new Promise(resolve => {
       let settled = false, timeout;
@@ -50,7 +53,7 @@ export class NetworkManager {
         timeout = setTimeout(() => { settle(false); ws.close(); }, 8000);
         ws.onopen = () => {
           if (generation !== this.generation) { ws.close(); return; }
-          this.connected = true; this.reconnecting = false; this.reconnectAttempts = 0;
+          this.connected = true;
           this.send('hello', { protocol: CLIENT_PROTOCOL }); this.startPingLoop();
           this.emit('connected', { url: this.url }); settle(true);
         };
@@ -58,7 +61,8 @@ export class NetworkManager {
         ws.onerror = error => { if (generation === this.generation) this.emit('error', error); settle(false); };
         ws.onclose = event => {
           if (generation !== this.generation) return;
-          this.connected = false; this.pendingResume = false; settle(false); this.stopPingLoop();
+          this.connected = false; this.pendingResume = false; this.sessionReady = false;
+          clearTimeout(this.stableTimer); settle(false); this.stopPingLoop();
           this.emit('disconnected', { code: event.code, reason: event.reason });
           if (!this.manualDisconnect && event.code !== 1008 && event.code !== 4002) this.handleAutoReconnect();
         };
@@ -73,6 +77,17 @@ export class NetworkManager {
     this.emit('reconnecting', { attempt: this.reconnectAttempts, max: this.maxReconnectAttempts, delay });
     clearTimeout(this.reconnectTimer);
     this.reconnectTimer = setTimeout(() => { this.connect(this.url); }, delay);
+  }
+  markSessionReady() {
+    this.sessionReady = true; this.reconnecting = false;
+    clearTimeout(this.stableTimer);
+    const generation = this.generation;
+    // A briefly accepted socket (including repeated capacity rejections) must
+    // not replenish the retry budget before a usable session stays healthy.
+    this.stableTimer = setTimeout(() => {
+      if (generation === this.generation && this.connected && this.sessionReady && !this.pendingResume) this.reconnectAttempts = 0;
+    }, this.stableConnectionMs);
+    this.stableTimer?.unref?.();
   }
   observeServerTime(serverTime, received = this.clock(), rtt = this.ping) {
     if (!Number.isFinite(serverTime)) return;
@@ -100,16 +115,18 @@ export class NetworkManager {
       this.freshSession = { token: msg.resumeToken, expiresAt: msg.resumeExpiresAt };
       if (previous?.roomCode && (!previous.endpoint || previous.endpoint === this.url)) {
         this.pendingResume = true; this.send('resume_session', { token: previous.token });
-      } else this.saveSession(msg.resumeToken, msg.resumeExpiresAt);
+      } else { this.saveSession(msg.resumeToken, msg.resumeExpiresAt); this.markSessionReady(); }
       this.emit('welcome', { ...msg, pendingResume: this.pendingResume }); return;
     }
     if (msg.type === 'session_resumed') {
       this.pendingResume = false; this.clientId = msg.id;
       this.saveSession(msg.resumeToken, msg.resumeExpiresAt, msg.room?.roomCode || msg.room?.code || this.session?.roomCode);
+      this.markSessionReady();
     }
     if (msg.type === 'resume_error') {
       this.pendingResume = false; this.forgetSession();
       this.saveSession(this.freshSession?.token, this.freshSession?.expiresAt);
+      this.markSessionReady();
     }
     if (msg.type === 'room_joined') {
       this.saveSession(msg.resumeToken || this.session?.token || this.freshSession?.token, msg.resumeExpiresAt || this.session?.expiresAt || this.freshSession?.expiresAt, msg.room?.roomCode || msg.room?.code);
@@ -143,6 +160,7 @@ export class NetworkManager {
   stopPingLoop() { clearInterval(this.pingInterval); this.pingInterval = null; }
   disconnect({ forget = false } = {}) {
     this.manualDisconnect = true; this.stopPingLoop(); clearTimeout(this.reconnectTimer); ++this.generation;
+    clearTimeout(this.stableTimer); this.sessionReady = false; this.pendingResume = false;
     this.ws?.close(); this.ws = null; this.connected = false; this.reconnecting = false; this.connectPromise = null;
     if (forget) this.forgetSession();
   }

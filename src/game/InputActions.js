@@ -1,17 +1,17 @@
-export const CONTROLS_VERSION = 4;
+export const CONTROLS_VERSION = 5;
 export const ACTIONS = Object.freeze({
   pitchDown: { label: 'Nose down', key: 'ArrowDown', kind: 'axis' },
   pitchUp: { label: 'Nose up', key: 'ArrowUp', kind: 'axis' },
   rollLeft: { label: 'Roll left', key: 'ArrowLeft', kind: 'axis' },
   rollRight: { label: 'Roll right', key: 'ArrowRight', kind: 'axis' },
   yawLeft: { label: 'Yaw / steer left', key: 'KeyQ', kind: 'axis' },
-  yawRight: { label: 'Yaw / steer right', key: 'KeyE', kind: 'axis' },
+  yawRight: { label: 'Yaw / steer right', key: 'KeyD', kind: 'axis' },
   throttleUp: { label: 'Increase throttle', key: 'KeyW', kind: 'held' },
   throttleDown: { label: 'Decrease throttle', key: 'KeyS', kind: 'held' },
   afterburner: { label: 'Afterburner', key: 'ShiftLeft', alternate: 'ShiftRight', kind: 'held' },
   airBrake: { label: 'Air / wheel brake', key: 'KeyB', kind: 'held' },
   cannon: { label: 'Cannon', key: 'Space', mouse: 'Mouse0', kind: 'held' },
-  missile: { label: 'Missile', key: 'KeyM', mouse: 'Mouse2', kind: 'press' },
+  missile: { label: 'Missile', key: 'KeyE', mouse: 'Mouse2', kind: 'press' },
   flare: { label: 'Flares', key: 'KeyX', kind: 'press' },
   targetNext: { label: 'Next target', key: 'KeyR', kind: 'press' },
   targetPrev: { label: 'Previous target', key: 'BracketLeft', kind: 'press' },

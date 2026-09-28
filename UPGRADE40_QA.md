@@ -102,3 +102,7 @@ Remote snapshot compaction reduced measured outbound rate from approximately 1.5
 ## Current environment recovery record
 
 During the upgrade, the workspace initially had Playwright libraries but no Chrome/Edge/Chromium executable. Normal `agent-browser` installation succeeded. Its documented browser install failed because the Chrome manifest connection reported an unknown certificate issuer. The primary runtime's normal Playwright install received a 195-byte `text/html` response in place of a Chromium ZIP and failed extraction. The verified OS package-manager route failed container `setgroups`/`seteuid` permissions. No certificate, browser security or sandbox policy was disabled. Until an authorized browser becomes available, keep graphical, audible, physical-device and real-network gates **unverified**.
+
+## Post-audit fixes — 2026-09-29 IST
+
+The earlier 192-test candidate evidence above is retained as historical evidence. The follow-up fixes all six reported code flaws, the newly exposed operation terminal-event routing bug, and updates Open Skies steering and default missile fire to E (Q/D yaw). Full suite: **206/206 pass**, including 14 new regression tests. See `FLAW_FIXES.md` and `evidence/flaw-fixes/`. These automated fixes do not satisfy the outstanding graphics/device, public WSS worker, TURN or production release gates.

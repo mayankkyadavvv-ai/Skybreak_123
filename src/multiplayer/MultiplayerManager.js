@@ -9,6 +9,7 @@ import { QuickComms } from "./QuickComms.js";
 import { SpectatorManager } from "./SpectatorManager.js";
 import { createJet } from "../game/Jet.js";
 import { flightCommands } from '../game/FlightPhysics.js';
+import { bindingLabel } from '../game/InputActions.js';
 import { FlightPrediction } from './FlightPrediction.js';
 import { VoiceManager } from './VoiceManager.js';
 import { terrainHeight, RUNWAYS } from '../shared/WorldGeometry.js';
@@ -116,7 +117,7 @@ export class MultiplayerManager {
     this.network.on("missile_warning", (msg) => {
       this.game.warningTimer = 2.0;
       this.game.audio?.play?.("warning");
-      this.game.ui?.message?.("MISSILE WARNING · DEPLOY FLARES [X]", 2.5);
+      this.game.ui?.message?.(`MISSILE WARNING · DEPLOY FLARES [${bindingLabel('flare', this.game.settings)}]`, 2.5);
     });
 
     this.network.on("rearmed", () => {
@@ -167,11 +168,12 @@ export class MultiplayerManager {
 
   onGameStarted(msg) {
     this.game.stopLocalCoop?.();clearMissionExtensions(this.game);
+    this.game.flightSchool?.stop();this.game.clearTrainingLesson?.();this.game.launchContext=null;
+    this.game.endHangarPreview?.();
     this.game.openSkies?.abort();
     this.game.openSkies = null;
     this.game.squadronReturnState = null;
     this.game.input.menuMode = null;
-    this.game.applyMissionEnvironment?.();
     this.game.hostileLock=false;
     this.active = true;
     this.localId = msg.myId || this.localId;
@@ -234,8 +236,7 @@ export class MultiplayerManager {
     this.game.lastPlayerPos.copy(this.game.player.position);
 
     // Set atmosphere from room options
-    if (msg.options?.timeOfDay) this.game.atmosphere?.setTimeOfDay(msg.options.timeOfDay);
-    if (msg.options?.weather) this.game.atmosphere?.setWeather(msg.options.weather);
+    this.game.applyMissionEnvironment?.();
 
     // Switch game state
     this.game.state = "playing";
@@ -522,7 +523,7 @@ export class MultiplayerManager {
   // Game.step calls this INSTEAD of offline updateFlight at the fixed simulation rate.
   predictLocalFlight(dt = FIXED_DT) {
     if (!this.active || !this.game.player.alive || this.lostConnectionDuringMatch || this.network.pendingResume) return false;
-    const player = this.game.player, input = this.game.input, settings = this.game.settings;
+    const player = this.game.player, input = this.game.input, settings = this.game.getFlightSettings?.() || this.game.settings;
     if (!this.prediction.state) return false;
     const suppressed = !!this.game.ui?.modalType || !!input.menuMode || this.comms.isOpen;
     const command = suppressed ? { pitch: 0, roll: 0, yaw: 0, throttle: 0, brake: 0, boost: false } : flightCommands(input, settings);

@@ -159,7 +159,7 @@ test('mission selection, switching modes and Help all use the current controls',
   assert.equal(game.state, 'paused');assert.equal(ui.modalType, 'controls');
   click(document, '#modal-root [data-mode="mouse"]');
   assert.equal(settings.input, 'mouse');assert.match(ui.modal.textContent, /Aim mouse toward/);
-  assert.match(ui.modal.textContent, /M \/ RMB/);
+  assert.match(ui.modal.textContent, /E \/ RMB/);
   click(document, '#modal-root [data-flight-mode="manual"]');
   assert.match(ui.modal.textContent, /Manual flight keeps inertia/);
   ui.closePanel();assert.equal(ui.modalType, 'pause');ui.closePanel();assert.equal(game.state, 'playing');

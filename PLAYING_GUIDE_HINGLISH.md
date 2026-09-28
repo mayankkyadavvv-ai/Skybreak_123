@@ -7,7 +7,7 @@ Yeh guide F01–F40 candidate source ke liye hai. Existing live site ko is candi
 1. **Training → Climb** se shuru karo. Phir turn, throttle, target/lock, flares aur landing lessons try karo. Har lesson actual aircraft movement/action check karta hai; Reset aur Skip available hain.
 2. **Settings → Controls:** Keyboard, Assisted, Easy rakho. Default **↑ nose up** aur **↓ nose down** hain. Keyboard inversion off rakho; custom bindings Help mein turant dikhte hain.
 3. **Solo → Free Flight** kholo. W se throttle badhao, S se kam karo. Key chhodne par throttle hold hota hai. Chhote arrow inputs do; turn ke saath thoda nose-up useful hai.
-4. Ground se takeoff: W dabao, Q/E se runway par seedha rakho, 55 m/s se upar ↑ dabao, airborne hone par G se gear retract karo. Space cannon hai.
+4. Ground se takeoff: W dabao, Q/D se runway par seedha rakho, 55 m/s se upar ↑ dabao, airborne hone par G se gear retract karo. Space cannon hai.
 5. **A** terrain-aware recovery deta hai. Steering se turant manual control wapas milta hai. Bahut low/fast descent mein recovery physically possible na ho to warning milegi.
 
 ## Keyboard defaults
@@ -16,12 +16,12 @@ Yeh guide F01–F40 candidate source ke liye hai. Existing live site ko is candi
 |---|---|
 | ↑ / ↓ | Nose up / nose down |
 | ← / → | Bank/turn left / right |
-| Q / E | Yaw; runway steering |
+| Q / D | Yaw; runway steering |
 | W / S | Throttle increase / decrease |
 | Shift | Afterburner, hold |
 | B | Air/wheel brake, hold |
 | Space / left mouse | Cannon, hold |
-| M / right mouse | Missile; har press par ek launch, valid lock zaroori |
+| E / right mouse | Missile; har press par ek launch, valid lock zaroori |
 | X | Flares |
 | R / [ | Next / previous target |
 | F | Priority threat select |
@@ -37,7 +37,7 @@ Yeh guide F01–F40 candidate source ke liye hai. Existing live site ko is candi
 | Tab | Online scoreboard, hold |
 | H / Esc | Help / pause-back |
 
-Bindings change karne par in-game Help aur training labels follow karo. Purane custom F/K bindings retain hote hain; conflicting new shortcut ko Settings mein khud assign kar sakte ho.
+Is update mein purane settings aur saved profiles ek baar **E missile / D right-yaw** layout par migrate hote hain. Purani missile key aur E par assigned action reset hote hain; baaki valid custom bindings retain hote hain. Iske baad apni binding badal sakte ho—Help, HUD, warnings aur training current key/device dikhate hain.
 
 ## Controls ko apne hisaab se set karo
 
@@ -49,7 +49,11 @@ Standard gamepad: left stick pitch/roll, right stick look, shoulders yaw, RT can
 
 ## Open Skies aur naye solo missions
 
-**Solo → Open Skies** mein patrol, reinforcements aur VIPER phases complete karo. R se deliberate target select karo, reticle ke paas rakho, **LOCKED** par M dabao. Incoming missile warning par X flares aur turn use karo. Cloud/terrain IR lock ko break kar sakte hain; radar aur visual contact alag hain. Graphics Low karne se authoritative sensors improve nahi hote.
+**Solo → Open Skies** mein patrol, reinforcements aur VIPER phases complete karo. R se deliberate target select karo, reticle ke paas rakho, **LOCKED** par E dabao. Incoming missile warning par X flares aur turn use karo. Cloud/terrain IR lock ko break kar sakte hain; radar aur visual contact alag hain. Graphics Low karne se authoritative sensors improve nahi hote.
+
+Easy setup: **Settings → Controls → Assisted + Gentler Open Skies steering ON**. Yeh default hai. Arrows se chhote climb/turn inputs do; release karne par jet level hota hai. Pitch input 18% aur bank input 20% gentler hai; normal flight limits same hain. Q/D optional yaw hai—normal turns arrows se ho jaate hain. W/S chhodne par selected throttle hold rahega. Confused ho toh **A** recovery, target choose karne ke liye **R**, fire **E**, defence **X**. E ko hold karne se repeated missiles nahi nikalti; next valid lock par dobara press karo. Original handling ke liye gentler option off karo; Manual par yeh extra scaling apply nahi hoti. Solo, local co-op aur online Open Skies co-op inputs same rule use karte hain.
+
+**Restart / Fly again** wahi encounter seed aur difficulty, ya custom mission preset aur campaign sector preserve karta hai; har attempt alag result ID use karta hai. Training Restart lesson ka progress/timer reset karta hai. Online match ke beech Restart nahi hota; result ke baad host squadron ko lobby mein le ja sakta hai.
 
 Y orders panel mein **1 Cover, 2 Attack target, 3 Regroup**. Damaged wingman ko regroup/cover do. Solo panel pause karta hai; online panel shared match ko pause nahi karta.
 

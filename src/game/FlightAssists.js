@@ -1,5 +1,14 @@
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 
+// Scale the pilot's intent, so offline flight and server prediction use the
+// same existing flight envelope. No extra thrust, turn authority or auto-fire.
+export function openSkiesFlightSettings(settings, inOpenSkies) {
+  if (!inOpenSkies || settings.openSkiesEasyControls === false || settings.flightMode === 'manual' || settings.input === 'advanced') return settings;
+  return { ...settings, flightMode: 'assisted',
+    pitchSensitivity: (settings.pitchSensitivity ?? 1) * .82,
+    rollSensitivity: (settings.rollSensitivity ?? 1) * .8 };
+}
+
 // Intent only: shared simulations still apply their physical turn/climb limits.
 export function recoveryIntent(state, command = {}, terrainHeight = () => 0) {
   const overridden=Math.abs(command.pitch||0)+Math.abs(command.roll||0)+Math.abs(command.yaw||0)>.08;

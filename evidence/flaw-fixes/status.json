@@ -1,0 +1,31 @@
+{
+  "auditItems": {
+    "A01": "fixed; automated regression passed",
+    "A02": "fixed; automated regression passed",
+    "A03": "fixed; automated regression passed",
+    "A04": "fixed; automated regression passed",
+    "A05": "fixed; automated regression passed",
+    "A06": "fixed; automated regression passed"
+  },
+  "additionalFix": "Operation complete/failed event routing and debrief/progression",
+  "baselineTests": 192,
+  "finalTests": 206,
+  "targetedRegressions": 14,
+  "build": "passed",
+  "staticPages": 7,
+  "defaultKeyboard": {
+    "pitchUp": "ArrowUp",
+    "pitchDown": "ArrowDown",
+    "missile": "KeyE",
+    "yawLeft": "KeyQ",
+    "yawRight": "KeyD"
+  },
+  "openSkiesAssistedInputScales": {
+    "pitch": 0.82,
+    "roll": 0.8
+  },
+  "browserAndDeviceAcceptance": "unverified",
+  "publicWorker": "not provisioned",
+  "turnRelay": "not provisioned",
+  "productionPromotion": false
+}

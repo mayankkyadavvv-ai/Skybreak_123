@@ -111,10 +111,13 @@ function spawnOperationEntity(game, descriptor) {
 }
 export function handleOperationEvents(game, events) {
   for (const event of events) {
-    if (event.type === 'spawn') for (const entity of event.entities) spawnOperationEntity(game, entity);
-    else if (event.type === 'radio' || event.type === 'objective') game.notify?.('MISSION CONTROL', event.text, 6);
-    else if (event.type === 'recall') for (const jet of game.enemies) if (event.ids.includes(jet.missionId)) { jet.combat.target = null; jet.combat.targetTimer = 0; }
-    else if (event.type === 'complete' || event.type === 'failed') {
+    if (event.type === 'spawn') {
+      for (const entity of event.entities) spawnOperationEntity(game, entity);
+    } else if (event.type === 'radio' || event.type === 'objective') {
+      game.notify?.('MISSION CONTROL', event.text, 6);
+    } else if (event.type === 'recall') {
+      for (const jet of game.enemies) if (event.ids.includes(jet.missionId) && jet.combat) { jet.combat.target = null; jet.combat.targetTimer = 0; }
+    } else if (event.type === 'complete' || event.type === 'failed') {
       game.operationResult = event.result;
       recordOperationResult(progression, game.operation.instanceId, event.result, game.operation.campaignContext ? 'campaign' : 'custom');
       if (game.operation.campaignContext) {

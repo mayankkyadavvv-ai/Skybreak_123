@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   mouseDeadzone: .08, mouseCurve: 1.35, mouseLock: false, mouseRecenter: 'spring', gamepadDeadzone: .14, gamepadInvert: false,
   autoCruise: false, cruiseThrottle: .58, fov: 64, speedFov: .65, shakeIntensity: .35, horizonStabilization: .65,
   landingCamera: true, hudScale: 1, hudOpacity: .76, highContrast: false, effectIntensity: .8, reducedMotion: false, openSkiesGuideSeen: false,
-  adaptiveQuality: false, adaptiveTargetFps: 60, hudDetail: 'full', mouseMode: 'virtual-stick', targetCamera: false,
+  adaptiveQuality: false, adaptiveTargetFps: 60, hudDetail: 'full', mouseMode: 'virtual-stick', targetCamera: false, openSkiesEasyControls: true,
   subtitles: true, radioVolume: .75, warningDucking: true, lastMissionId: 3, lastSoloPlayed: false,
   touchCameraSensitivity: 1, controlProfiles: [], activeControlProfile: '', gamepadIndex: -1,
   ...AUDIO_DEFAULTS, shake: true, guideSeen: false, controlsVersion: CONTROLS_VERSION,
@@ -21,7 +21,7 @@ export function normalizeTouchLayout(raw = {}) {
   }
   return layout;
 }
-export const CONTROL_PROFILE_FIELDS=Object.freeze(['device','flightMode','sensitivity','pitchSensitivity','rollSensitivity','keyboardInvert','mouseInvert','gamepadInvert','mouseDeadzone','mouseCurve','mouseMode','mouseLock','mouseRecenter','gamepadDeadzone','gamepadIndex','touchCameraSensitivity','keyBindings','touchLayout']);
+export const CONTROL_PROFILE_FIELDS=Object.freeze(['controlsVersion','device','flightMode','openSkiesEasyControls','sensitivity','pitchSensitivity','rollSensitivity','keyboardInvert','mouseInvert','gamepadInvert','mouseDeadzone','mouseCurve','mouseMode','mouseLock','mouseRecenter','gamepadDeadzone','gamepadIndex','touchCameraSensitivity','keyBindings','touchLayout']);
 export function normalizeSettings(saved = {}, reducedMotion = false) {
   if (!saved || typeof saved !== 'object' || Array.isArray(saved)) saved = {};
   const value = normalizeAudioSettings({ ...DEFAULT_SETTINGS, ...saved });
@@ -36,21 +36,31 @@ export function normalizeSettings(saved = {}, reducedMotion = false) {
   for (const key of ['keyboardInvert','gamepadInvert','mouseInvert','mouseLock','autoCruise','landingCamera','highContrast','reducedMotion','openSkiesGuideSeen']) value[key] = value[key] === true;
   for (const key of ['adaptiveQuality','targetCamera','lastSoloPlayed']) value[key]=value[key]===true;
   for (const key of ['subtitles','warningDucking']) value[key]=value[key]!==false;
+  value.openSkiesEasyControls=value.openSkiesEasyControls!==false;
   value.lastMissionId=Number.isInteger(value.lastMissionId)&&value.lastMissionId>=0&&value.lastMissionId<=7?value.lastMissionId:3;
   value.gamepadIndex=Number.isInteger(value.gamepadIndex)&&value.gamepadIndex>=0&&value.gamepadIndex<=15?value.gamepadIndex:-1;
   value.adaptiveTargetFps=value.adaptiveTargetFps===30?30:60;
   value.touchLayout=normalizeTouchLayout(value.touchLayout);
-  value.controlProfiles=Array.isArray(saved.controlProfiles)?saved.controlProfiles.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&p.settings&&typeof p.settings==='object').slice(0,10).map(p=>({id:p.id.slice(0,64),name:p.name.trim().slice(0,32)||'Controls',settings:Object.fromEntries(CONTROL_PROFILE_FIELDS.filter(k=>Object.hasOwn(p.settings,k)).map(k=>[k,p.settings[k]]))})):[];
+  value.controlProfiles=Array.isArray(saved.controlProfiles)?saved.controlProfiles.filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&p.settings&&typeof p.settings==='object').slice(0,10).map(p=>{
+    const profile=normalizeSettings({...p.settings,controlsVersion:p.settings.controlsVersion ?? saved.controlsVersion,controlProfiles:[]}).settings;
+    return {id:p.id.slice(0,64),name:p.name.trim().slice(0,32)||'Controls',settings:Object.fromEntries(CONTROL_PROFILE_FIELDS.filter(k=>Object.hasOwn(p.settings,k)||['controlsVersion','keyBindings'].includes(k)).map(k=>[k,profile[k]]))};
+  }):[];
   value.activeControlProfile=typeof value.activeControlProfile==='string'&&value.controlProfiles.some(p=>p.id===value.activeControlProfile)?value.activeControlProfile:'';
   const savedBindings = { ...saved.keyBindings };
   if ((Number(saved.controlsVersion) || 0) < 4) {
     if (savedBindings.pitchUp === 'ArrowDown') delete savedBindings.pitchUp;
     if (savedBindings.pitchDown === 'ArrowUp') delete savedBindings.pitchDown;
   }
+  if ((Number(saved.controlsVersion) || 0) < 5) {
+    // Apply the requested E missile mapping once, including saved profiles.
+    // Later v5 user rebindings stay intact. E can never also command yaw.
+    delete savedBindings.missile;
+    for (const [action, code] of Object.entries(savedBindings)) if (code === 'KeyE') delete savedBindings[action];
+  }
   const migrated = migrateBindings(savedBindings);
   value.keyBindings = migrated.bindings; value.controlsVersion = CONTROLS_VERSION; value.input = value.device;
   delete value.invert;
   const notices = migrated.notices.map(action => `Reset conflicting or unsupported binding: ${action}.`);
-  if (saved.controlsVersion !== CONTROLS_VERSION && Object.keys(saved).length) notices.unshift(`Pitch controls updated: ${bindingLabel('pitchUp', value, false)} nose up, ${bindingLabel('pitchDown', value, false)} nose down. Check Controls before flight.`);
+  if (saved.controlsVersion !== CONTROLS_VERSION && Object.keys(saved).length) notices.unshift(`Controls updated: ${bindingLabel('pitchUp', value, false)} nose up, ${bindingLabel('pitchDown', value, false)} nose down. Missile = ${bindingLabel('missile', value, false)}; yaw = ${bindingLabel('yawLeft', value, false)} / ${bindingLabel('yawRight', value, false)}. Previous missile/E bindings were updated, including saved profiles.`);
   return { settings: value, notices };
 }

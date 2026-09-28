@@ -162,7 +162,7 @@ class UI {
 
         <div class="hud-weapons">
           <div class="weapon">
-            <span>IR MISSILE <kbd data-bind="missile">M / RMB</kbd></span>
+            <span>IR MISSILE <kbd data-bind="missile">${bindingLabel('missile', this.settings)}</kbd></span>
             <strong id="missile-value">06 <small>/ 06</small></strong>
             <div id="missile-bars"></div>
           </div>
@@ -471,7 +471,7 @@ class UI {
     if (a === "close") this.closePanel();
     if (a === "pause") this.game.pause();
     if (a === "resume") this.game.resume();
-    if (a === "restart") this.game.start();
+    if (a === "restart") this.game.restart();
     if (a === "menu") this.game.menu();
     if (a === "next") {
       this.selected = (this.selected + 1) % FLIGHT_MODES.length;
@@ -954,7 +954,7 @@ class UI {
         <button data-action="toggle-gear">Landing gear · ${bindingLabel("landingGear",this.settings)}</button>
         <button data-action="hangar">✈️ Jet Modifications</button>
         <button data-action="toggle-map">Tactical World Map 🗺️</button>
-        <button data-action="restart">Restart flight</button>
+        ${this.game.multiplayer?.active ? '' : '<button data-action="restart">Restart flight</button>'}
         <button data-action="sounds">Sounds</button>
         <button data-action="settings">Settings</button>
         <button data-action="controls">How to Play</button>

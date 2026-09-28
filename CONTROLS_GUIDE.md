@@ -9,13 +9,13 @@ Generated from src/game/InputActions.js. Custom bindings and device labels appea
 | Roll left | ← | axis |
 | Roll right | → | axis |
 | Yaw / steer left | Q | axis |
-| Yaw / steer right | E | axis |
+| Yaw / steer right | D | axis |
 | Increase throttle | W | held |
 | Decrease throttle | S | held |
 | Afterburner | L Shift / R Shift | held |
 | Air / wheel brake | B | held |
 | Cannon | Space / LMB | held |
-| Missile | M / RMB | press |
+| Missile | E / RMB | press |
 | Flares | X | press |
 | Next target | R | press |
 | Previous target | [ | press |
@@ -45,6 +45,8 @@ Generated from src/game/InputActions.js. Custom bindings and device labels appea
 | Pause / back | Esc | press |
 
 Device (keyboard/mouse/gamepad) and flight assistance (Assisted/Manual) are independent. Enemy difficulty is separate. W/S changes throttle, which holds after release. B brakes. Cannon and boost never command takeoff rotation. Build at least 55 m/s and use the nose-up action.
+
+Gentler Open Skies steering is enabled by default in Assisted mode: pitch inputs are scaled to 82% and roll to 80%, with normal flight limits and release-to-level behavior. Disable it in Settings → Controls for the original response; Manual is unchanged. Default missile fire is E / RMB, yaw is Q / D.
 
 Mouse has an adjustable deadzone, curve, sensitivity, inversion, optional click-to-capture and recentering. MMB temporarily looks without steering. Open Skies: Y (controller View/Back or touch WING) opens squadron orders and pauses flight. In that panel, 1 Cover me, 2 Attack my target, 3 Regroup; Esc or Y closes. Controller D-pad selects, A confirms, B closes. Multiplayer quick commands keep their existing routing.
 

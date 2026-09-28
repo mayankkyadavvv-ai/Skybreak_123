@@ -168,7 +168,7 @@ test("assisted keys and weapon shortcuts match the HUD; rebound airbrake is resp
     ui: { toggleMap: () => called.push("map") },
     launch: () => called.push("missile"), flare: () => called.push("flare")
   };
-  for (const key of ["KeyN", "KeyM", "KeyX"]) Game.prototype.action.call(game, key);
+  for (const key of ["KeyN", "KeyE", "KeyX"]) Game.prototype.action.call(game, key);
   assert.deepEqual(called, ["map", "missile", "flare"]);
 
   const jet = new Jet("player");

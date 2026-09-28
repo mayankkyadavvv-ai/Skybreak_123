@@ -1,5 +1,7 @@
 # Skybreak upgrade report
 
+> Historical stage report. Current controls/fixes: [FLAW_FIXES.md](FLAW_FIXES.md) and [PLAYING_GUIDE_HINGLISH.md](PLAYING_GUIDE_HINGLISH.md). Defaults are ↑ nose up, ↓ nose down, E missile, Q/D yaw.
+
 **28 September 2026 · Follow-up source/build handoff · Vercel publication blocked**
 
 The supplied sequential prompt was worked through from Phase 0 to Phase 15. Controls, game fixes, camera, HUD, rendering, terrain/effects, menus and public pages have source implementations. Release acceptance remains **partial** because real-browser/GPU/hardware checks were unavailable, a licensed external aircraft was not supplied, and operator/legal facts remain unknown.

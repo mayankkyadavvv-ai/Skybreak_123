@@ -1,0 +1,22 @@
+✔ A01 UI Restart preserves custom preset and new campaign attempt advances its sector exactly once (263.048884ms)
+✔ A01 Open Skies Restart retains seed/difficulty while a new sortie uses new preferences (104.459216ms)
+✔ operation failure reaches the debrief and a restarted attempt can finish successfully (96.805125ms)
+✔ local co-op seat Restart retains both seats and encounter seed with refreshed aircraft (123.135243ms)
+✔ A02 online pilot menu hides Restart and both UI action and direct solo start preserve match state (29.090032ms)
+✔ A03 settings and hangar keep room time/weather; leaving an operation restores solo preferences (44.497896ms)
+✔ A04 accepted but rejected connections stop after seven retries with increasing backoff (2.022815ms)
+✔ A04 retry budget resets only after a ready session stays connected, and dispose clears it (0.778964ms)
+✔ A05 real missile warning handler uses current custom keyboard and controller flare labels (0.54075ms)
+✔ A06 UI Restart of a long flare lesson resets instructor state and initial threat timing (98.834072ms)
+✔ E missile migration includes old saved profiles without yaw collisions and preserves later custom choices (1.212536ms)
+✔ actual E key press launches once, held auto-repeat never fires again and E never yaws the jet (38.994387ms)
+✔ gentler Open Skies controls respond immediately, bank less and settle when released at 30/60/144 render FPS (33.810091ms)
+✔ Open Skies cooperative prediction and local second seat receive the same gentler pilot settings (38.100863ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1117.907398

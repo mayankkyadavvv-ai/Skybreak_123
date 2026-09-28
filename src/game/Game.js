@@ -28,7 +28,7 @@ import { OpenSkiesEncounter, OPEN_SKIES, scoreOpenSkies } from './OpenSkies.js';
 import { configureSquadronJet, updateSquadronAI, issueSquadronOrder } from './SquadronAI.js';
 import { recordOpenSkiesResult } from './OpenSkiesProgress.js';
 import { normalizeSettings, CONTROL_PROFILE_FIELDS } from './Settings.js';
-import { controllerDeadzone } from './FlightAssists.js';
+import { controllerDeadzone, openSkiesFlightSettings } from './FlightAssists.js';
 import { createDamageState, applySystemDamage, systemEffects, repairSystems } from '../shared/DamageSystems.js';
 import { installMissionExtensions, startOperationRuntime, stepMissionExtensions, updateOperationAircraft, clearMissionExtensions } from './MissionIntegration.js';
 import { LocalCoop, allocateLocalDevices } from './LocalCoop.js';
@@ -153,8 +153,8 @@ class Game {
 
   endHangarPreview() {
     if(!this.hangarEnvironment)return;
-    const {time,weather}=this.hangarEnvironment;this.hangarEnvironment=null;
-    this.atmosphere.setTimeOfDay(time);this.atmosphere.setWeather(weather);
+    this.hangarEnvironment=null;
+    this.applyMissionEnvironment();
   }
 
   startLocalCoop({mode='free_flight',inputMode='keyboard-controller'}={}) {
@@ -168,8 +168,10 @@ class Game {
   stopLocalCoop(){this.localCoop?.stop();this.localCoop=null;}
 
   applyMissionEnvironment() {
-    const time = this.openSkies || this.operation ? 'midday' : this.settings.timeOfDay || 'day';
-    const weather = this.openSkies ? 'clear' : this.operation?.preset.weather || this.settings.weather || 'clear';
+    const room = this.multiplayer?.active ? this.multiplayer.matchOptions || {} : null;
+    const preview = !!this.hangarEnvironment;
+    const time = preview ? 'midday' : room ? room.timeOfDay || 'day' : this.openSkies || this.operation ? 'midday' : this.settings.timeOfDay || 'day';
+    const weather = preview ? 'clear' : room ? room.weather || 'clear' : this.openSkies ? 'clear' : this.operation?.preset.weather || this.settings.weather || 'clear';
     if (this.atmosphere) {
       if (!this.atmosphere.hasApplied || this.atmosphere.timeOfDay !== time) this.atmosphere.setTimeOfDay(time);
       if (this.atmosphere.weather !== weather) this.atmosphere.setWeather(weather);
@@ -179,6 +181,10 @@ class Game {
 
   getControlPreview() {
     return {device:this.settings.device,axes:{...this.input.axes},mouse:{...this.input.mouse},rawAxes:[...(this.input.padRawAxes || [])],held:[...this.input.heldActions],status:this.input.padStatus,padId:this.input.padId,padIndex:this.input.padIndex,pointAim:this.input.pointAim};
+  }
+
+  getFlightSettings() {
+    return openSkiesFlightSettings(this.settings, !!this.openSkies || this.multiplayer?.active && this.multiplayer.matchOptions?.mode === 'open_skies_coop');
   }
 
   saveControlProfile(name) {
@@ -233,7 +239,7 @@ class Game {
   }
 
   clearTrainingLesson() {
-    this.training=false;this.trainingCombat=false;this.trainingLesson=null;this.trainingTimer=0;this.weapons.clear();
+    this.training=false;this.trainingCombat=false;this.trainingLesson=null;this.trainingTimer=0;this.trainingLastMissile=null;this.weapons.clear();
     for(const jet of this.enemies.filter(j=>j.training))jet.dispose();this.enemies=this.enemies.filter(j=>!j.training);
     if(this.target?.training)this.target=null;this.incoming=[];this.lock=0;
   }
@@ -321,6 +327,8 @@ class Game {
     if (action === 'landingGear') { this.toggleGear(); return; }
     if (action === 'landingAssist') { this.input?.clear?.(); this.ui.showAirbaseLandingModal(); return; }
     if (action === "timeOfDay" && this.atmosphere) {
+      if (this.multiplayer?.active) { this.ui.message('Room time and weather are controlled by the host before launch.', 3); return; }
+      if (this.operation) { this.ui.message('This operation uses its mission preset environment.', 3); return; }
       if (this.openSkies) { this.ui.message('Aegis Strait uses clear daylight. Your sky preference returns after this sortie.', 3); return; }
       const cycle = { morning: "midday", midday: "day", day: "sunset", sunset: "night", night: "morning" };
       const next = cycle[this.atmosphere.timeOfDay] || "morning";
@@ -342,6 +350,7 @@ class Game {
     this.incoming = [];
     this.outOfArea = false;
     this.elapsed = 0;
+    this.trainingLastMissile = null;
     this.score = 0;
     this.lock = 0;
     this.lockSound = false;
@@ -357,21 +366,39 @@ class Game {
     this.input.clear();
   }
 
+  restart() {
+    if (this.multiplayer?.active) {
+      const error = 'The online match is still running. The host can return the squadron to the lobby after the match.';
+      this.ui.message(error, 4);
+      return { ok: false, error };
+    }
+    if (this.training && this.flightSchool?.active) return this.flightSchool.reset(this);
+    if (this.training && this.trainingLesson) { this.prepareTrainingLesson(this.trainingLesson); return { ok: true }; }
+    const launch = this.launchContext;
+    return this.start(launch?.id ?? this.selectedMission, launch?.options || {});
+  }
+
   start(id = this.selectedMission, options = {}) {
+    if (this.multiplayer?.active) {
+      const error = 'Leave the online match before starting a solo flight.';
+      this.ui.message(error, 4);
+      return { ok: false, error };
+    }
     const localRestart=this.localCoop?.active && [2,3].includes(id)?{...this.localCoop.options}:null;
     this.stopLocalCoop();
     this.endHangarPreview();
+    if (!options.training) this.flightSchool?.stop();
+    this.trainingLesson=null;this.trainingTimer=0;
     this.training=!!options.training;this.trainingCombat=false;
     this.audio.stopPreview?.();
     this.audio.init();
     this.mission = getMission(id);
     this.openSkies?.abort();
     this.openSkies = this.mission.id === 2 && !this.multiplayer?.active ? new OpenSkiesEncounter(options.seed) : null;
-    if (this.openSkies) this.openSkies.difficulty = this.settings.difficulty || 'easy';
+    if (this.openSkies) this.openSkies.difficulty = options.encounterDifficulty || this.settings.difficulty || 'easy';
     this.sortieId = `skies-${Date.now().toString(36)}-${++sortieSequence}`;
     this.squadronReturnState = null;
     this.input.menuMode = null;
-    this.applyMissionEnvironment();
     this.selectedMission = this.mission.id;
     for (const j of [...this.enemies, ...this.allies]) {
       j.dispose?.();
@@ -436,6 +463,14 @@ class Game {
       this.handleEncounterEvents(this.openSkies.start());
     }
     startOperationRuntime(this,options);
+    const launchOptions = { training: this.training };
+    if (this.openSkies) Object.assign(launchOptions, { seed: this.openSkies.seed, encounterDifficulty: this.openSkies.difficulty });
+    if (this.operation) {
+      launchOptions.operationPreset = Object.freeze({ ...this.operation.preset });
+      if (this.operation.campaignContext) launchOptions.campaignContext = Object.freeze({ ...this.operation.campaignContext });
+    }
+    this.launchContext = Object.freeze({ id: this.mission.id, options: Object.freeze(launchOptions) });
+    this.applyMissionEnvironment();
     for (const jet of [this.player, ...this.enemies, ...this.allies]) jet.resetInterpolation?.();
     this.target = this.enemies.find((e) => Math.abs(e.position.x - this.player.position.x) < 400) || this.enemies[0] || null;
     this.cam.mode = "chase";
@@ -452,6 +487,7 @@ class Game {
     this.ui.message(this.mission.name + " · " + this.mission.objective, 4.5);
     this.notify(this.mission.freeFlight ? "FLIGHT GUIDE" : "COMMAND", this.mission.freeFlight ? `Free flight active. ${bindingLabel("tacticalMap",this.settings)} opens the map.` : `Keep the target in the reticle. ${bindingLabel("missile",this.settings)} launches when LOCKED.`, 7);
     if(localRestart && !options.localInit){localRestart.mode=id===2?'open_skies':'free_flight';const allocation=allocateLocalDevices(localRestart.inputMode);if(allocation.ok){this.localCoop=new LocalCoop(this,localRestart,allocation);this.localCoop.start();}else this.ui.message(allocation.error,6);}
+    return { ok: true };
   }
 
   handleEncounterEvents(events) {
@@ -845,7 +881,7 @@ class Game {
     if (this.player.alive) {
       this._previousFlightPosition ||= new T.Vector3();
       this._previousFlightPosition.copy(this.player.position);
-      updateFlight(this.player, this.input, dt, this.settings,{terrainHeight});
+      updateFlight(this.player, this.input, dt, this.getFlightSettings(),{terrainHeight});
 
       // Check boundary crossing
       if (!this.lastPlayerPos) this.lastPlayerPos = new T.Vector3().copy(this.player.position);
@@ -1050,7 +1086,7 @@ class Game {
       if(j.localHuman)continue;
       if(j.training){
         j.position.addScaledVector(j.velocity,dt);j.animate(this.elapsed);
-        if(this.trainingLesson==='flare' && this.elapsed-(this.trainingLastMissile || -10)>7 && this.player.alive){this.weapons.missile(j,this.player);this.trainingLastMissile=this.elapsed;}
+        if(this.trainingLesson==='flare' && this.elapsed-(this.trainingLastMissile ?? -10)>7 && this.player.alive){this.weapons.missile(j,this.player);this.trainingLastMissile=this.elapsed;}
         continue;
       }
       if(updateOperationAircraft(j,this))continue;

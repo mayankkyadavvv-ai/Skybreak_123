@@ -708,7 +708,7 @@
         "F16",
         "F32"
       ],
-      "entry_point": "R / [ / F; M / Space; menus",
+      "entry_point": "R / [ / F; E / Space; menus",
       "modules": [
         "Game",
         "Input",

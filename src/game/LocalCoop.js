@@ -1,7 +1,7 @@
 import * as T from 'three';
 import { Jet } from './Jet.js';
 import { CameraController } from './Camera.js';
-import { ACTIONS, readGamepad, isHeld } from './InputActions.js';
+import { ACTIONS, readGamepad, isHeld, bindingLabel } from './InputActions.js';
 import { updateFlight } from './FlightPhysics.js';
 import { updateLock } from './Weapons.js';
 import { terrainHeight } from './World.js';
@@ -72,12 +72,14 @@ export class LocalCoop {
       seat.menu.innerHTML=`<h3>PLAYER ${index+1}</h3><p data-seat-status>Doosra pilot fly kar sakta hai.</p><button data-local="resume">Resume flight</button><button data-local="camera">Change camera</button><button data-local="recover">Recover aircraft</button><button data-local="restart">Restart both players</button>${index===0?'<button data-local="exit">Exit local co-op</button>':''}`;
       seat.menu.addEventListener('click',event=>{const action=event.target.closest('[data-local]')?.dataset.local;if(!action)return;
         if(action==='resume')this.toggleMenu(index,false);if(action==='camera')seat.cam.cycle();if(action==='recover'){if(seat.player.alive)seat.input.levelTimer=3;else if(g.mission.freeFlight)this.resetSeat(index);this.toggleMenu(index,false);}
-        if(action==='restart')g.startLocalCoop(this.options);if(action==='exit')g.menu();});
+        if(action==='restart')g.restart();if(action==='exit')g.menu();});
       seat.hud.el.appendChild(seat.menu);
     }
     g.ui.hudEl.hidden=true;g.ui.root.classList.add('local-coop-active');this.resize();
-    this.message(0,this.allocation.primary===null?'↑ nose up · ↓ nose down · Space cannon · M missile · X flares':'Left stick fly · RT cannon · A missile · B flares',8);
-    this.message(1,'Left stick fly · RT cannon · A missile · B flares · Menu seat menu',8);
+    for (const [index, seat] of this.seats.entries()) {
+      const key = action => bindingLabel(action, seat.view.settings);
+      this.message(index,`${key('pitchUp')} nose up · ${key('pitchDown')} nose down · ${key('cannon')} cannon · ${key('missile')} missile · ${key('flare')} flares · ${key('pause')} menu`,8);
+    }
     return {ok:true};
   }
   message(index,text,ttl=3){const seat=this.seats[index];if(seat){seat.notice.textContent=text;seat.noticeTime=ttl;}}
@@ -99,7 +101,7 @@ export class LocalCoop {
     v.elapsed=g.elapsed;v.state=p.alive?g.state:'dying';v.mission=g.mission;v.stats=g.stats;
     for(const key of ['missileCooldown','cannonCooldown','flareCooldown'])v[key]=Math.max(0,v[key]-dt);
     if(p.alive){
-      const previous=p.position.clone();updateFlight(p,seat.input,dt,v.settings,{terrainHeight});
+      const previous=p.position.clone();updateFlight(p,seat.input,dt,v.getFlightSettings(),{terrainHeight});
       let touchdown=null;
       if(!p.isLanded && !(p.takeoffCooldown>0))for(const base of IAF_BASES){const result=assessTouchdown(base,previous,p);if(result){touchdown=result;if(result.safe){p.position.copy(result.hit);g.touchdown.call(v,base);}else if(g.mission.freeFlight)this.resetSeat(1);else g.damage(p,1000,null,'terrain');break;}}
       if(!touchdown && !p.isLanded && g.world.collision(p.position)){if(g.mission.freeFlight)this.resetSeat(1);else g.damage(p,1000,null,'terrain');}

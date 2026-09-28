@@ -27,3 +27,7 @@ Existing production remains `skybreak-iota.vercel.app`, deployment `dpl_t1vnXgFB
 Earlier GitHub publication attempts were blocked by automatic approval review. On 2026-09-28 the user explicitly authorized publication of the source and test evidence to the public repository `mayankkyadavvv-ai/Skybreak_123`, branch `feature/skybreak-40-upgrade`, creation of a draft PR, and a preview deployment in the existing Skybreak Vercel project. The first source upload under that explicit authorization succeeded.
 
 The candidate is committed locally and is being published through the approved branch/review workflow. The branch and its linked draft PR/deployment checks are the authoritative current publication status. A full-index patch against the exact upstream baseline preserves the implementation changes; the downloadable LAN package was saved separately. GitHub publication and a READY preview do not satisfy the pending production acceptance gates above.
+
+## Post-audit fixes — 2026-09-29 IST
+
+The earlier 192-test candidate evidence above is retained as historical evidence. The follow-up fixes all six reported code flaws, the newly exposed operation terminal-event routing bug, and updates Open Skies steering and default missile fire to E (Q/D yaw). Full suite: **206/206 pass**, including 14 new regression tests. See `FLAW_FIXES.md` and `evidence/flaw-fixes/`. These automated fixes do not satisfy the outstanding graphics/device, public WSS worker, TURN or production release gates.
