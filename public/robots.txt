@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://skybreak-iota.vercel.app/sitemap.xml

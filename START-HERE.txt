@@ -1,0 +1,36 @@
+SKYBREAK - VERIFY AND PUBLISH TO YOUR EXISTING VERCEL SITE
+
+1. ZIP download karke right-click > Extract All karo.
+2. Extracted folder mein Verify and Deploy Skybreak.cmd par double-click karo.
+3. Node.js 22+ aur Chrome/Edge installed hone chahiye. Internet on rakho.
+4. Tests/build aur Chrome/Edge checks chalenge. Flight sampling 5 minutes hai;
+   poore checks mein isse zyada time lagega. Window khuli rakho.
+5. Vercel login aaye to Skybreak owner account se browser mein sign in karo.
+   Password, token ya login code ChatGPT mein mat bhejna.
+6. Launcher sirf existing skybreak project/team verify karke source upload
+   karta hai. Failed check par ruk jaata hai. Naya project nahi banana.
+7. Successful live verification ke baad https://skybreak-iota.vercel.app
+   browser mein khulega. Yehi existing domain rahega.
+
+Agar error aaye: terminal aur qa-artifacts/acceptance.json,
+release-status.json, live-check.json mein exact result milega. Pehle error
+padho. Sign-in/protection wall ko disable karke bypass mat karo; owner ke
+signed-in browser mein site kholo.
+
+Current local evidence: 111 automated tests pass, production build and
+15 local HTTP checks pass. Updated source is in this archive.
+
+What this package does NOT claim:
+- This workspace has not uploaded it to Vercel. Connected deploy action
+  returned Tool not found. The live page still has the earlier build.
+- This launcher was syntax/source checked, not run on Windows here.
+- GPU FPS, physical controller, visual review and full accessibility
+  acceptance need a capable computer. Automated sampling is not a manual
+  five-minute playthrough or a guarantee of 60 FPS.
+- Privacy/Terms remain draft until actual operator/public contact/provider
+  details are supplied. The aircraft is the enhanced procedural model;
+  no third-party licensed GLB has been included.
+
+Existing team: mayankkyadavvv-3062
+Existing project: skybreak
+See SKYBREAK_UPGRADE_REPORT.md and QA.md for exact evidence and remaining gates.

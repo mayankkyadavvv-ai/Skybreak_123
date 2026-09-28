@@ -1,0 +1,47 @@
+{
+  "method": "WCAG sRGB luminance calculation for listed tokens; not a browser/pixel accessibility scan",
+  "checks": [
+    {
+      "label": "Menu body",
+      "foreground": "#c1d1d7",
+      "background": "#081520",
+      "contrast": 11.74,
+      "required": 4.5
+    },
+    {
+      "label": "Panel heading",
+      "foreground": "#edf8fa",
+      "background": "#102532",
+      "contrast": 14.56,
+      "required": 4.5
+    },
+    {
+      "label": "Public page body",
+      "foreground": "#c4d4dc",
+      "background": "#07121a",
+      "contrast": 12.43,
+      "required": 4.5
+    },
+    {
+      "label": "Public links",
+      "foreground": "#9de7dc",
+      "background": "#07121a",
+      "contrast": 13.42,
+      "required": 4.5
+    },
+    {
+      "label": "HUD muted, minimum 72% dark panel over white sky",
+      "foreground": "#c1d1d7",
+      "background": "72% #05111b over white",
+      "contrast": 4.94,
+      "required": 4.5
+    },
+    {
+      "label": "Warning, opaque panel",
+      "foreground": "#ff9a94",
+      "background": "#081520",
+      "contrast": 9.05,
+      "required": 4.5
+    }
+  ]
+}

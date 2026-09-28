@@ -1,56 +1,34 @@
-# Skybreak Flight Combat — Web Hosting Guide
+# Hosting Skybreak
 
-This guide explains how to host your customized, high-performance Skybreak game on any free web hosting platform in minutes.
+Deployment is now requested, but the connected deploy action is unavailable in this workspace. The intended existing origin is `https://skybreak-iota.vercel.app`. No access-protection settings were changed.
 
----
+## Static game
 
-## ⚡ Option 1: Netlify Drag & Drop (Easiest — 30 Seconds, No Terminal)
+Build with `npm ci` then `npm run build`; publish `dist`. The package includes Vercel configuration, generated `_headers` for compatible static hosts, and a branded `404.html`. There is no catch-all rewrite to the game. Clean public paths resolve to their matching HTML pages.
 
-Netlify is the recommended host for Skybreak.
+The separate `skybreak-deploy-ready.zip` contains the clean prebuilt output and its own static-only `vercel.json`: installation/build are skipped and the output directory is `.`. Extract it first. The source archive retains the normal Vite build configuration. Neither archive constitutes a live deployment or a completed release acceptance gate.
 
-1. Open **[app.netlify.com/drop](https://app.netlify.com/drop)** in your browser (log in or create a free account).
-2. Take the **`dist`** folder (or unzipped `skybreak-deploy-ready-dist.zip`).
-3. Drag and drop the folder directly into the browser window.
-4. **Done!** Netlify will instantly give you a live HTTPS URL (e.g. `https://your-custom-name.netlify.app/`).
-   - The included `_headers` file will automatically enforce all security and privacy headers.
+HTML and ordinary public files should revalidate. Vite-generated hashed JS/CSS under `/assets/` use immutable caching. Keep future model assets versioned/fingerprinted if placed under this cached directory. Do not cache policy or HTML files as immutable.
 
----
+## Separate multiplayer server
 
-## 🌐 Option 2: Netlify via GitHub (Automatic Continuous Deployment)
+A static site does not run `server/index.js`. Host that Node/WebSocket service separately or route a WebSocket-capable service on the same origin.
 
-If you have a GitHub repository:
-1. Push this project code to your GitHub repo.
-2. Go to [Netlify](https://app.netlify.com/) ➔ **Add new site** ➔ **Import an existing project**.
-3. Select your GitHub repository.
-4. Netlify will auto-detect settings from `netlify.toml`:
-   - **Build command**: `npm run build`
-   - **Publish directory**: `dist`
-5. Click **Deploy**. Every time you push changes, Netlify will build and deploy automatically!
+If using a separate server, set the public build variable `VITE_SKYBREAK_WS_URL` to its `wss://` address. Run `npm run headers` and `npm run build` with that value **before uploading the source**, so `vercel.json` contains the same explicit connection origin that the client permits. Vercel reads its configuration before the remote build; editing headers only during that build is not sufficient for a new origin.
 
----
+`.env.example` documents the public variable. `.env*`, `.vercel`, account files, dependency caches and credentials are excluded from exports. No server secret belongs in client code or a VITE variable.
 
-## ▲ Option 3: Vercel
+## Verify after a future release
 
-1. Open **[vercel.com](https://vercel.com/)** and click **Add New Project**.
-2. Select your GitHub repository or use the Vercel CLI (`npx vercel`).
-3. Vercel will auto-detect settings from `vercel.json`:
-   - **Build command**: `npm run build`
-   - **Output directory**: `dist`
-4. Click **Deploy**. Your game is live with global CDN acceleration and full privacy headers.
+- Confirm the intended Vercel team/project and existing protection settings.
+- Check HTTPS certificate, HTTP-to-HTTPS redirect, CSP, MIME types and the platform's actual HSTS response. This pass did not verify live TLS/HSTS and does not claim preload/subdomain coverage.
+- Test clean routes and direct reloads. A missing JS/GLB must return a 404, not the game HTML.
+- Check that the WSS connection and server origin work with the deployed CSP.
+- Check actual provider cookies, logs, analytics and retention against the draft privacy notice.
+- Keep preview deployments protected. Preview builds (`VERCEL_ENV=preview` or `SKYBREAK_PREVIEW=1`) contain `noindex` metadata; that is not an access-control mechanism.
 
----
+## Local acceptance
 
-## 🐙 Option 4: GitHub Pages
+`npm run preview` uses `scripts/preview.mjs`, with strict paths, status codes, MIME and cache headers. It is a local test server, not a production service. The optional browser script in QA.md can run against it.
 
-1. In `vite.config.js`, `base: './'` is already configured for relative paths.
-2. Run `npm run build`.
-3. Push the `dist` folder to your `gh-pages` branch, or configure GitHub Actions to deploy from `dist`.
-4. Your game will be available at `https://<username>.github.io/<repo>/`.
-
----
-
-## 🔒 Security & Privacy Features Included
-- **Content-Security-Policy (CSP)**: Locks down script/asset origins.
-- **X-Frame-Options: SAMEORIGIN**: Prevents iframe clickjacking.
-- **Permissions-Policy**: Restricts camera, mic, and location.
-- **Immutable Asset Caching**: 1-year cache on hashed CSS and JS chunks for blazing fast repeat visits.
+Configuration reference: [Vercel vercel.json documentation](https://vercel.com/docs/project-configuration/vercel-json).

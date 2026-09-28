@@ -1,31 +1,56 @@
-# Skybreak 1.2 — Airfield & visual systems update
+# Skybreak
 
-Recovered from your 37-file Antigravity source document and extended in place.
+A Three.js + Vite browser flight/combat game. This source includes the September 2026 upgrade pass: shared controls, camera interpolation, contextual HUD, graphics quality settings, chunked terrain, revised procedural aircraft and effects, accessible menu controls and independent information pages.
 
-## Run on Windows
-1. Extract this ZIP completely.
-2. Open the skybreak folder, then double-click START-GAME.bat.
-3. Node.js must be installed. No npm install is needed to play the included build.
-4. Keep the terminal open. If needed, open http://127.0.0.1:4173 manually.
+## Run locally
 
-## Fly and land
-- Start Free Flight. Arrow keys steer; Shift boosts; H opens help.
-- L: air stations. Select ILS Approach for a manual approach or Start parked for takeoff practice. Resume after selecting the scenario.
-- J: toggle landing mode. In landing mode PgUp/PgDn (or +/−) adjusts throttle.
-- K: flaps. G: gear. B: airbrake / wheel brake.
-- On approach target roughly 400 km/h, wings level. Keep the runway centreline aligned. Two white/two red PAPI lights indicate the intended path. The HUD shows lateral and glideslope errors.
-- Gently pull up before touchdown. Hard/sideways/gear-up landings are rejected or penalized. These are gameplay thresholds, not real aircraft operating limits.
-- After landing throttle is idle. Hold B to stop. Remain stationary at idle for five seconds to repair/rearm.
-- Takeoff: PgUp to increase power, accelerate straight, then Up to rotate above 342 km/h. Boost alone cannot take off. Raise gear/flaps when airborne; J restores cruise assist.
-- Earth atlas opens a separate geographic country/city overview. The flight terrain is still compressed/procedural, not satellite terrain.
+Use Node.js 20.19+ or 22+ (this pass was tested with Node 24.19.0).
 
-## Edit and build
+```bash
 npm ci
 npm run dev
+```
+
+Open `http://localhost:4173`. On Windows, `Play Offline.bat` builds the current source and starts the local production preview. Internet is needed for the first dependency installation.
+
+## Check the production build
+
+```bash
 npm test
 npm run build
+npm run audit:secrets
+npm run preview
+```
 
-The included dist folder is the compiled game. Rebuild it after source edits.
-The source includes Vercel and Netlify configuration; the existing Vercel site has not been changed by this package.
+The preview uses production-like routing: `/about`, `/help`, `/privacy`, `/terms` and `/storage` work directly; unknown pages and missing assets return real 404s. It sends a local `noindex` header. Static host behavior must still be checked after a future deployment.
 
-See UPDATE-NOTES.md for validation, limitations and next priorities.
+## Fly
+
+- **↓ nose up, ↑ nose down; ←/→ roll; Q/E yaw and ground steering.**
+- **W/S changes throttle and holds it after release.** Shift boosts, B brakes.
+- Space/LMB cannon; M/RMB missile; X flares; R next target; `[` previous.
+- G gear; N map; L airbase panel; C camera cycle; V cockpit/chase.
+- MMB temporary free-look; Z recenter; H help; Escape pause/back.
+
+See **CONTROLS_GUIDE.md**, generated from the action registry. Keyboard, mouse and standard gamepad are devices; Assisted and Manual are separate flight modes. Touch controls include steering, throttle, weapons, boost/brake, gear, view and pause.
+
+## Multiplayer
+
+```bash
+npm run server
+```
+
+The local server listens on port 8080 by default. Run the development client separately. A static host does not run this WebSocket server. Hosted HTTPS clients accept secure WSS endpoints only, on the site origin or the explicitly configured public `VITE_SKYBREAK_WS_URL` origin. Never put a secret in a VITE variable. Configure production CSP before uploading source; see **HOSTING_GUIDE.md**.
+
+Multiplayer protocol, rooms, scores and progression are preserved. Saved data stays in the browser; multiplayer sends names and game state to the chosen server. **Privacy and Terms are drafts pending operator/contact and provider details.**
+
+## Handoff
+
+- `SKYBREAK_UPGRADE_REPORT.md`: phase-by-phase results, evidence and limitations.
+- `SKYBREAK_UPGRADE_PROGRESS.md`: execution status.
+- `SKYBREAK_RELEASE_CHECKLIST.md`: remaining release gates.
+- `QA.md`: real-browser, mobile, controller and performance checks.
+- `ASSET_PROVENANCE.md`: procedural asset provenance and future GLB contract.
+- `DATA_INVENTORY.md`: observed storage and network flows.
+
+The requested Vercel update is blocked here: the connected deploy action returns “Tool not found”. No deployment was performed for this upgrade. Use **Verify and Deploy Skybreak.cmd** from the extracted source on a capable Windows PC to run the prepared verification and upload workflow. Actual GPU frame rate, real browser screenshots/visual behavior, physical controller behavior and a manual five-minute playthrough remain unverified. No licensed external GLB was provided; the enhanced procedural X-17 is the active model.

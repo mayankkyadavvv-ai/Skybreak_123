@@ -626,23 +626,1501 @@
   }
 }
 
-.atlas-panel{width:min(1040px,95vw)!important;max-width:1040px!important}.atlas-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.atlas-toolbar button{padding:10px 16px;background:#183948;border:1px solid #476d76}.atlas-toolbar span{font:11px monospace;color:#75c6bc;margin-left:auto}.atlas-stage{height:min(50vh,500px);border:1px solid #345461;overflow:hidden;background:#071c2b}.atlas-stage svg{width:100%;height:100%;display:block}.atlas-country{fill:#214751;stroke:#759b9e;stroke-width:.07}.atlas-country:hover{fill:#38646b}.atlas-grid{fill:none;stroke:#173540;stroke-width:.08}.atlas-city{fill:#ffb86b;cursor:pointer}.atlas-city.selected{fill:#ffffff;stroke:#ff7845;stroke-width:.12}.atlas-readout{padding:12px 0;color:#8ae4d2;font:12px monospace}.menu-nav{flex-wrap:wrap}
 
-@media(min-width:1000px){.menu-main{width:520px;padding-top:18px}.menu-main h1{font-size:clamp(64px,6vw,88px);white-space:nowrap;line-height:.98}.menu-nav{gap:18px;margin-top:14px}.menu-main .intro-copy{margin-bottom:18px}.menu-bottom{flex-shrink:0}}
+/* ==========================================================================
+   MULTIPLAYER AIR COMBAT UI & SQUADRON LOBBY STYLES
+   ========================================================================== */
 
-.practice-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.practice-actions button{min-width:0;white-space:normal;line-height:1.3}.hud-mission{background:rgba(6,23,32,.72);padding:12px 14px;border-left:2px solid #76b5b6}.hud-mission .eyebrow{color:#a5c7ce}
+/* Multiplayer Call Sign & Status */
+.mp-menu-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
-/* Flight readability against both bright sand and dark terrain. */
-.hud{ text-shadow:0 1px 1px #031019,1px 0 1px #031019,-1px 0 1px #031019; }
-.hud-bottom-left,.hud-weapons,.radio,.hud-session{background:rgba(5,19,29,.9);border:1px solid #48616c;padding:12px;border-radius:4px;color:#e9fff7}
-.hud-weapons{grid-template-columns:125px 115px}
-.hud .flight-hints{background:rgba(5,19,29,.94);padding:9px;bottom:0;color:#e9fff7}
-.hud kbd{background:#112a35;color:#fff;border-color:#78929e}
-.hud .health-row,.hud .flight-telemetry,.hud .radio,.hud .weapon>span,.hud .flare-line,.hud #fps{color:#e4fff4}
-.hud .lock-status,.hud .flight-warning{background:rgba(4,18,27,.88);padding:5px 9px;border-radius:3px}
-#toast{top:auto;bottom:175px;max-width:min(520px,85vw);font-size:13px}
-@media(max-width:700px){.hud-weapons{grid-template-columns:70px 65px;padding:8px}.hud-bottom-left{padding:8px}.radio{max-width:210px;padding:6px}.hud-session{padding:6px}#toast{bottom:210px}}
-.hud-bottom-left{bottom:132px;width:230px}
-.hud .flight-warning:empty{display:none}
-#toast{top:180px;bottom:auto}
-@media(max-width:700px){.hud-bottom-left{bottom:115px;width:145px}#toast{top:180px;bottom:auto}}
+.mp-callsign-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(12, 28, 38, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 12px 18px;
+  border-radius: 6px;
+}
+
+.mp-callsign-bar label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 1px;
+}
+
+.mp-callsign-bar input {
+  background: #061520;
+  border: 1px solid #38bdf8;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  width: 180px;
+}
+
+.mp-connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #5df2b6;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5df2b6;
+  box-shadow: 0 0 10px #5df2b6;
+}
+
+/* Mode Selection Cards */
+.mp-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.mp-card {
+  position: relative;
+  background: rgba(15, 30, 42, 0.75);
+  border: 1px solid rgba(100, 160, 180, 0.25);
+  border-radius: 6px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.mp-card:hover {
+  border-color: #38bdf8;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.mp-card.highlight {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: linear-gradient(145deg, rgba(16, 38, 54, 0.85), rgba(8, 20, 30, 0.85));
+}
+
+.mp-card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: #ff5722;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.mp-card-badge.blue {
+  background: #0284c7;
+}
+
+.mp-card-badge.green {
+  background: #10b981;
+}
+
+.mp-card-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.mp-card h3 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 1px;
+}
+
+.mp-card p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #94a3b8;
+  margin: 0 0 18px 0;
+  flex: 1;
+}
+
+.mp-play-btn {
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+}
+
+/* Custom Room & Join By Code */
+.mp-custom-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  background: rgba(10, 20, 28, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 18px;
+}
+
+.mp-custom-block h4 {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 1px;
+}
+
+.mp-custom-block p {
+  font-size: 11px;
+  color: #8da4af;
+  margin: 0 0 12px 0;
+}
+
+.mp-join-input-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.mp-join-input-wrap input {
+  flex: 1;
+  background: #061520;
+  border: 1px solid #475569;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: ui-monospace, monospace;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.mp-join-input-wrap button {
+  padding: 8px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.secondary-btn {
+  background: rgba(30, 50, 65, 0.7);
+  border: 1px solid rgba(100, 160, 180, 0.35);
+  color: #e2e8f0;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+  background: rgba(45, 75, 95, 0.85);
+  border-color: #38bdf8;
+  color: #fff;
+}
+
+/* Spinner */
+.mp-matchmaking-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 35px 20px;
+  text-align: center;
+}
+
+.mp-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(56, 189, 248, 0.2);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.mp-queue-status {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  color: #5df2b6;
+  margin-bottom: 8px;
+}
+
+/* ==========================================================================
+   SQUADRON LOBBY UI
+   ========================================================================== */
+.mp-lobby-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.room-code-highlight {
+  font-family: ui-monospace, monospace;
+  color: #ffaa44;
+  font-size: 15px;
+  letter-spacing: 2px;
+  background: rgba(255, 170, 68, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 170, 68, 0.3);
+  margin-right: 8px;
+}
+
+.copy-code-btn {
+  background: #1e3a5f;
+  color: #60a5fa;
+  border: 1px solid #3b82f6;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.mp-lobby-settings-bar {
+  display: flex;
+  gap: 14px;
+  background: rgba(10, 20, 30, 0.7);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+
+.mp-lobby-settings-bar b {
+  color: #5df2b6;
+}
+
+.mp-roster-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.mp-team-column {
+  background: rgba(8, 18, 26, 0.75);
+  border-radius: 6px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 3px solid #64748b;
+}
+
+.mp-team-column.blue {
+  border-top-color: #38bdf8;
+  border-left: 1px solid rgba(56, 189, 248, 0.2);
+  border-right: 1px solid rgba(56, 189, 248, 0.2);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.mp-team-column.red {
+  border-top-color: #ef4444;
+  border-left: 1px solid rgba(239, 68, 68, 0.2);
+  border-right: 1px solid rgba(239, 68, 68, 0.2);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.mp-team-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 8px;
+}
+
+.mp-team-header h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.mp-team-column.blue h4 { color: #38bdf8; }
+.mp-team-column.red h4 { color: #ef4444; }
+
+.mp-team-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.mp-team-dot.blue { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
+.mp-team-dot.red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+.mp-switch-btn {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.mp-switch-btn.blue {
+  background: rgba(56, 189, 248, 0.2);
+  border: 1px solid #38bdf8;
+  color: #bae6fd;
+}
+
+.mp-switch-btn.red {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #fecaca;
+}
+
+.mp-slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 180px;
+}
+
+.mp-slot {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(15, 30, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.mp-slot.empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #475569;
+  border-style: dashed;
+  font-family: ui-monospace, monospace;
+}
+
+.mp-slot.is-me {
+  border-color: #5df2b6;
+  background: rgba(93, 242, 182, 0.08);
+}
+
+.slot-pilot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slot-pilot strong {
+  color: #fff;
+}
+
+.pilot-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #334155;
+  color: #cbd5e1;
+}
+
+.slot-jet {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.slot-ping {
+  font-family: ui-monospace, monospace;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.slot-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #334155;
+  color: #94a3b8;
+}
+
+.slot-status.ready {
+  background: #065f46;
+  color: #a7f3d0;
+  border: 1px solid #10b981;
+}
+
+/* Lobby Footer Bar */
+.mp-lobby-footer-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(10, 20, 30, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px 18px;
+  border-radius: 6px;
+}
+
+.mp-player-loadout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.mp-player-loadout b {
+  color: #38bdf8;
+}
+
+.mp-lobby-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ready-btn {
+  background: #047857;
+  color: #fff;
+  border: 1px solid #10b981;
+  padding: 10px 18px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ready-btn.is-ready {
+  background: #059669;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+}
+
+.launch-match-btn {
+  width: auto !important;
+  padding: 10px 20px !important;
+  font-size: 13px !important;
+}
+
+/* ==========================================================================
+   IN-GAME MULTIPLAYER HUD OVERLAYS
+   ========================================================================== */
+
+/* Top Team Scores Header */
+.mp-header {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: linear-gradient(90deg, rgba(2, 44, 75, 0.9), rgba(10, 25, 35, 0.95), rgba(75, 15, 15, 0.9));
+  border: 1px solid rgba(100, 180, 220, 0.35);
+  border-radius: 6px;
+  padding: 8px 24px;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.mp-team-score {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mp-team-score.blue .mp-team-title { color: #38bdf8; font-weight: bold; font-size: 11px; letter-spacing: 1.5px; }
+.mp-team-score.blue strong { color: #fff; font-size: 24px; font-family: ui-monospace, monospace; }
+
+.mp-team-score.red .mp-team-title { color: #ef4444; font-weight: bold; font-size: 11px; letter-spacing: 1.5px; }
+.mp-team-score.red strong { color: #fff; font-size: 24px; font-family: ui-monospace, monospace; }
+
+.mp-match-center {
+  text-align: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0 16px;
+}
+
+.mp-match-mode {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #5df2b6;
+}
+
+.mp-match-timer {
+  font-size: 16px;
+  font-family: ui-monospace, monospace;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* Kill Feed in Top-Right */
+.mp-kill-feed {
+  position: absolute;
+  top: 75px;
+  right: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.kill-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 20, 30, 0.85);
+  border-left: 3px solid #ff5722;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  animation: fadeIn 0.3s ease;
+}
+
+.kill-entry .killer { color: #5df2b6; font-weight: bold; }
+.kill-entry .weapon-icon { color: #ffaa44; font-size: 9px; }
+.kill-entry .victim { color: #ff7766; font-weight: bold; }
+.kill-entry .assist { color: #94a3b8; font-size: 9px; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(15px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Respawn and Spectator Banner */
+.mp-respawn-banner {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 15, 22, 0.92);
+  border: 2px solid #ef4444;
+  border-radius: 6px;
+  padding: 20px 36px;
+  text-align: center;
+  z-index: 30;
+  box-shadow: 0 0 50px rgba(239, 68, 68, 0.5);
+  pointer-events: none;
+}
+
+.respawn-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #ef4444;
+  margin-bottom: 6px;
+}
+
+.respawn-killer {
+  font-size: 13px;
+  color: #cbd5e1;
+  margin-bottom: 12px;
+}
+
+.respawn-countdown {
+  font-size: 22px;
+  font-weight: bold;
+  font-family: ui-monospace, monospace;
+  color: #5df2b6;
+  margin-bottom: 12px;
+}
+
+.spectator-bar {
+  font-size: 12px;
+  color: #94a3b8;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 10px;
+}
+
+.spectator-bar kbd {
+  background: #1e293b;
+  border: 1px solid #475569;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #fff;
+}
+
+/* Scoreboard Overlay (TAB) */
+.mp-scoreboard-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 10, 16, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.mp-scoreboard-modal {
+  width: 860px;
+  max-width: 95vw;
+  background: rgba(10, 22, 32, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 6px;
+  padding: 24px;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8);
+}
+
+.scoreboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.scoreboard-header h3 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: #e2e8f0;
+}
+
+.scoreboard-header span {
+  font-size: 11px;
+  color: #64748b;
+  letter-spacing: 1px;
+}
+
+.teams-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.team-block h4 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.mp-score-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.mp-score-table th {
+  text-align: left;
+  font-size: 10px;
+  color: #64748b;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mp-score-table td {
+  padding: 8px;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.mp-score-table tr.is-me {
+  background: rgba(93, 242, 182, 0.1);
+}
+
+.mp-score-table tr.is-dead td {
+  opacity: 0.45;
+}
+
+.alive-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.alive-dot.alive { background: #5df2b6; }
+.alive-dot.dead { background: #ef4444; }
+
+.score-col {
+  font-family: ui-monospace, monospace;
+  color: #38bdf8;
+  font-weight: bold;
+}
+
+/* Post Match Result */
+.mp-result-banner {
+  padding: 24px;
+  text-align: center;
+  border-radius: 6px;
+}
+
+.mp-result-banner.victory {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.2), rgba(6, 95, 70, 0.1));
+  border: 2px solid #10b981;
+}
+
+.mp-result-banner.defeat {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.2), rgba(153, 27, 27, 0.1));
+  border: 2px solid #ef4444;
+}
+
+.mp-result-banner h2 {
+  font-size: 36px;
+  margin: 0 0 12px 0;
+  letter-spacing: 2px;
+}
+
+.final-score-line {
+  font-size: 20px;
+  font-family: ui-monospace, monospace;
+  font-weight: bold;
+}
+
+.vs-divider {
+  color: #64748b;
+  margin: 0 12px;
+}
+
+/* High Contrast HUD Panels - Razor-sharp Object & Feature Legibility */
+.hud-mission {
+  background: rgba(8, 14, 22, 0.82) !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  border-radius: 6px !important;
+  padding: 12px 18px !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65) !important;
+}
+
+.hud-mission h2 {
+  color: #ffffff !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9) !important;
+}
+
+.hud-mission p {
+  color: #d1e6e4 !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+.hud-bottom-left {
+  background: rgba(8, 14, 22, 0.82) !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  border-radius: 6px !important;
+  padding: 12px 16px !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65) !important;
+}
+
+.hud-bottom-left .pilot-label {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+.hud-bottom-left .health-row {
+  color: #00ffcc !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+.hud-weapons {
+  background: rgba(8, 14, 22, 0.82) !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  border-radius: 6px !important;
+  padding: 12px 18px !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65) !important;
+}
+
+.hud-weapons .weapon strong {
+  color: #ffffff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9) !important;
+}
+
+.hud-airspace, .hud-journey {
+  background: rgba(8, 14, 22, 0.82) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+.practice-help {
+  background: rgba(8, 14, 22, 0.82) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  border-radius: 6px !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65) !important;
+}
+
+#toast {
+  top: 175px !important;
+  background: rgba(8, 14, 24, 0.92) !important;
+  border: 1px solid rgba(0, 240, 255, 0.35) !important;
+  border-left: 4px solid var(--orange) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75) !important;
+}
+
+.radio {
+  bottom: 22px !important;
+  color: #d8edf0 !important;
+  background: rgba(8, 14, 24, 0.85) !important;
+  border: 1px solid rgba(0, 240, 255, 0.25) !important;
+  border-radius: 6px !important;
+  padding: 8px 14px !important;
+  backdrop-filter: blur(8px) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Key Rebinding & Controls UI */
+.keybind-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(12, 26, 36, 0.45);
+  border: 1px solid rgba(80, 120, 140, 0.2);
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.keybind-btn {
+  background: #112836 !important;
+  border: 1px solid #38bdf8 !important;
+  color: #38bdf8 !important;
+  font-family: ui-monospace, monospace !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 6px 14px !important;
+  border-radius: 4px !important;
+  min-width: 100px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.keybind-btn:hover {
+  background: #1d4057 !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.keybind-btn.rebinding {
+  background: #3a1515 !important;
+  border-color: #ff4444 !important;
+  color: #ff7777 !important;
+  animation: keypulse 0.8s infinite alternate;
+}
+
+@keyframes keypulse {
+  from { opacity: 0.6; transform: scale(0.98); }
+  to { opacity: 1.0; transform: scale(1.02); }
+}
+
+/* HUD Network Connection Status Badge */
+.hud-net-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(8, 18, 28, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #90e0ef;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  margin-right: 14px;
+}
+
+.hud-net-badge .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 8px #00ff88;
+}
+
+/* ==========================================================================
+   PILOT PROGRESSION, DOSSIER & FLOATING XP POPUPS
+   ========================================================================== */
+
+/* Floating In-Game XP Notifications on HUD */
+.xp-award-container {
+  position: fixed;
+  top: 90px;
+  right: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.xp-award-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(10, 20, 30, 0.88);
+  border: 1px solid #ffd700;
+  border-left: 4px solid #ffd700;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.25), 0 0 12px rgba(0, 229, 255, 0.2);
+  border-radius: 4px;
+  padding: 8px 16px;
+  color: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(12px);
+  animation: xpSlideIn 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.xp-award-item.fade-out {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+}
+
+.xp-award-item .xp-icon {
+  font-size: 16px;
+  color: #ffd700;
+  text-shadow: 0 0 10px #ffd700;
+}
+
+.xp-award-item .xp-reason {
+  color: #ffd700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes xpSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Hangar Header Pilot Dossier Badge */
+.pilot-status-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(12, 24, 36, 0.85);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  backdrop-filter: blur(8px);
+}
+
+.pilot-status-header:hover {
+  background: rgba(16, 32, 48, 0.95);
+  border-color: #00e5ff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.3);
+}
+
+.pilot-rank-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pilot-insignia {
+  font-size: 18px;
+  color: #ffd700;
+  text-shadow: 0 0 8px #ffd700;
+}
+
+.pilot-info-col {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.pilot-rank-name {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #00e5ff;
+  font-weight: 700;
+}
+
+.pilot-callsign-tag {
+  font-size: 13px;
+  color: #fff;
+  font-family: ui-monospace, monospace;
+}
+
+.pilot-xp-track {
+  width: 90px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pilot-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00e5ff, #ffd700);
+  transition: width 0.4s ease;
+}
+
+.pilot-xp-label {
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: #85c4b8;
+}
+
+/* Locked cards & tags */
+.locked-card {
+  opacity: 0.65;
+  filter: grayscale(0.25);
+  border-color: rgba(255, 170, 68, 0.4) !important;
+}
+
+.locked-card:hover {
+  opacity: 0.85;
+}
+
+.lock-tag {
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: #ffa751;
+  background: rgba(255, 167, 81, 0.12);
+  border: 1px solid rgba(255, 167, 81, 0.35);
+  padding: 3px 8px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Dossier Modal */
+.dossier-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 16, 0.78);
+  backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.dossier-modal {
+  width: 92%;
+  max-width: 680px;
+  background: rgba(10, 20, 32, 0.95);
+  border: 1px solid rgba(0, 229, 255, 0.45);
+  border-radius: 8px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 229, 255, 0.2);
+  padding: 24px;
+}
+
+.dossier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.dossier-rank-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: rgba(0, 229, 255, 0.06);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.dossier-insignia {
+  font-size: 44px;
+  color: #ffd700;
+  text-shadow: 0 0 16px #ffd700;
+}
+
+.dossier-rank-info {
+  flex: 1;
+  text-align: left;
+}
+
+.dossier-rank-info h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.dossier-rank-code {
+  font-size: 11px;
+  color: #00e5ff;
+  font-family: ui-monospace, monospace;
+}
+
+.dossier-xp-bar-container {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.dossier-xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00e5ff, #ffd700);
+}
+
+.dossier-callsign-editor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(8, 16, 26, 0.7);
+  border: 1px solid rgba(75, 160, 180, 0.25);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.dossier-callsign-editor label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #85c4b8;
+  letter-spacing: 1px;
+}
+
+.dossier-callsign-editor input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+}
+
+.dossier-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.dossier-stat-box {
+  background: rgba(14, 28, 42, 0.7);
+  border: 1px solid rgba(75, 160, 180, 0.2);
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+}
+
+.dossier-stat-box .stat-num {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #00e5ff;
+  font-family: ui-monospace, monospace;
+}
+
+.dossier-stat-box .stat-desc {
+  font-size: 9px;
+  color: #85c4b8;
+  letter-spacing: 0.5px;
+}
+
+.rank-list-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  background: rgba(12, 22, 32, 0.6);
+  border: 1px solid transparent;
+  font-size: 12px;
+}
+
+.rank-list-row.current {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.08);
+}
+
+.rank-list-row.unlocked {
+  border-color: rgba(0, 229, 255, 0.2);
+}
+
+.rank-list-row.locked {
+  opacity: 0.5;
+}
+
+.row-insignia {
+  font-size: 16px;
+  color: #ffd700;
+  width: 24px;
+  text-align: center;
+}
+
+.row-name {
+  flex: 1;
+  text-align: left;
+  color: #fff;
+}
+
+.row-xp {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #85c4b8;
+}
+
+/* ==========================================================================
+   STAGE 23 & 24: PREFLIGHT BOOT LOADER & OPERATIONS BOARD POLISH
+   ========================================================================== */
+.preflight-boot-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #050e16;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.preflight-boot-loader.boot-complete {
+  opacity: 0;
+  transform: scale(1.02);
+  pointer-events: none;
+}
+
+.boot-terminal {
+  width: 480px;
+  max-width: 90vw;
+  background: rgba(8, 22, 32, 0.95);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 6px;
+  padding: 28px 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 240, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.boot-terminal::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00f0ff, #ff7845, transparent);
+  animation: bootScan 2s linear infinite;
+}
+
+@keyframes bootScan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.boot-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.boot-brand-mark {
+  display: inline-grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  color: #061720;
+  background: var(--orange, #ff7845);
+  width: 36px;
+  height: 38px;
+  transform: skew(-9deg);
+}
+
+.boot-title-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.boot-brand-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #f0fdfa;
+}
+
+.boot-brand-sub {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #38bdf8;
+  font-family: ui-monospace, monospace;
+}
+
+.boot-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(14, 165, 233, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.boot-progress-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #38bdf8, #00f0ff, #5df2b6);
+  animation: bootProgress 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes bootProgress {
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(0%); }
+}
+
+.boot-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #a5f3fc;
+  margin-bottom: 18px;
+}
+
+.boot-status-code {
+  color: #5df2b6;
+  font-weight: 700;
+  border: 1px solid rgba(93, 242, 182, 0.4);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.boot-subsystems {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  color: rgba(165, 243, 252, 0.65);
+  border-top: 1px solid rgba(56, 189, 248, 0.15);
+  padding-top: 12px;
+}
+
+/* Operations Board Briefing Enhancements */
+.briefing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.threat-badge {
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.threat-none {
+  background: rgba(93, 242, 182, 0.15);
+  border: 1px solid rgba(93, 242, 182, 0.4);
+  color: #5df2b6;
+}
+
+.threat-moderate {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.threat-high {
+  background: rgba(251, 146, 60, 0.15);
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  color: #fb923c;
+}
+
+.threat-critical {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #f87171;
+  animation: threatPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes threatPulse {
+  0% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.3); }
+  100% { box-shadow: 0 0 14px rgba(239, 68, 68, 0.7); }
+}
+
+.brief-intel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #94bac5;
+  background: rgba(10, 25, 35, 0.5);
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin: 8px 0;
+  border: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.brief-objective-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.brief-obj-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #38bdf8;
+}
+
+/* Cockpit / HUD Pilot Label Layout Fix */
+.pilot-label {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+.pilot-label > span {
+  float: none !important;
+  margin-top: 0 !important;
+}
+
+
+

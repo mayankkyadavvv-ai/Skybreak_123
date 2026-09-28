@@ -17,16 +17,16 @@ const effects = { emit() {
 const makeWeapons = (hit) => new Weapons(new T.Scene(), effects, hit, () => {
 });
 test("pitch, roll and yaw have the requested signs and forward flight is stable", () => {
-  for (const [key, axis, sign] of [["KeyS", "y", 1], ["KeyW", "y", -1], ["KeyQ", "x", -1], ["KeyE", "x", 1]]) {
+  for (const [key, axis, sign] of [["ArrowDown", "y", 1], ["ArrowUp", "y", -1], ["KeyQ", "x", -1], ["KeyE", "x", 1]]) {
     const p2 = new Jet("player");
     for (let i = 0; i < 60; i++) updateFlight(p2, input(key), 1 / 60, settings);
     assert.ok(p2.forward[axis] * sign > 0.1, key);
   }
   const a = new Jet("player");
-  updateFlight(a, input("KeyA"), 0.1, settings);
+  updateFlight(a, input("ArrowLeft"), 0.1, settings);
   assert.ok(a.quaternion.z > 0);
   const d = new Jet("player");
-  updateFlight(d, input("KeyD"), 0.1, settings);
+  updateFlight(d, input("ArrowRight"), 0.1, settings);
   assert.ok(d.quaternion.z < 0);
   const p = new Jet("player");
   for (let i = 0; i < 600; i++) updateFlight(p, input(), 1 / 60, settings);
@@ -41,9 +41,9 @@ test("mouse steering and inversion, acceleration, braking and speed limits", () 
   assert.ok(p.forward.y > 0.15);
   assert.ok(p.forward.x > 0);
   const invert = new Jet("player");
-  for (let i = 0; i < 60; i++) updateFlight(invert, controls, 1 / 60, { ...settings, input: "mouse", invert: true });
+  for (let i = 0; i < 60; i++) updateFlight(invert, controls, 1 / 60, { ...settings, input: "mouse", mouseInvert: true });
   assert.ok(invert.forward.y < 0);
-  const b = new Jet("player");
+  const b = new Jet("player"); b.throttle = 1;
   for (let i = 0; i < 1500; i++) updateFlight(b, input("ShiftLeft"), 1 / 60, settings);
   assert.ok(b.speed > 550 && b.speed <= 590);
   for (let i = 0; i < 1e3; i++) updateFlight(b, input("KeyB"), 1 / 60, settings);
@@ -148,6 +148,7 @@ test("object pools clear all projectiles for mission restart", () => {
   assert.equal([...w.bullets, ...w.missiles].filter((x) => x.active || x.mesh.visible).length, 0);
 });
 import { Game } from "../src/game/Game.js";
+import { IAF_BASES } from "../src/game/GeoWorld.js";
 function harness() {
   const g = Object.create(Game.prototype);
   Object.assign(g, { scene: new T.Scene(), camera: new T.PerspectiveCamera(), cam: { mode: "chase", shake: 0 }, effects: { ...effects, clear() {
@@ -167,6 +168,26 @@ function harness() {
   g.weapons = makeWeapons(g.damage.bind(g));
   return g;
 }
+test('airbase approach reaches touchdown through the game loop and restart leaves ground state', () => {
+  const g = harness();g.settings = {...settings, input:'keyboard', flightMode:'assisted'};
+  g.start(FREE_FLIGHT.id);g.state = 'playing';g.approachBase('ambala_afb');
+  for (let i=0;i<3600 && !g.player.isLanded;i++) g.step(1/60);
+  assert.equal(g.player.isLanded,true);assert.equal(g.player.currentBase,'ambala_afb');
+  assert.equal(g.stats.rearms,1);
+  g.start(FREE_FLIGHT.id);
+  assert.equal(g.player.isLanded,false);assert.equal(g.player.landingMode,false);assert.equal(g.player.currentBase,null);
+});
+test('unsafe runway contact cannot use the terrain fallback to rearm or land', () => {
+  const base = IAF_BASES.find(b=>b.id==='ambala_afb');
+  for (const gearDown of [false,true]) {
+    const g=harness();g.settings={...settings,flightMode:'manual'};g.start(FREE_FLIGHT.id);g.state='playing';
+    g.player.position.set(base.x,base.elevation+3.21,base.z);g.player.speed=230;
+    g.player.quaternion.setFromEuler(new T.Euler(-.05,0,0));g.player.velocity.set(0,-4,-230);g.player.setGear(gearDown);
+    g.step(1/60);
+    assert.equal(g.player.isLanded,false);assert.equal(g.stats.rearms || 0,0);
+    assert.ok(g.player.position.y>1000,'unsafe contact should recover Free Flight');
+  }
+});
 test("integrated mission: acquire, launch, hit, score, complete and restart", () => {
   const g = harness();
   g.start(0);
@@ -234,34 +255,34 @@ test("empty ammo, lock and cooldown gates prevent unintended launches", () => {
 
 const easy = { ...settings, input: 'keyboard' };
 test('arrow keys steer intuitively, bank automatically and respect pitch limits', () => {
-  for (const [key, axis, sign] of [['ArrowUp', 'y', 1], ['ArrowDown', 'y', -1], ['ArrowLeft', 'x', -1], ['ArrowRight', 'x', 1]]) {
+  for (const [key, axis, sign] of [['ArrowDown', 'y', 1], ['ArrowUp', 'y', -1], ['ArrowLeft', 'x', -1], ['ArrowRight', 'x', 1]]) {
     const p = new Jet('player');
     for (let i = 0; i < 120; i++) updateFlight(p, input(key), 1 / 60, easy);
     assert.ok(p.forward[axis] * sign > .18, key);
     if (axis === 'x') assert.ok(Math.abs(new T.Euler().setFromQuaternion(p.quaternion, 'YXZ').z) > .1);
   }
   const p = new Jet('player');
-  for (let i = 0; i < 900; i++) updateFlight(p, input('ArrowUp'), 1 / 60, easy);
-  assert.ok(p.forward.y > .35 && p.forward.y < .6, 'held Up should climb without looping');
+  for (let i = 0; i < 900; i++) updateFlight(p, input('ArrowDown'), 1 / 60, easy);
+  assert.ok(p.forward.y > .35 && p.forward.y < .6, 'held Down should climb without looping');
 });
 test('releasing arrows levels wings and nose; combined arrows work', () => {
   const p = new Jet('player');
-  for (let i = 0; i < 120; i++) updateFlight(p, input('ArrowUp', 'ArrowRight'), 1 / 60, easy);
+  for (let i = 0; i < 120; i++) updateFlight(p, input('ArrowDown', 'ArrowRight'), 1 / 60, easy);
   assert.ok(p.forward.x > .15 && p.forward.y > .15);
   for (let i = 0; i < 600; i++) updateFlight(p, input(), 1 / 60, easy);
   const angle = new T.Euler().setFromQuaternion(p.quaternion, 'YXZ');
   assert.ok(Math.abs(angle.x) < .025 && Math.abs(angle.z) < .025);
 });
-test('easy cruise returns automatically after boost/brake and free-look does not steer', () => {
+test('selected throttle holds after boost/brake and free-look does not steer', () => {
   const p = new Jet('player');
   for (let i = 0; i < 600; i++) updateFlight(p, input('ShiftLeft'), 1 / 60, easy);
-  assert.ok(p.speed > 480);
+  assert.ok(p.speed > 450);
   for (let i = 0; i < 600; i++) updateFlight(p, input(), 1 / 60, easy);
-  assert.ok(Math.abs(p.speed - 220) < 1);
+  assert.ok(Math.abs(p.speed - (75 + p.throttle * 270)) < 6);
   for (let i = 0; i < 600; i++) updateFlight(p, input('KeyB'), 1 / 60, easy);
-  assert.ok(p.speed >= 115 && p.speed < 140);
+  assert.ok(p.speed >= 56 && p.speed < 70);
   for (let i = 0; i < 600; i++) updateFlight(p, input(), 1 / 60, easy);
-  assert.ok(Math.abs(p.speed - 220) < 1);
+  assert.ok(Math.abs(p.speed - (75 + p.throttle * 270)) < 6);
   const looking = { ...input(), freeLook: true, mouse: { x: 1, y: -1 } };
   for (let i = 0; i < 300; i++) updateFlight(p, looking, 1 / 60, { ...easy, input: 'mouse' });
   assert.ok(Math.abs(p.forward.x) < .001 && Math.abs(p.forward.y) < .001);

@@ -35,14 +35,14 @@ test('braking stops ground roll, boost alone cannot rotate, pull-up preserves cl
  for(let n=0;n<240;n++)updateFlight(p,controls('KeyB'),1/60,settings);
  assert.equal(p.speed,0);assert.equal(p.isLanded,true);
  p.speed=100;updateFlight(p,controls('ShiftLeft'),1/60,settings);assert.equal(p.isLanded,true);
- updateFlight(p,controls('ArrowUp'),1/60,settings);assert.equal(p.isLanded,false);assert.ok(p.velocity.y>0);assert.ok(p.position.y>45.2);
+ updateFlight(p,controls('ArrowDown'),1/60,settings);assert.equal(p.isLanded,false);assert.ok(p.velocity.y>0);assert.ok(p.position.y>45.2);
 });
 test('gear cannot retract on ground, manual throttle and flap approach response work',()=>{
  const p=new Jet('player');p.isLanded=true;p.toggleGear();assert.equal(p.gearDown,true);
  p.isLanded=false;p.landingMode=true;p.throttle=.5;
- for(let n=0;n<60;n++)updateFlight(p,controls('PageDown'),1/60,settings);
+ for(let n=0;n<70;n++)updateFlight(p,controls('KeyS'),1/60,settings);
  assert.ok(p.throttle<.2);
- for(let n=0;n<60;n++)updateFlight(p,controls('PageUp'),1/60,settings);
+ for(let n=0;n<70;n++)updateFlight(p,controls('KeyW'),1/60,settings);
  assert.ok(p.throttle>.45);
 });
 test('rotated runway geometry and ILS share the same coordinates',()=>{

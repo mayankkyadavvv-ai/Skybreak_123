@@ -2,14 +2,13 @@ import * as T from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { AirfieldDetail } from "./AirfieldDetail.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { assessTouchdown, runwayPoint, onRunway, GLIDE_ANGLE } from "./Landing.js";
 import { Jet } from "./Jet.js";
 import { World, BASE, terrainHeight } from "./World.js";
 import { Effects } from "./Effects.js";
+import { damp } from "./math.js";
 import { Input } from "./Input.js";
+import { ACTIONS, actionForCode, isHeld, bindingLabel } from "./InputActions.js";
 import { updateFlight } from "./FlightPhysics.js";
 import { Weapons, updateLock } from "./Weapons.js";
 import { updateAI } from "./AI.js";
@@ -17,8 +16,14 @@ import { FREE_FLIGHT, getMission, missionStatus } from "./Missions.js";
 import { CameraController } from "./Camera.js";
 import { AudioManager } from "./Audio.js";
 import { Atmosphere } from "./Atmosphere.js";
-import { getAirspaceAt, getNearestCity, checkBoundaryCrossing, CITIES, INTERNATIONAL_BORDERS, IAF_BASES } from "./GeoWorld.js";
+import { getAirspaceAt, getNearestCity, checkBoundaryCrossing, CITIES, INTERNATIONAL_BORDERS, IAF_BASES, getNearestIAFBase } from "./GeoWorld.js";
 import { loadPlayerJetConfig, savePlayerJetConfig, JET_MODELS } from "./JetConfigs.js";
+import { MultiplayerManager } from "../multiplayer/MultiplayerManager.js";
+import { progression } from "./Progression.js";
+import { canTouchdown, assessTouchdown, runwayPoint, onRunway, GLIDE_ANGLE } from "./Landing.js";
+import { configureRenderer, qualityFor } from "./Quality.js";
+import { EnvironmentLighting } from "./Environment.js";
+import { SpeedEffects } from "./SpeedEffects.js";
 
 class Game {
   constructor(canvas, ui, settings) {
@@ -39,6 +44,7 @@ class Game {
       powerPreference: "high-performance",
       logarithmicDepthBuffer: true
     });
+    this.renderer.info.autoReset=false;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.4));
     this.renderer.setSize(innerWidth, innerHeight);
     this.renderer.shadowMap.enabled = true;
@@ -49,50 +55,44 @@ class Game {
     this.camera = new T.PerspectiveCamera(68, innerWidth / innerHeight, 1.2, 95e3);
     this.world = new World(this.scene);
     this.atmosphere = new Atmosphere(this.world, this.scene);
-    this.airfieldDetail = new AirfieldDetail(this.scene);
-    const pmrem=new T.PMREMGenerator(this.renderer);
-    const environment=new RoomEnvironment();
-    this.environmentTarget=pmrem.fromScene(environment,.04);
-    this.scene.environment=this.environmentTarget.texture;
-    this.scene.environmentIntensity=.55;
-    environment.dispose();pmrem.dispose();
     this.effects = new Effects(this.scene);
+    this.speedEffects = new SpeedEffects(this.scene, this.camera);
     this.weapons = new Weapons(this.scene, this.effects, this.damage.bind(this), (type, position) => this.audio.play(type, { distance: position ? position.distanceTo(this.camera.position) : 0 }));
     this.jetConfig = loadPlayerJetConfig();
     this.player = new Jet("player", false, this.jetConfig);
     this.scene.add(this.player.model);
     this.player.position.set(0, 1550, 5200);
+    this.hangarLight = new T.SpotLight(0xffffff, 0, 50, Math.PI / 3.5, 0.4, 1.2);
+    this.hangarLight.position.set(0, 1568, 5200);
+    this.hangarLight.target = this.player.model;
+    this.scene.add(this.hangarLight);
     this.lastPlayerPos = new T.Vector3().copy(this.player.position);
     this.currentAirspace = getAirspaceAt(this.player.position.x, this.player.position.z);
     this.nearestCityInfo = getNearestCity(this.player.position.x, this.player.position.z);
     this.camera.position.copy(this.player.position).add(new T.Vector3(-22, 10, 30));
     this.cam = new CameraController(this.camera);
-    this.input = new Input(canvas, this.action.bind(this), () => this.state === "playing");
+    this.input = new Input(canvas, this.action.bind(this), () => this.state === "playing" && !this.ui.modalType, () => this.settings);
     this.selectedMission = FREE_FLIGHT.id;
     this.target = null;
     this.lock = 0;
     this.notifications = [];
+    this.multiplayer = new MultiplayerManager(this);
 
     // Post-Processing Pipeline (HDR Bloom & Tone Mapping)
     this.composer = null;
     this.bloomPass = null;
     try {
-      if (typeof window !== "undefined" && this.renderer && this.renderer.capabilities?.isWebGL2) {
-        // Multisample the offscreen scene too: canvas antialias alone does not
-        // smooth geometry rendered through the post-processing composer.
-        const sceneTarget = new T.WebGLRenderTarget(innerWidth, innerHeight, {
-          type: T.HalfFloatType,
-          samples: Math.min(4, this.renderer.capabilities.maxSamples)
-        });
-        this.composer = new EffectComposer(this.renderer, sceneTarget);
+      if (typeof window !== "undefined" && this.renderer && this.renderer.capabilities?.isWebGL2 && this.renderer.extensions.has("EXT_color_buffer_float")) {
+        const target = new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,depthBuffer:true});
+        this.composer = new EffectComposer(this.renderer, target);
         const renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
 
         this.bloomPass = new UnrealBloomPass(
           new T.Vector2(innerWidth, innerHeight),
-          0.55,  // Intensity
-          0.38,  // Radius
-          0.72   // Threshold: selective bright glow (afterburners, tracer rounds, ALS lights)
+          0.38,  // Intensity: crisp cinematic emissive glow
+          0.32,  // Radius
+          0.88   // Threshold: strict cutoff so daylight terrain/sky never blooms or bleeds
         );
         this.composer.addPass(this.bloomPass);
 
@@ -103,52 +103,27 @@ class Game {
       this.composer = null;
     }
 
+    try { this.environment=new EnvironmentLighting(this.renderer,this.scene); } catch { this.environment=null; }
+    this.world.onLightingChange=()=>{try{this.environment?.update(`${this.atmosphere.timeOfDay}:${this.atmosphere.weather}`,this.world);}catch{this.environment?.dispose();this.environment=null;}};
     this.applySettings();
-    window.addEventListener("resize", () => this.resize());
-    canvas.addEventListener("webglcontextlost", (e) => {
+    this.onResize=()=>this.resize();window.addEventListener("resize",this.onResize);
+    this.onContextLost=(e)=>{
       e.preventDefault();
       this.pause();
       ui.message("Graphics connection interrupted. Reload the page to reconnect.");
-    });
+    };canvas.addEventListener("webglcontextlost",this.onContextLost);
     this.last = performance.now();
     this.frame = this.frame.bind(this);
-    requestAnimationFrame(this.frame);
+    this.animationFrame=requestAnimationFrame(this.frame);
   }
 
   applySettings() {
-    this.world?.setQuality?.(this.settings.quality, this.renderer);
-    if (this.camera) {
-      this.camera.far = 220e3;
-      this.camera.updateProjectionMatrix();
-    }
-    if (this.effects) {
-      this.effects.quality = this.settings.quality === "low" ? 0.45 : this.settings.quality === "high" ? 1 : 0.7;
-    }
-    if (this.composer) {
-      const samples = this.settings.quality === "low" ? 0 : this.settings.quality === "clear" ? 2 : 4;
-      for (const target of [this.composer.renderTarget1, this.composer.renderTarget2]) {
-        const supported = Math.min(samples, this.renderer.capabilities.maxSamples);
-        if (target.samples !== supported) { target.dispose(); target.samples = supported; }
-      }
-    }
-    this.composer?.setPixelRatio(this.renderer.getPixelRatio());
-    if (this.bloomPass) {
-      if (["low", "clear"].includes(this.settings.quality)) {
-        this.bloomPass.enabled = false;
-      } else if (this.settings.quality === "high") {
-        this.bloomPass.enabled = true;
-        this.bloomPass.strength = 0.16;
-        this.bloomPass.threshold = 1.5;
-        this.bloomPass.radius = 0.12;
-      } else {
-        this.bloomPass.enabled = true;
-        this.bloomPass.strength = 0.10;
-        this.bloomPass.threshold = 1.5;
-        this.bloomPass.radius = 0.08;
-      }
-    }
-    if (this.settings.timeOfDay) this.atmosphere?.setTimeOfDay(this.settings.timeOfDay);
-    if (this.settings.weather) this.atmosphere?.setWeather(this.settings.weather);
+    const quality=configureRenderer(this,innerWidth,innerHeight,window.devicePixelRatio || 1);
+    this.world?.setQuality?.(this.settings.quality);
+    this.effects?.setQuality?.(quality.particles,this.settings.effectIntensity ?? .8);
+    this.speedEffects?.setQuality?.(quality.streaks,this.settings.effectIntensity ?? .8);
+    if(this.atmosphere && (!this.atmosphere.hasApplied || this.settings.timeOfDay!==this.atmosphere.timeOfDay))this.atmosphere.setTimeOfDay(this.settings.timeOfDay || "day");
+    if(this.atmosphere && this.settings.weather && this.settings.weather!==this.atmosphere.weather)this.atmosphere.setWeather(this.settings.weather);
   }
 
   equipJet(config) {
@@ -157,6 +132,7 @@ class Game {
     savePlayerJetConfig(this.jetConfig);
     this.player.applyCustomization(this.jetConfig);
     this.recalculateLoadout();
+    this.cam?.reset?.(this.player);
     if (this.ui?.onJetChanged) this.ui.onJetChanged(this.jetConfig, this.player.stats);
   }
 
@@ -170,17 +146,14 @@ class Game {
   }
 
   resize() {
-    this.world.setQuality(this.settings.quality, this.renderer);
-    this.composer?.setPixelRatio(this.renderer.getPixelRatio());
-    this.renderer.setSize(innerWidth, innerHeight);
-    this.composer?.setSize(innerWidth, innerHeight);
-    this.camera.aspect = innerWidth / innerHeight;
-    this.camera.updateProjectionMatrix();
+    configureRenderer(this,innerWidth,innerHeight,window.devicePixelRatio || 1);
     this.ui.resize();
   }
 
   action(code) {
-    if (code === "Escape") {
+    const action = ACTIONS[code] ? code : actionForCode(code, this.settings);
+    if (action === "pause") {
+      if (this.ui.modalType && this.state === "playing") { this.ui.closePanel(); return; }
       if (this.state === "playing" || this.state === "intro") this.pause();
       else if (this.state === "paused") this.ui.closePanel();
       else this.ui.closePanel();
@@ -190,33 +163,66 @@ class Game {
       this.pause();
       return;
     }
-    if (this.state === "menu") {
-      if (code === "Enter" || code === "Space") {
-        this.start();
+    if (this.state !== "playing") return;
+    if (this.multiplayer?.active) {
+      if (action === "teamComms" || action === "allComms") {
+        this.multiplayer.comms?.toggle?.(action === "teamComms");
         return;
       }
+      if (action?.startsWith("command") && this.multiplayer.comms?.isOpen) {
+        const num = parseInt(action.replace("command", ""), 10);
+        if (num >= 1 && num <= 7) {
+          this.multiplayer.comms.triggerCommand(num);
+          return;
+        }
+      }
+      if (!this.player.alive && this.multiplayer.spectator?.isSpectating) {
+        if (action === "yawLeft") { this.multiplayer.spectator.selectNextTeammate(-1); return; }
+        if (action === "yawRight") { this.multiplayer.spectator.selectNextTeammate(1); return; }
+      }
     }
-    if (this.state !== "playing") return;
-    if (code === "KeyH") { this.pause(); this.ui.showControls(); return; }
-    if (code === "KeyM") { this.ui.toggleMap(); return; }
-    if (code === "KeyK") { this.player.flaps = !this.player.flaps; this.player.landingMode = true; this.ui.message(this.player.flaps ? "FLAPS DOWN · LANDING MODE" : "FLAPS UP"); return; }
-    if (code === "KeyJ") { this.player.landingMode = !this.player.landingMode; this.ui.message(this.player.landingMode ? "LANDING MODE · PgUp/PgDn throttle · K flaps" : "CRUISE ASSIST"); return; }
-    if (code === "KeyG") { this.toggleGear(); return; }
-    if (code === "KeyL") { this.ui.showAirbaseLandingModal(); return; }
-    if (code === "KeyT" && this.atmosphere) {
-      const cycle = { day: "sunset", sunset: "night", night: "day" };
-      const next = cycle[this.atmosphere.timeOfDay] || "day";
+    if (this.ui.modalType) {
+      if (action === 'tacticalMap' && this.ui.modalType === 'map') this.ui.closePanel();
+      return;
+    }
+    if (action === 'help') { this.pause(); this.ui.showControls(); return; }
+    if (action === 'tacticalMap') { this.input?.clear?.(); this.ui.toggleMap(); return; }
+    if (action === 'missile') { this.launch(); return; }
+    if (action === 'targetNext') { this.cycleTarget(1); return; }
+    if (action === 'targetPrev') { this.cycleTarget(-1); return; }
+    if (action === 'landingGear') { this.toggleGear(); return; }
+    if (action === 'landingAssist') { this.input?.clear?.(); this.ui.showAirbaseLandingModal(); return; }
+    if (action === "timeOfDay" && this.atmosphere) {
+      const cycle = { morning: "midday", midday: "day", day: "sunset", sunset: "night", night: "morning" };
+      const next = cycle[this.atmosphere.timeOfDay] || "morning";
       this.atmosphere.setTimeOfDay(next);
       this.settings.timeOfDay = next;
       this.ui.message(`TIME OF DAY: ${next.toUpperCase()}`, 2);
       return;
     }
-    if (code === "KeyX") { this.input.clear(); this.input.levelTimer = 3; this.ui.message("Auto-leveling active. Keep mouse centered."); return; }
-    if (code === "Missile" || (code === "KeyE" && this.settings.input !== "advanced")) this.launch();
-    if (code === "KeyR") this.cycleTarget();
-    if (code === "KeyF") this.flare();
-    if (code === "KeyC") this.cam.cycle();
-    if (code === "KeyV") this.cam.mode = this.cam.mode === "cockpit" ? "chase" : "cockpit";
+    if (action === "flare") { this.flare(); return; }
+    if (action === "camera") { this.cam.cycle(); return; }
+    if (action === "cockpit") { this.cam.mode = this.cam.mode === "cockpit" ? "chase" : "cockpit"; return; }
+  }
+
+  resetSessionCounters() {
+    this.missileCooldown = 0;
+    this.flareCooldown = 0;
+    this.cannonCooldown = 0;
+    this.warningTimer = 0;
+    this.incoming = [];
+    this.outOfArea = false;
+    this.elapsed = 0;
+    this.score = 0;
+    this.lock = 0;
+    this.lockSound = false;
+    this.lastKill = -20;
+    this.combo = 0;
+    this.damageFlash = 0;
+    this.notifications = [];
+    this.stats = { kills: 0, hits: 0, shots: 0, missiles: 0, missileHits: 0 };
+    this.accumulator = 0;
+    this.input.clear();
   }
 
   start(id = this.selectedMission) {
@@ -225,10 +231,7 @@ class Game {
     this.mission = getMission(id);
     this.selectedMission = this.mission.id;
     for (const j of [...this.enemies, ...this.allies]) {
-      this.scene.remove(j.model);
-      j.model.traverse((o) => {
-        if (o.isMesh) o.geometry.dispose();
-      });
+      j.dispose?.();
     }
     this.enemies = [];
     this.allies = [];
@@ -239,12 +242,6 @@ class Game {
     this.player.maxHp = this.player.hp;
     this.player.alive = true;
     this.player.deadTime = 0;
-    this.player.isLanded = false;
-    this.player.currentBase = null;
-    this.player.landingMode = false;
-    this.player.flaps = false;
-    this.serviceTime = 0;
-    this.player.setGear(false);
     this.player.speed = 245;
     this.player.throttle = 0.6;
     this.player.angular.set(0, 0, 0);
@@ -257,25 +254,16 @@ class Game {
     this.player.velocity.set(0, 0, -245);
     this.player.boost = false;
     this.player.model.visible = true;
+    this.player.isLanded = false;
+    this.player.currentBase = null;
+    this.player.landingMode = false;
+    this.player.flaps = false;
+    this.player.takeoffCooldown = 0;
     this.missilesLeft = this.player.stats?.missiles ?? 6;
     this.cannonLeft = this.player.stats?.cannon ?? 1200;
     this.flaresLeft = this.player.stats?.flares ?? 20;
-    this.missileCooldown = 0;
-    this.flareCooldown = 0;
-    this.cannonCooldown = 0;
-    this.warningTimer = 0;
-    this.incoming = [];
+    this.resetSessionCounters();
     this.player.stall = false;
-    this.outOfArea = false;
-    this.elapsed = 0;
-    this.score = 0;
-    this.lock = 0;
-    this.lockSound = false;
-    this.lastKill = -20;
-    this.combo = 0;
-    this.damageFlash = 0;
-    this.notifications = [];
-    this.stats = { kills: 0, hits: 0, shots: 0, missiles: 0, missileHits: 0 };
     for (let i = 0; i < this.mission.fighters; i++) {
       const j = new Jet("enemy");
       j.position.set((i % 3 - 1) * 850, 1650 + i % 2 * 250, this.player.position.z - 3600 - Math.floor(i / 3) * 1700 - i * 250);
@@ -300,7 +288,6 @@ class Game {
     this.cam.mode = "chase";
     this.state = "playing";
     this.intro = 0;
-    this.accumulator = 0;
     this.camera.position.copy(this.player.position).add(new T.Vector3(0, 8.5, 32));
     this.camera.lookAt(this.player.position.clone().add(new T.Vector3(0, 0, -110)));
     this.camera.up.set(0, 1, 0);
@@ -309,13 +296,14 @@ class Game {
     this.cam?.reset?.(this.player);
     this.ui.inGame();
     this.ui.message(this.mission.name + " · " + this.mission.objective, 4.5);
-    this.notify(this.mission.freeFlight ? "FLIGHT GUIDE" : "COMMAND", this.mission.freeFlight ? "Free flight active. Press M for Tactical World Map, T for Time & Sky." : "Keep enemy inside reticle. Press E or Right-Click when LOCKED.", 7);
+    this.notify(this.mission.freeFlight ? "FLIGHT GUIDE" : "COMMAND", this.mission.freeFlight ? `Free flight active. ${bindingLabel("tacticalMap",this.settings)} opens the map.` : `Keep the target in the reticle. ${bindingLabel("missile",this.settings)} launches when LOCKED.`, 7);
   }
 
   pause() {
     if (this.state === "playing" || this.state === "intro") {
       this.beforePause = this.state;
       this.state = "paused";
+      document.exitPointerLock?.();
       this.input.clear();
       this.ui.showPause();
     }
@@ -330,16 +318,16 @@ class Game {
   }
 
   menu() {
+    if (this.multiplayer?.active) {
+      this.multiplayer.leaveMatch();
+    }
     this.audio.stopPreview?.();
     this.state = "menu";
     this.input.clear();
     this.weapons.clear();
     this.effects.clear();
     for (const j of [...this.enemies, ...this.allies]) {
-      this.scene.remove(j.model);
-      j.model.traverse((o) => {
-        if (o.isMesh) o.geometry.dispose();
-      });
+      j.dispose?.();
     }
     this.enemies = [];
     this.allies = [];
@@ -354,9 +342,30 @@ class Game {
     this.ui.showMenu();
   }
 
-  cycleTarget() {
+  cycleTarget(dir = 1) {
+    if (this.multiplayer?.active) {
+      const available = Array.from(this.multiplayer.remotePlayers.values()).filter((e) => e.alive && e.team !== this.multiplayer.localTeam);
+      if (available.length > 0) {
+        let idx = available.findIndex((e) => e.id === this.target?.id);
+        if (idx === -1) idx = 0;
+        else idx = (idx + dir + available.length) % available.length;
+        this.target = available[idx] || null;
+      } else {
+        this.target = null;
+      }
+      this.lock = 0;
+      this.lockSound = false;
+      return;
+    }
     const available = this.enemies.filter((e) => e.alive);
-    this.target = available[(available.indexOf(this.target) + 1) % available.length] || null;
+    if (available.length > 0) {
+      let idx = available.indexOf(this.target);
+      if (idx === -1) idx = 0;
+      else idx = (idx + dir + available.length) % available.length;
+      this.target = available[idx] || null;
+    } else {
+      this.target = null;
+    }
     this.lock = 0;
     this.lockSound = false;
   }
@@ -370,8 +379,10 @@ class Game {
     this.player.angular.set(0, 0, 0);
     this.player.isLanded = false;
     this.player.currentBase = null;
-    this.player.landingMode = false;this.player.flaps = false;
-    this.player.setGear(true);
+    this.player.landingMode = false;
+    this.player.flaps = false;
+    this.player.takeoffCooldown = 0;
+    this.player.gearDown = true;
     this.player.velocity.set(0, 0, -220);
     this.player.speed = 220;
     this.player.throttle = 0.58;
@@ -386,7 +397,21 @@ class Game {
   }
 
   chooseEasyTarget() {
-    if (this.settings.input === "advanced" || this.lock > 0 || this.mission.freeFlight) return;
+    if (this.multiplayer?.active) {
+      if (this.settings.flightMode === "manual" || this.lock > 0) return;
+      let best = this.target, bestDot = 0.94;
+      const direction = this.player.forward;
+      for (const jet of this.multiplayer.remotePlayers.values()) {
+        if (!jet.alive || jet.team === this.multiplayer.localTeam) continue;
+        const offset = jet.position.clone().sub(this.player.position);
+        if (offset.length() > 8500) continue;
+        const dot = direction.dot(offset.normalize());
+        if (dot > bestDot) { bestDot = dot; best = jet; }
+      }
+      if (best !== this.target) { this.target = best; this.lock = 0; this.lockSound = false; }
+      return;
+    }
+    if (this.settings.flightMode === "manual" || this.lock > 0 || this.mission.freeFlight) return;
     let best = this.target, bestDot = 0.94;
     const direction = this.player.forward;
     for (const jet of this.enemies) {
@@ -400,6 +425,33 @@ class Game {
   }
 
   launch() {
+    if (this.multiplayer?.active) {
+      if (!this.multiplayer.matchOptions?.weaponsEnabled) return;
+      if (this.missilesLeft <= 0) {
+        this.ui.message("No missiles remaining. Use the cannon.");
+        return;
+      }
+      if (this.missileCooldown > 0) {
+        this.ui.message("Missile rack reloading");
+        return;
+      }
+      if (!this.target?.alive || this.lock < 1.4) {
+        this.ui.message("Keep the selected target inside the ring until LOCKED");
+        return;
+      }
+      const origin = this.player.position.clone().add(this.player.forward.clone().multiplyScalar(4));
+      const dir = this.player.forward.clone();
+      this.multiplayer.fireMissile(this.target.id, origin, dir);
+      this.weapons.missile(this.player, this.target);
+      this.missilesLeft--;
+      this.stats.missiles++;
+      this.missileCooldown = 1.7;
+      this.lock = 0;
+      this.lockSound = false;
+      this.cam.shake = 0.5;
+      this.notify("KESTREL", "Missile away.", 2);
+      return;
+    }
     if (this.mission?.freeFlight) return;
     if (this.missilesLeft <= 0) {
       this.ui.message("No missiles remaining. Use the cannon.");
@@ -425,11 +477,22 @@ class Game {
   }
 
   flare() {
+    if (this.multiplayer?.active) {
+      if (!this.multiplayer.matchOptions?.weaponsEnabled) return;
+      if (this.flareCooldown > 0 || this.flaresLeft <= 0) return;
+      this.flaresLeft--;
+      this.flareCooldown = 0.75;
+      this.multiplayer.deployFlares();
+      this.weapons.deployFlares(this.player);
+      this.ui.message("Flares deployed · missile diverted", 2);
+      return;
+    }
     if (this.mission?.freeFlight) return;
     if (this.flareCooldown > 0 || this.flaresLeft <= 0) return;
     this.flaresLeft--;
     this.flareCooldown = 0.75;
     const n = this.weapons.deployFlares(this.player);
+    if (n) progression.recordFlareDeflection();
     this.ui.message(n ? "Flares deployed · missile diverted" : "Flares deployed", 2);
   }
 
@@ -468,6 +531,7 @@ class Game {
           const bonus = Math.max(0, this.combo - 1) * 250;
           this.score += 1e3 + bonus;
           this.ui.message("HOSTILE DOWN  +1,000" + (bonus ? "  · COMBO +" + bonus : ""), 2.3);
+          progression.recordKill(weapon);
         }
         if (this.target === jet) this.cycleTarget();
       }
@@ -475,31 +539,40 @@ class Game {
   }
 
   notify(who, text, ttl = 4) {
+    if (this.notifications.some(n => n.who === who && n.text === text)) return;
     this.notifications.push({ who, text, ttl });
-    if (this.notifications.length > 3) this.notifications.shift();
+    if (this.notifications.length > 5) this.notifications.pop();
   }
 
   finish(success, reason = "") {
     if (this.state === "result") return;
     this.state = "result";
     this.input.clear();
-    if (success) this.score += 5e3;
+    if (success) {
+      this.score += 5e3;
+      progression.recordMissionWin(this.mission?.name || "SORTIE");
+    }
     this.ui.showResult(success, reason);
   }
 
   step(dt) {
+    this.player.beginStep?.();
+    for (const jet of this.enemies) jet.beginStep?.();
+    for (const jet of this.allies) jet.beginStep?.();
     this.elapsed += dt;
+    if (this.multiplayer?.active) {
+      this.multiplayer.step(dt);
+    }
     this.missileCooldown = Math.max(0, this.missileCooldown - dt);
     this.flareCooldown = Math.max(0, this.flareCooldown - dt);
     this.cannonCooldown -= dt;
     this.damageFlash = Math.max(0, this.damageFlash - dt);
     this.warningTimer -= dt;
-    this.notifications.forEach((n) => (n.ttl -= dt));
-    this.notifications = this.notifications.filter((n) => n.ttl > 0);
+    if (this.notifications[0]) { this.notifications[0].ttl -= dt; if(this.notifications[0].ttl <= 0) this.notifications.shift(); }
 
     if (this.player.alive) {
-      this.input.freeLook = this.cam.mode === "free";
-      const previousPosition = this.player.position.clone();
+      this._previousFlightPosition ||= new T.Vector3();
+      this._previousFlightPosition.copy(this.player.position);
       updateFlight(this.player, this.input, dt, this.settings);
 
       // Check boundary crossing
@@ -514,45 +587,146 @@ class Game {
       this.currentAirspace = getAirspaceAt(this.player.position.x, this.player.position.z);
       this.nearestCityInfo = getNearestCity(this.player.position.x, this.player.position.z);
 
-      // Wingtip contrails during high-speed or high-G maneuvers
-      if (this.effects?.contrail && (this.player.boost || Math.hypot(this.player.angular.x, this.player.angular.z) > 0.85)) {
+      // Signature Aerodynamic Wingtip Contrails during high-speed, high-G, or afterburner boost
+      const alt = this.player.position.y;
+      const isBoost = this.player.boost;
+      const isHighG = Math.hypot(this.player.angular.x, this.player.angular.z) > 0.32;
+      if (this.effects?.contrail && (isBoost || isHighG || this.player.speed > 210)) {
         const tips = this.player.getWingTips?.();
         if (tips) {
-          this.effects.contrail(tips.left);
-          this.effects.contrail(tips.right);
+          this.effects.contrail(tips.left, 18, 1.2, isBoost, alt);
+          this.effects.contrail(tips.right, 18, 1.2, isBoost, alt);
         }
       }
 
-      for (const base of IAF_BASES) {
-        const result = assessTouchdown(base, previousPosition, this.player);
-        if (!result) continue;
-        if (result.safe) {
-          this.touchdown(base);
-          if (result.hard) this.player.hp=Math.max(1,this.player.hp-20);
-          this.effects.tireSmoke?.(this.player.position,this.player.velocity);
-          this.ui.message(`${result.hard ? 'HARD' : 'SMOOTH'} TOUCHDOWN · ${result.sink.toFixed(1)} m/s · Hold B to brake`,5);
+      // High-speed aerodynamic rush streaks & transonic sonic boom effects
+      
+
+      // Cosmetic nozzle exhaust glow (not screen-space refraction)
+      if (isBoost && this.effects?.exhaustGlow) {
+        const nozzlePos = this.player.getExhaustPosition();
+        this.effects.exhaustGlow(nozzlePos, this.player.velocity);
+      }
+
+      // Low-altitude sea spray water wake rooster-tail (<38m over ocean)
+      if (this.effects?.waterWake && this.player.position.y <= 38 && this.player.speed > 80) {
+        const groundH = terrainHeight(this.player.position.x, this.player.position.z);
+        if (groundH <= 6) {
+          this.effects.waterWake(this.player.position, this.player.velocity, this.player.speed);
+        }
+      }
+
+      // Airbase Terminal Inbound Proximity & ATC Clearance Callout
+      const nearBaseInfo = getNearestIAFBase ? getNearestIAFBase(this.player.position.x, this.player.position.z) : null;
+      if (nearBaseInfo && nearBaseInfo.distance < 8500 && !this.player.isLanded) {
+        const nearBase = nearBaseInfo.base;
+        if (this.lastAlertedBase !== nearBase.id && (this.elapsed - (this.lastBaseAlertTime || 0)) > 40) {
+          this.lastAlertedBase = nearBase.id;
+          this.lastBaseAlertTime = this.elapsed;
+          const rwyNum = (nearBase.runwayHeading || 0) === 0 ? "36/18" : "09/27";
+          this.notify("AIRBASE APPROACH", `${nearBase.callsign}: Inbound aircraft identified. Runway ${rwyNum} active, elevation ${nearBase.elevation}M. Cleared for visual landing approach.`);
+          this.ui.message(`🛬 APPROACHING ${nearBase.shortName.toUpperCase()} · ALIGN RUNWAY · SINK RATE < 18 M/S`, 5.0);
+          this.audio.playLock?.();
+        }
+      }
+
+      // Takeoff climbout immunity countdown
+      if (this.player.takeoffCooldown > 0) {
+        this.player.takeoffCooldown -= dt;
+      }
+
+      // Runway touchdown detection for IAF strategic airbases & Home base
+      const rw = this.world.getRunwayAt ? this.world.getRunwayAt(this.player.position.x, this.player.position.z) : null;
+      const nearAirbase = this.world.getAirbaseNear ? this.world.getAirbaseNear(this.player.position.x, this.player.position.z, 3800) : null;
+      const targetBase = rw?.base || nearAirbase?.base;
+      const groundElev = rw?.elevation ?? terrainHeight(this.player.position.x,this.player.position.z);
+      const groundContactY = groundElev + 3.2;
+      const altAboveGround = this.player.position.y - groundContactY;
+      const sinkRate = -this.player.velocity.y;
+
+      const isDescending = this.player.velocity.y < -0.8 && sinkRate > 0.8;
+      const onTakeoffClimb = (this.player.takeoffCooldown || 0) > 0 || this.player.velocity.y > 0.5;
+
+      let runwayContact = null;
+      if (!this.player.isLanded && !onTakeoffClimb) {
+        for (const base of IAF_BASES) {
+          const result = assessTouchdown(base, this._previousFlightPosition, this.player);
+          if (!result) continue;
+          runwayContact = result;
+          if (result.safe) {
+            this.player.position.copy(result.hit);
+            this.touchdown(base);
+            if (result.hard) this.player.hp = Math.max(1, this.player.hp - 20);
+          } else {
+            if (this.mission.freeFlight) this.resetPracticePosition();
+            else this.damage(this.player, 1000, null, "terrain");
+            this.ui.message(result.reason, 4);
+          }
+          break;
+        }
+      }
+
+      // 1. Aerodynamic Ground Effect Lift Cushion: smoothly flares and cushions descent rate when landing
+      if (this.settings.flightMode!=="manual" && !this.player.isLanded && !onTakeoffClimb && altAboveGround > 0 && altAboveGround < 30 && sinkRate > 0.6) {
+        const cushionFactor = Math.min(1.0, 1.0 - altAboveGround / 30.0);
+        this.player.velocity.y = damp(this.player.velocity.y, -1.5, 6.5 * cushionFactor, dt);
+      }
+
+      // 2. Safety Landing Gear Deployment: auto-extend gear on short final descent if pilot forgot
+      if (this.settings.flightMode!=="manual" && !this.player.isLanded && !onTakeoffClimb && !this.player.gearDown && altAboveGround <= 28 && altAboveGround > -3.0 && isDescending) {
+        this.player.setGear(true);
+        this.ui.message("AVIONICS: LANDING GEAR AUTO-EXTENDED [DOWN] 🛬", 2.2);
+        this.audio.playLock?.();
+      }
+
+      // 3. Smooth Wheel Touchdown:
+      // ONLY triggers when NOT on takeoff climb, actively descending downwards, and wheels meet surface
+      const overRunway = IAF_BASES.some(base => onRunway(base, this.player.position));
+      if (!runwayContact && !overRunway && !this.player.isLanded && !onTakeoffClimb && isDescending && altAboveGround >= -2.5 && altAboveGround <= 3.8) {
+        if (groundElev>3 && canTouchdown(this.player,sinkRate)) {
+          const landBase = targetBase || {
+            id: "field_landing",
+            name: "Tactical Field Landing",
+            shortName: "Field Landing",
+            elevation: groundElev,
+            squadron: "Expeditionary Force"
+          };
+          this.touchdown(landBase);
+          // Tire smoke puff & suspension bump
+          if (this.effects?.smoke) {
+            const wheelPos = this.player.position.clone().add(new T.Vector3(0, -1.5, 0));
+            this.effects.smoke(wheelPos, false, 8);
+          }
+          if (this.cam) this.cam.shake = 0.22;
+        }
+      }
+
+      // Runway Liftoff Detection & Departure Chime
+      if (this.player.justLiftedOff) {
+        this.player.justLiftedOff = false;
+        this.audio.playLock?.();
+        this.ui.message("🛫 AIRBORNE! CLIMBING OUT · CLEARED FOR COMBAT FLIGHT", 4.5);
+        const depBase = targetBase || (nearBaseInfo && nearBaseInfo.base);
+        if (depBase) {
+          this.notify("AIRBASE DEPARTURE", `${depBase.callsign || "AIRBASE TOWER"}: Airborne confirmed. Radar contact established. Good hunting.`);
+        }
+      }
+
+      if (!this.player.isLanded && !onTakeoffClimb && this.world.collision(this.player.position, this.player.isLanded, this.player.gearDown)) {
+        // Safety catch: if player is near surface level in landing zone, execute safe touchdown
+        if (!runwayContact && !overRunway && groundElev > 3 && altAboveGround >= -2.5 && canTouchdown(this.player, sinkRate)) {
+          const landBase = targetBase || {
+            id: "field_landing",
+            name: "Tactical Field Landing",
+            shortName: "Field Landing",
+            elevation: groundElev,
+            squadron: "Expeditionary Force"
+          };
+          this.touchdown(landBase);
         } else {
-          this.ui.message(result.reason,4);
-          if(this.mission.freeFlight)this.resetPracticePosition();
-          else this.damage(this.player,1000,null,'terrain');
+          if (this.mission.freeFlight) this.resetPracticePosition();
+          else this.damage(this.player, 1e3, null, "terrain");
         }
-        break;
-      }
-      if (this.player.isLanded) {
-        const base=IAF_BASES.find(b=>b.id===this.player.currentBase);
-        if(base && !onRunway(base,this.player.position,20)) {
-          this.ui.message('RUNWAY EXCURSION · Resetting to safe parking',4);
-          this.landAtBase(base.id);
-        }
-        if(this.player.speed<2 && this.player.throttle<.15 && !this.serviced) {
-          this.serviceTime=(this.serviceTime||0)+dt;
-          if(this.serviceTime>=5) {this.recalculateLoadout();this.serviced=true;this.stats.rearms=(this.stats.rearms||0)+1;this.ui.message('GROUND SERVICE COMPLETE · Repaired & rearmed',4);}
-        } else if(this.player.speed>=2) this.serviceTime=0;
-      }
-
-      if (this.world.collision(this.player.position, this.player.isLanded, this.player.gearDown)) {
-        if (this.mission.freeFlight) this.resetPracticePosition();
-        else this.damage(this.player, 1e3, null, "terrain");
       }
 
       const radius = Math.hypot(this.player.position.x, this.player.position.z);
@@ -568,7 +742,19 @@ class Game {
         else { this.player.velocity.y -= 30; this.ui.message("Altitude ceiling · lower your nose", 1); }
       }
 
-      if (!this.mission.freeFlight && (this.input.fire || this.input.keys.has("Space")) && this.cannonCooldown <= 0 && this.cannonLeft > 0) {
+      const isFiringCannon = !this.ui.modalType && isHeld(this.input, "cannon", this.settings);
+      if (this.multiplayer?.active) {
+        if (this.multiplayer.matchOptions?.weaponsEnabled && isFiringCannon && this.cannonCooldown <= 0 && this.cannonLeft > 0) {
+          const origin = this.player.position.clone().add(this.player.forward.clone().multiplyScalar(4));
+          const dir = this.player.forward.clone();
+          this.multiplayer.fireCannon(origin, dir);
+          this.weapons.cannon(this.player, this.target);
+          this.cannonLeft--;
+          this.stats.shots++;
+          this.cannonCooldown = 0.065;
+          this.cam.shake = 0.15;
+        }
+      } else if (!this.mission.freeFlight && isFiringCannon && this.cannonCooldown <= 0 && this.cannonLeft > 0) {
         if (this.weapons.cannon(this.player, this.target)) {
           this.cannonLeft--;
           this.stats.shots++;
@@ -620,13 +806,34 @@ class Game {
           j.model.visible = false;
           if (j === this.player) this.finish(false, "Your aircraft was destroyed.");
         }
-      } else if (j.hp < 65 && Math.random() < 0.25) {
-        this.effects.smoke(j.position, true, j.hp < 30 ? 20 : 10);
-        if (j.hp < 30) this.effects.emit(j.position, new T.Vector3(0, 3, 0), 16744245, 8, 0.5);
+      } else if (j.hp < 80) {
+        // Progressive Aircraft Damage VFX Escalation (Vapor leak -> Engine smoke -> Fire & sparks)
+        const hpRatio = j.hp / (j.maxHp || 100);
+        if (hpRatio < 0.3) {
+          // Critical damage: violent fire, black smoke and trailing sparks
+          if (Math.random() < 0.65) {
+            this.effects.smoke(j.position, true, 26);
+            const firePos = j.position.clone().add(new T.Vector3((Math.random() - 0.5) * 1.5, 0.2, (Math.random() - 0.5) * 1.5));
+            this.effects.emit(firePos, new T.Vector3((Math.random() - 0.5) * 4, 3, (Math.random() - 0.5) * 4), 0xff4511, 14, 0.35, 1.8);
+            if (Math.random() < 0.4) {
+              this.effects.emit(firePos, new T.Vector3((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12), 0xffdd44, 5, 0.6, 1.2, -15);
+            }
+          }
+        } else if (hpRatio < 0.55) {
+          // Moderate damage: dark engine smoke
+          if (Math.random() < 0.45) {
+            this.effects.smoke(j.position, true, 18);
+          }
+        } else {
+          // Light damage: hydraulic/fuel vapor leak
+          if (Math.random() < 0.28) {
+            this.effects.emit(j.position, new T.Vector3((Math.random() - 0.5) * 2, 1, (Math.random() - 0.5) * 2), 0xd5e2ea, 10, 0.8, 2.0);
+          }
+        }
       }
     }
 
-    if (this.state === "playing" && !this.mission.freeFlight) {
+    if (this.state === "playing" && !this.mission.freeFlight && !this.multiplayer?.active) {
       const status = missionStatus(this.enemies, this.player, BASE);
       if (status === "complete") this.finish(true);
       if (status === "base-lost") this.finish(false, "A bomber reached the friendly airbase.");
@@ -634,15 +841,23 @@ class Game {
   }
 
   frame(now) {
-    requestAnimationFrame(this.frame);
-    const dt = Math.min(0.06, (now - this.last) / 1e3);
+    if(this.disposed)return;
+    this.animationFrame=requestAnimationFrame(this.frame);
+    const frameSeconds=Math.max(.001,(now-this.last)/1000);
+    const dt=Math.min(.06,frameSeconds);
     this.last = now;
-    this.fps += (1 / Math.max(1e-3, dt) - this.fps) * 0.03;
+    this.input.poll?.(dt);
+    this.fps += (1/frameSeconds-this.fps)*.03;
+    this.frameTimes ||= [];this.frameTimes.push(frameSeconds*1000);if(this.frameTimes.length>240)this.frameTimes.shift();
     this.menuTime += dt;
+
+    if (this.hangarLight) {
+      this.hangarLight.intensity = this.state === "hangar" ? 3.8 : 0;
+    }
 
     if (this.state === "menu" || this.state === "quit") {
       this.player.animate(this.menuTime);
-      this.player.model.position.y = 1550 + Math.sin(this.menuTime * 0.7) * 0.35;
+      this.player.position.y = 1550 + Math.sin(this.menuTime * 0.7) * 0.35;
     } else if (this.player?.alive) {
       const isFiring = this.cannonCooldown > 0.02;
       this.player.animate(
@@ -651,7 +866,9 @@ class Game {
         this.player.angular?.x || 0,
         this.player.angular?.z || 0,
         this.player.speed || 0,
-        isFiring
+        isFiring,
+        this.player.angular?.y || 0,
+        this.player.airBrake || false
       );
     }
 
@@ -669,60 +886,101 @@ class Game {
         if (this.state === "result") break;
       }
       this.effects.update(dt);
-      this.airfieldDetail?.update(this.player);
     }
 
+    const renderAlpha = this.state === "playing" ? this.accumulator * 60 : 1;
+    this.player.renderInterpolated?.(renderAlpha);
+    for (const jet of this.enemies) jet.renderInterpolated?.(renderAlpha);
+    for (const jet of this.allies) jet.renderInterpolated?.(renderAlpha);
     if (this.state !== "paused" && this.state !== "result") {
       this.cam.update(dt, this);
       this.world.update(dt, this.player.position, this.camera);
       this.atmosphere?.update(dt, this.camera, this.player.position, this.audio);
+      this.speedEffects?.update(dt,this.player,this.camera,this.audio,this.world);
     }
 
+    this.player.updateVisualLOD?.(this.player.position.distanceTo(this.camera.position));
+    for(const jet of [...this.enemies,...this.allies])jet.updateVisualLOD?.(jet.position.distanceTo(this.camera.position));
     this.audio.update(this.player, ["playing", "intro", "dying"].includes(this.state), this.cam.mode);
     this.ui.update(this, dt);
 
-    if (this.composer && this.settings.quality !== "low") {
+    this.renderer.info.reset();
+    if (this.composer) {
       this.composer.render();
     } else {
       this.renderer.render(this.scene, this.camera);
     }
   }
 
+  getPerformanceSnapshot(){
+    const frames=[...(this.frameTimes || [])].sort((a,b)=>a-b),pick=q=>frames[Math.floor((frames.length-1)*q)] || 0;
+    return {sampleFrames:frames.length,frameP50ms:pick(.5),frameP95ms:pick(.95),fps:this.fps,quality:this.settings.quality,dpr:this.renderer.getPixelRatio(),drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,geometries:this.renderer.info.memory.geometries,textures:this.renderer.info.memory.textures,programs:this.renderer.info.programs?.length,terrainCache:this.world.terrainChunks.cache.size};
+  }
+  dispose(){
+    if(this.disposed)return;this.disposed=true;cancelAnimationFrame(this.animationFrame);
+    window.removeEventListener('resize',this.onResize);this.renderer.domElement.removeEventListener('webglcontextlost',this.onContextLost);
+    this.input.dispose();this.multiplayer.clearRemotePlayers();this.multiplayer.network.disconnect();
+    for(const jet of [this.player,...this.enemies,...this.allies])jet.dispose();
+    this.weapons.dispose();this.effects.dispose();this.speedEffects.dispose();this.atmosphere.dispose();this.environment?.dispose();this.world.dispose();
+    for(const pass of this.composer?.passes || [])pass.dispose?.();this.composer?.dispose();this.renderer.dispose();this.audio.dispose()?.catch?.(()=>{});
+  }
   toggleGear() {
     const down = this.player.toggleGear();
-    this.ui.message(down ? "LANDING GEAR: EXTENDED [DOWN] 🛬" : "LANDING GEAR: RETRACTED [UP] ✈️", 2.0);
+    if (!down) { this.player.landingMode = false; this.player.flaps = false; }
+    this.ui.message(down ? "LANDING GEAR: EXTENDED [DOWN] 🛬 · READY FOR TOUCHDOWN" : "LANDING GEAR: RETRACTED [UP] ✈️", 2.5);
     return down;
   }
 
   touchdown(base) {
     if (!base) return;
     this.player.isLanded = true;
+    this.player.setGear(true);
+    this.player.landingMode = true;
     this.player.landedElev = base.elevation;
     this.player.currentBase = base.id;
     this.player.position.y = base.elevation + 3.2;
     this.player.velocity.y = 0;
+    this.player.takeoffCooldown = 0;
+    this.player.speed = Math.min(this.player.speed, 110);
+    this.player.throttle = Math.min(this.player.throttle || 0, 0.25);
     this.expandedMapMode = true;
 
-    this.player.landingMode = true;
-    this.player.throttle = 0;
-    this.serviceTime = 0; this.serviced = false;
-    this.ui.message(`TOUCHDOWN · ${base.shortName} · B brakes, stop for 5s to service`,5);
+    const online = this.multiplayer?.active;
+    if (online && IAF_BASES.some((b) => b.id === base.id)) {
+      this.multiplayer.sendLocalTelemetry();
+      this.multiplayer.network.send("airbase_rearm", { baseId: base.id });
+    } else if (!online) {
+      this.player.hp = this.player.maxHp;
+      this.cannonLeft = this.player.stats?.cannon || 1200;
+      this.missilesLeft = this.player.stats?.missiles || 6;
+      this.flaresLeft = this.player.stats?.flares || 20;
+    }
+    this.stats.rearms = (this.stats.rearms || 0) + 1;
+
+    progression.recordLanding(base.shortName || base.name);
+
+    this.audio.playLock?.();
+    const displayName = (base.shortName || base.name || "AIRBASE").toUpperCase();
+    this.ui.message(`🛬 TOUCHDOWN: ${displayName}${online ? " · REARM REQUESTED" : " · REARMED 100%"}`, 5.0);
+    this.notify("AIRBASE TOUCHDOWN", `Landed safely at ${base.name || "Airbase"}${base.state ? ` [${base.state}]` : ""}. ${base.squadron ? `Squadron: ${base.squadron}. ` : ""}${bindingLabel("throttleUp",this.settings)} increases throttle for takeoff.`, 7.0);
   }
 
   landAtBase(baseId) {
+    if (this.multiplayer?.active) { this.ui.message("Fast travel is unavailable during multiplayer.", 3); return; }
     const base = IAF_BASES.find((b) => b.id === baseId) || IAF_BASES[0];
     if (!base) return;
 
     this.expandedMapMode = true;
     this.player.isLanded = true;
     this.player.setGear(true);
+    this.player.landingMode = true;
+    this.player.flaps = true;
     this.player.landedElev = base.elevation;
     this.player.currentBase = base.id;
 
     const headingRad = ((base.runwayHeading || 0) * Math.PI) / 180;
     this.player.quaternion.setFromAxisAngle(new T.Vector3(0, 1, 0), -headingRad);
-    this.player.position.copy(runwayPoint(base,0,base.elevation+3.2,base.runwayLength*.36));
-    this.player.landingMode=true; this.player.flaps=true; this.serviced=true; this.serviceTime=0;
+    this.player.position.copy(runwayPoint(base, 0, base.elevation + 3.2, base.runwayLength * .36));
     if (this.lastPlayerPos) this.lastPlayerPos.copy(this.player.position);
     this.player.speed = 0;
     this.player.throttle = 0;
@@ -736,36 +994,41 @@ class Game {
     this.missilesLeft = this.player.stats?.missiles || 6;
     this.flaresLeft = this.player.stats?.flares || 20;
 
+    progression.recordLanding(base.shortName || base.name);
+
     this.camera.position.copy(this.player.position).add(new T.Vector3(0, 7, 28));
+    this.cam?.reset?.(this.player);
     this.ui.message(`🛬 PARKED AT ${base.shortName.toUpperCase()} · READY FOR SCRAMBLE`, 5.0);
     this.notify("AIRBASE DISPATCH", `Welcome to ${base.name}. Squadron: ${base.squadron}. Full throttle to roll for takeoff.`, 7.0);
   }
 
   approachBase(baseId) {
+    if (this.multiplayer?.active) { this.ui.message("Fast travel is unavailable during multiplayer.", 3); return; }
     const base = IAF_BASES.find((b) => b.id === baseId) || IAF_BASES[0];
     if (!base) return;
 
     this.expandedMapMode = true;
     this.player.isLanded = false;
     this.player.setGear(true);
+    this.player.landingMode = true;
+    this.player.flaps = true;
+    this.player.takeoffCooldown = 0;
     this.player.currentBase = null;
 
-    // Position 4.5 km south of runway threshold on glideslope
+    // Align the aircraft and velocity with the rotated runway's three-degree glideslope.
     const headingRad = ((base.runwayHeading || 0) * Math.PI) / 180;
-    this.player.quaternion.setFromAxisAngle(new T.Vector3(0, 1, 0), -headingRad);
-    const approachZ=base.runwayLength/2+4500;
-    this.player.position.copy(runwayPoint(base,0,base.elevation+3.2+4750*Math.tan(GLIDE_ANGLE),approachZ));
-    this.player.landingMode=true;this.player.flaps=true;
-    const euler=new T.Euler(-GLIDE_ANGLE,-headingRad,0,"YXZ");this.player.quaternion.setFromEuler(euler);
+    this.player.quaternion.setFromEuler(new T.Euler(-GLIDE_ANGLE, -headingRad, 0, 'YXZ'));
+    this.player.position.copy(runwayPoint(base, 0, base.elevation + 3.2 + 4750 * Math.tan(GLIDE_ANGLE), base.runwayLength / 2 + 4500));
     if (this.lastPlayerPos) this.lastPlayerPos.copy(this.player.position);
     this.player.speed = 112;
     this.player.throttle = .56;
-    this.player.velocity.copy(this.player.forward).multiplyScalar(112);
+    this.player.velocity.copy(this.player.forward).multiplyScalar(this.player.speed);
     this.player.angular.set(0, 0, 0);
 
     this.camera.position.copy(this.player.position).add(new T.Vector3(0, 8.5, 32));
-    this.ui.message(`✈️ ON FINAL APPROACH: ${base.shortName.toUpperCase()} · 3-MILE ILS GLIDESLOPE`, 5.0);
-    this.notify("ILS APPROACH", `${base.callsign}: Cleared for straight-in approach. Runway elevation: ${base.elevation}M. Target 400 KM/H. PgUp/PgDn throttle; flare gently with Up at 10M.`, 7.0);
+    this.cam?.reset?.(this.player);
+    this.ui.message(`✈️ ON FINAL APPROACH: ${base.shortName.toUpperCase()} · ALIGNED ON RUNWAY`, 5.0);
+    this.notify("ILS APPROACH", `${base.callsign}: Cleared straight-in approach. Elevation: ${base.elevation}M. Target 400 KM/H. ${bindingLabel('throttleUp', this.settings)} / ${bindingLabel('throttleDown', this.settings)} throttle; ${bindingLabel('pitchUp', this.settings)} to flare. Retract gear to leave approach mode.`, 7.0);
   }
 }
 

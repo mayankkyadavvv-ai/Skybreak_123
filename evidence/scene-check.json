@@ -1,0 +1,10 @@
+{
+  "environment": "Node 24.19.0, Three 0.180.0, @napi-rs/canvas for procedural 2D textures; no WebGL renderer",
+  "procedure": "Construct current World, set Medium, run 240 world updates at the same position, count scene meshes/triangles, dispose",
+  "beforeStaticBatching": {"meshes":2514,"triangles":186464,"terrainCache":9},
+  "afterStaticBatching": {"meshes":1927,"triangles":186464,"terrainCache":9},
+  "compatibleStaticMeshes": {"before":716,"after":129},
+  "meaning": "Structural reduction in potential submissions; not a GPU draw-call count, FPS or benchmark comparison",
+  "gpuFPS": null,
+  "gpuTestStatus": "Unavailable: no browser executable; Chromium download failed"
+}

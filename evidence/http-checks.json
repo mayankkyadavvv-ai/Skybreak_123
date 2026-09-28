@@ -1,0 +1,125 @@
+{
+  "adapter": "Current local production preview; not deployed Vercel",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "location": null,
+      "bytes": 3232,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/about",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "location": null,
+      "bytes": 3659,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/help",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "location": null,
+      "bytes": 6259,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/privacy",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "location": null,
+      "bytes": 5851,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/terms",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "location": null,
+      "bytes": 4152,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/storage",
+      "status": 200,
+      "mime": "text/html; charset=utf-8",
+      "location": null,
+      "bytes": 4364,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/help.html",
+      "status": 308,
+      "mime": null,
+      "location": "/help",
+      "bytes": 0,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/help/",
+      "status": 308,
+      "mime": null,
+      "location": "/help",
+      "bytes": 0,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/missing-flight-route",
+      "status": 404,
+      "mime": "text/html; charset=utf-8",
+      "location": null,
+      "bytes": 2664,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/assets/missing.js",
+      "status": 404,
+      "mime": "text/plain; charset=utf-8",
+      "location": null,
+      "bytes": 15,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/brand/missing.png",
+      "status": 404,
+      "mime": "text/plain; charset=utf-8",
+      "location": null,
+      "bytes": 15,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/brand/skybreak-social.png",
+      "status": 200,
+      "mime": "image/png",
+      "location": null,
+      "bytes": 146536,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/favicon.ico",
+      "status": 200,
+      "mime": "image/x-icon",
+      "location": null,
+      "bytes": 4729,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/robots.txt",
+      "status": 200,
+      "mime": "text/plain; charset=utf-8",
+      "location": null,
+      "bytes": 77,
+      "cache": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/sitemap.xml",
+      "status": 200,
+      "mime": "application/xml; charset=utf-8",
+      "location": null,
+      "bytes": 369,
+      "cache": "public, max-age=0, must-revalidate"
+    }
+  ]
+}

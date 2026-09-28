@@ -47,7 +47,7 @@ export function makeNoise(sampleRate, seconds = 4, seed = 37) {
   return finish(channels, sampleRate, .9, true);
 }
 export function makeEffect(type, sampleRate, variant = 0, style = 'rotary') {
-  const durations = { cannon: style === 'heavy' ? .23 : .15, missile: 1.05, explosion: 1.65, flare: .36, hit: .25, lock: .3, warning: .72, click: .045 };
+  const durations = { cannon: style === 'heavy' ? .23 : .15, missile: 1.05, explosion: 1.65, flare: .36, hit: .25, lock: .3, warning: .72, click: .045, pullup: .65, sonicboom: 1.25 };
   if (!Object.hasOwn(durations, type)) throw new Error('Unknown sound effect: ' + type);
   const duration = durations[type], n = Math.ceil(sampleRate * duration);
   const lowRate = 1 - Math.exp(-2 * Math.PI * 180 / sampleRate);
@@ -87,6 +87,13 @@ export function makeEffect(type, sampleRate, variant = 0, style = 'rotary') {
       } else if (type === 'warning') {
         const local = t % .36;
         value = local < .22 ? Math.sin(2 * Math.PI * 620 * t + 1.5 * Math.sin(2 * Math.PI * 7 * t)) * Math.min(1, local / .012, (.22 - local) / .02) * Math.exp(-local / .16) * .35 : 0;
+      } else if (type === 'pullup') {
+        const local = t % .32;
+        value = local < .20 ? (Math.sin(2 * Math.PI * 780 * t) + 0.4 * Math.sin(2 * Math.PI * 980 * t)) * Math.min(1, local / .01) * Math.exp(-local / .14) * .4 : 0;
+      } else if (type === 'sonicboom') {
+        const shock = high * Math.exp(-t / .012) * 1.2;
+        const rumble = low * Math.exp(-t / .48) * 3.2 + warm * Math.exp(-t / .18) * 1.5;
+        value = shock + rumble + Math.sin(2 * Math.PI * 38 * t) * Math.exp(-t / .35) * .4;
       } else value = Math.sin(2 * Math.PI * 900 * t) * Math.exp(-t / .012) * .25;
       channels[c][i] = value;
     }

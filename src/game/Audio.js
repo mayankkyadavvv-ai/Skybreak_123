@@ -48,7 +48,7 @@ class AudioManager {
       this.musicVoices.forEach(v => v.gain.gain.value = .028);
       this.samples = new Map();
       for (const style of ['rotary', 'heavy']) for (let i = 0; i < 4; i++) this.samples.set(`cannon:${style}:${i}`, this.buffer(makeEffect('cannon', ctx.sampleRate, i, style)));
-      for (const type of ['missile', 'explosion', 'flare', 'hit', 'lock', 'warning', 'click']) this.samples.set(type, this.buffer(makeEffect(type, ctx.sampleRate)));
+      for (const type of ['missile', 'explosion', 'flare', 'hit', 'lock', 'warning', 'click', 'pullup', 'sonicboom']) this.samples.set(type, this.buffer(makeEffect(type, ctx.sampleRate)));
       this.ready = true;this.syncMix();ctx.resume()?.catch(() => {});
       return true;
     } catch {
@@ -123,14 +123,47 @@ class AudioManager {
     const t = options.at ?? this.ctx.currentTime;
     const source = this.ctx.createBufferSource(), gain = this.ctx.createGain();
     const pan = this.ctx.createStereoPanner();
-    const warnings = ['lock', 'warning', 'click'].includes(type);
+    const warnings = ['lock', 'warning', 'click', 'pullup'].includes(type);
     const bus = warnings ? this.warningBus : this.weaponsBus;
-    const distance = Math.max(0, options.distance || 0);
+
+    let distance = Math.max(0, options.distance || 0);
+    let panValue = options.pan || 0;
+    let dopplerShift = 1.0;
+
+    if (options.position && options.cameraPos) {
+      const dx = options.position.x - options.cameraPos.x;
+      const dy = options.position.y - options.cameraPos.y;
+      const dz = options.position.z - options.cameraPos.z;
+      distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+      if (options.cameraRight) {
+        const invD = distance > 1 ? 1 / distance : 0;
+        panValue = (dx * options.cameraRight.x + dy * options.cameraRight.y + dz * options.cameraRight.z) * invD;
+        panValue = Math.max(-0.85, Math.min(0.85, panValue));
+      }
+
+      if (options.velocity && options.cameraVel) {
+        const c = 340;
+        const invD = distance > 1 ? 1 / distance : 0;
+        const losX = dx * invD, losY = dy * invD, losZ = dz * invD;
+        const relVx = options.velocity.x - options.cameraVel.x;
+        const relVy = options.velocity.y - options.cameraVel.y;
+        const relVz = options.velocity.z - options.cameraVel.z;
+        const vRel = relVx * losX + relVy * losY + relVz * losZ;
+        dopplerShift = Math.max(0.65, Math.min(1.5, c / Math.max(50, c + vRel)));
+      }
+    }
+
     const attenuation = 1 / (1 + (distance / 1400) ** 1.35);
-    const volumes = { cannon: .46, missile: .5, explosion: .68, flare: .3, hit: .33, lock: .18, warning: .24, click: .055 };
-    gain.gain.value = volumes[type] * attenuation * (!options.preview && this.lastCamera === 'cockpit' && !warnings ? .72 : 1);
-    pan.pan.value = Math.max(-.75, Math.min(.75, options.pan || 0));
-    source.buffer = buffer;source.playbackRate.value = type === 'cannon' ? .975 + (this.variant % 4) * .017 : 1;
+    const volumes = { cannon: .46, missile: .5, explosion: .68, flare: .3, hit: .33, lock: .18, warning: .24, click: .055, pullup: .45, sonicboom: .85 };
+    gain.gain.value = (volumes[type] ?? .4) * attenuation * (!options.preview && this.lastCamera === 'cockpit' && !warnings ? .72 : 1);
+    pan.pan.value = Math.max(-.85, Math.min(.85, panValue));
+    
+    let rate = type === 'cannon' ? .975 + (this.variant % 4) * .017 : 1;
+    rate *= dopplerShift;
+    source.buffer = buffer;
+    source.playbackRate.value = Math.max(0.5, Math.min(2.0, rate));
+    
     source.connect(gain);gain.connect(pan);pan.connect(bus);
     const voice = { source, gain, pan, preview: !!options.preview };
     this.voices.add(voice);

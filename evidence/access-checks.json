@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-09-28T09:19:56.642356+00:00",
+  "origin": "https://skybreak-iota.vercel.app",
+  "liveResponse": {
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "hsts": "max-age=63072000; includeSubDomains; preload",
+    "cacheControl": "no-cache, no-store, must-revalidate",
+    "gameAsset": "assets/index-CaKcqXbW.js",
+    "threeAsset": "assets/three-ByaEJwel.js",
+    "cssAsset": "assets/index-cMcatHtE.css"
+  },
+  "interpretation": "The existing site responds over HTTPS and sends HSTS, but these are the previous build assets, not the upgraded source.",
+  "vercelProject": {
+    "id": "prj_p9e6EIGKjc9Sq0wGZXuFq8Shdf8T",
+    "team": "team_xDpOqkSlmQt7VSM3F5XKYKya",
+    "lastKnownProduction": "dpl_F3vGhEuwu6wzS27qv5WhfXtcTwdx",
+    "state": "READY"
+  },
+  "publishAttempt": {
+    "toolResult": "McpServerError: Tool deploy_to_vercel not found",
+    "uploaded": false,
+    "directAPI": "HTTP 403 Forbidden from this execution environment; no bypass attempted"
+  },
+  "browser": {
+    "currentLivePageOpened": true,
+    "visibleResult": "WebGL 2 is required. Enable graphics acceleration in your browser settings, then reload this page.",
+    "currentBuildGameplayVerified": false,
+    "localPreviewAccess": "net::ERR_BLOCKED_BY_CLIENT",
+    "scope": "Dedicated remote browser; this does not establish whether the user laptop supports WebGL 2.",
+    "consoleEvidence": "THREE.WebGLRenderer could not create a WebGL context; GL_VENDOR = Disabled, GL_RENDERER = Disabled."
+  },
+  "localTooling": {
+    "chromiumExecutable": false,
+    "gameDevCLI": false,
+    "blenderCLI": false,
+    "npmRegistryAvailability": "Timed out on bounded attempts"
+  },
+  "remaining": "A successful deployment from an environment with Vercel write access; actual GPU/browser gameplay on a capable computer; physical controller and legal/operator facts; licensed asset import."
+}

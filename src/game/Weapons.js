@@ -1,5 +1,6 @@
 import * as T from "three";
 import { forward, pointSegmentDistance } from "./math.js";
+import { SpatialHash } from "./SpatialHash.js";
 class Weapons {
   constructor(scene, effects, damage, sound) {
     this.scene = scene;
@@ -22,7 +23,10 @@ class Weapons {
       scene.add(mesh);
       return { mesh, p: mesh.position, previous: new T.Vector3(), dir: new T.Vector3(), active: false, target: null, owner: null, speed: 0, life: 0, trail: 0 };
     });
+    this.spatialGrid = new SpatialHash(600);
+    this._queryResults = [];
   }
+  dispose(){this.clear();const geometry=new Set(),materials=new Set();for(const shot of [...this.bullets,...this.missiles]){shot.mesh.removeFromParent();geometry.add(shot.mesh.geometry);materials.add(shot.mesh.material);}for(const item of geometry)item.dispose();for(const item of materials)item.dispose();}
   clear() {
     for (const o of [...this.bullets, ...this.missiles]) {
       o.active = false;
@@ -81,20 +85,27 @@ class Weapons {
     return diverted;
   }
   update(dt, jets, terrain) {
+    this.spatialGrid.clear();
+    for (const j of jets) {
+      if (j.alive) {
+        this.spatialGrid.insert(j, j.position, j.radius);
+      }
+    }
+
     for (const b of this.bullets) {
       if (!b.active) continue;
       b.previous.copy(b.p);
       b.p.addScaledVector(b.v, dt);
       b.life -= dt;
-      for (const j of jets) {
+
+      this.spatialGrid.querySegment(b.previous, b.p, 3, this._queryResults);
+      for (const j of this._queryResults) {
         if (!j.alive || j === b.owner || j.team === "enemy" === (b.owner.team === "enemy")) continue;
-        if (pointSegmentDistance(j.position, b.previous, b.p) < j.radius + 3) {
-          const dmg = b.owner?.stats?.cannonDamage || 14;
-          this.damage(j, dmg, b.owner, "cannon");
-          this.effects.burst(b.p, 5, 5);
-          b.life = 0;
-          break;
-        }
+        const dmg = b.owner?.stats?.cannonDamage || 14;
+        this.damage(j, dmg, b.owner, "cannon");
+        this.effects.burst(b.p, 5, 5);
+        b.life = 0;
+        break;
       }
       if (b.life <= 0 || terrain?.(b.p)) {
         b.active = b.mesh.visible = false;
@@ -114,10 +125,14 @@ class Weapons {
       m.p.addScaledVector(m.dir, m.speed * dt);
       m.mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 0, -1), m.dir);
       m.trail += dt;
-      if (m.trail > 0.045) {
+      if (m.trail > 0.038) {
         m.trail = 0;
-        this.effects.smoke(m.p, false, 10);
-        this.effects.emit(m.p, new T.Vector3(), 16759664, 8, 0.14);
+        if (this.effects.missileTrail) {
+          this.effects.missileTrail(m.p, m.dir, m.speed);
+        } else {
+          this.effects.smoke(m.p, false, 10);
+          this.effects.emit(m.p, new T.Vector3(), 16759664, 8, 0.14);
+        }
       }
       if (m.target?.alive && pointSegmentDistance(m.target.position, m.previous, m.p) < m.target.radius + 19) {
         this.damage(m.target, 110, m.owner, "missile");

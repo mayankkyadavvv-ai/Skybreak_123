@@ -1,23 +1,29 @@
-import { atlasMarkup, attachAtlas } from "./Atlas.js";
-import { approachInfo } from "../game/Landing.js";
+import { trapFocus, escapeHTML } from "./Accessibility.js";
+import { icon } from "./Icons.js";
 import * as T from "three";
 import { MISSIONS, FREE_FLIGHT, FLIGHT_MODES, getMission } from "../game/Missions.js";
 import { heading, clamp } from "../game/math.js";
 import { BASE, terrainHeight } from "../game/World.js";
+import { ACTIONS, bindingLabel, bindingError, formatKey, chordFromEvent, actionForCode } from "../game/InputActions.js";
+import { normalizeSettings } from "../game/Settings.js";
+import { hudContext, primaryWarning } from "./HUDState.js";
+import { settingsMarkup } from "./SettingsUI.js";
 import { beginnerGuide, flightHints } from "./BeginnerGuide.js";
 import { PREVIEW_LABELS, normalizeAudioSettings } from "../game/SoundDesign.js";
 import { soundSettingsMarkup, previewMuteReason } from "./SoundSettings.js";
 import { CITIES, INTERNATIONAL_BORDERS, IAF_BASES, getNearestIAFBase, getGPSCoordinates, getApproachingLocation, getBiomeAt } from "../game/GeoWorld.js";
 import { HangarUI } from "./HangarUI.js";
 import { JET_MODELS } from "../game/JetConfigs.js";
+import { MultiplayerUI } from "./MultiplayerUI.js";
+import { progression, RANKS } from "../game/Progression.js";
 
 const time = (s) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
-const icon = (name) => ({ pause: "Ⅱ", sound: "◖))", fullscreen: "⛶", close: "×", map: "🗺️" })[name] || name;
+
 
 class UI {
   constructor(root, settings) {
     this.root = root;
-    this.settings = normalizeAudioSettings(settings);
+    this.settings = Object.assign(settings, normalizeSettings(settings).settings);
     this.previewRequest = 0;
     this.game = null;
     this.timer = 0;
@@ -38,7 +44,7 @@ class UI {
     root.innerHTML = `
       <div id="menu" class="menu">
         <header class="masthead">
-          <a class="wordmark" href="#" aria-label="Skybreak main menu">
+          <a class="wordmark" href="/" aria-label="Skybreak main menu">
             <span class="brand-mark">S/</span> SKYBREAK
             <span class="wordmark-sub">FLIGHT COMBAT</span>
           </a>
@@ -56,8 +62,10 @@ class UI {
             <span class="play-triangle">▶</span> PLAY <span class="launch-meta">FREE FLIGHT</span><span>↗</span>
           </button>
           <nav class="menu-nav">
-            <button class="primary-nav-btn" data-action="hangar">✈️ Hangar &amp; Jets</button>
-            <button data-action="atlas">Earth atlas</button><button data-action="missions">Missions</button>
+            <button class="primary-nav-btn multiplayer-nav-btn" data-action="multiplayer">${icon("network")} Multiplayer</button>
+            <button class="primary-nav-btn" data-action="hangar">${icon("plane")} Hangar &amp; Jets</button>
+            <button data-action="missions">Missions</button>
+            <button data-action="atlas">World Atlas</button>
             <button data-action="controls">How to Play</button>
             <button data-action="sounds">Sounds</button>
             <button data-action="settings">Settings</button>
@@ -79,7 +87,7 @@ class UI {
             <div class="input-picker">
               <span>FLIGHT CONTROL</span>
               <button data-mode="keyboard">↑↓←→ Keys</button>
-              <button data-mode="mouse">Mouse</button>
+              <button data-mode="mouse">Mouse</button><button data-mode="gamepad">Gamepad</button>
             </div>
           </div>
           <div class="missions">
@@ -115,18 +123,18 @@ class UI {
           </div>
         </div>
 
-        <div id="hud-airspace" class="hud-airspace"></div>
-        <div id="hud-journey" class="hud-journey"></div>
+        <details class="hud-navigation"><summary>Navigation</summary><div id="hud-airspace" class="hud-airspace"></div><div id="hud-journey" class="hud-journey"></div></details>
+        <div id="approach-instruments" class="approach-instruments" hidden></div>
 
         <div class="hud-top-right">
           <div id="hud-score"></div>
-          <button class="icon-btn" data-action="toggle-map" aria-label="Tactical World Map">🗺️ <small>M</small></button>
-          <button class="icon-btn help-btn" data-action="flight-help" aria-label="Controls and help">? <small>H</small></button>
+          <button class="icon-btn" data-action="toggle-map" aria-label="Tactical World Map">${icon("map")} <small data-bind="tacticalMap">N</small></button>
+          <button class="icon-btn help-btn" data-action="flight-help" aria-label="Controls and help">${icon("help")} <small data-bind="help">H</small></button>
           <button class="icon-btn" data-action="pause" aria-label="Pause game">Ⅱ</button>
         </div>
 
         <div id="border-alert" class="border-alert" hidden></div>
-        <div id="threat" class="threat" hidden>⚠ MISSILE WARNING <small>PRESS F · DEPLOY FLARES</small></div>
+        <div id="threat" class="threat" hidden>⚠ MISSILE WARNING <small>DEPLOY FLARES</small></div>
         
         <div class="compact-telemetry">
           <span id="compact-speed"></span>
@@ -134,7 +142,7 @@ class UI {
         </div>
 
         <div id="lock-status" class="lock-status"></div>
-        <div id="flight-warning" class="flight-warning"></div>
+        <div id="flight-warning" class="flight-warning" role="status" aria-live="polite" aria-atomic="true"></div>
 
         <div class="hud-bottom-left">
           <div class="pilot-label"><span id="aircraft-pilot-code">KESTREL 01</span> <span id="camera-label">CHASE</span></div>
@@ -148,44 +156,37 @@ class UI {
 
         <div class="hud-weapons">
           <div class="weapon">
-            <span>IR MISSILE <kbd>RMB</kbd></span>
+            <span>IR MISSILE <kbd data-bind="missile">M / RMB</kbd></span>
             <strong id="missile-value">06 <small>/ 06</small></strong>
             <div id="missile-bars"></div>
           </div>
           <div class="weapon secondary">
-            <span>CANNON <kbd>SPACE</kbd></span>
+            <span>CANNON <kbd data-bind="cannon">Space / LMB</kbd></span>
             <strong id="cannon-value">1200</strong>
           </div>
-          <div class="flare-line">COUNTERMEASURES <b id="flare-value">20</b> <kbd>F</kbd></div>
+          <div class="flare-line">COUNTERMEASURES <b id="flare-value">20</b> <kbd data-bind="flare">X</kbd></div>
         </div>
 
-        <div id="practice-help" class="practice-help" hidden>
+        <details id="practice-help" class="practice-help" hidden><summary>Flight quick reference</summary>
           <span class="eyebrow">FREE FLIGHT · NO ENEMIES</span>
           <div id="practice-instructions"></div>
           <div class="practice-actions">
-            <button data-action="land-bases" style="background:#1a4d3a;border-color:#5df2b6;color:#e8fff6;">Land at IAF Base 🛬 [L]</button>
-            <button data-action="atlas">Earth atlas</button><button data-action="toggle-gear">Gear [G]</button>
+            <button data-action="land-bases" style="background:#1a4d3a;border-color:#5df2b6;color:#e8fff6;">Airbases <kbd data-bind="landingAssist">L</kbd></button>
+            <button data-action="toggle-gear">Gear <kbd data-bind="landingGear">G</kbd></button>
             <button data-action="practice-reset">Reset position</button>
-            <button data-action="flight-help">Help · H</button>
+            <button data-action="flight-help">Help <kbd data-bind="help">H</kbd></button>
           </div>
-        </div>
+        </details>
 
-        <div id="radio" class="radio"></div>
+        <div id="radio" class="radio" aria-live="off"></div>
 
-        <div class="flight-hints">
-          <span><kbd>W S</kbd> PITCH</span>
-          <span><kbd>A D</kbd> ROLL</span>
-          <span><kbd>SHIFT / TAB</kbd> BOOST</span>
-          <span><kbd>M</kbd> MAP</span>
-          <span><kbd>T</kbd> TIME</span>
-          <span><kbd>R</kbd> TARGET</span>
-          <span><kbd>C</kbd> CAMERA</span>
-          <span><kbd>G</kbd> GEAR</span>
-          <span><kbd>L</kbd> LAND</span>
-          <span><kbd>ESC</kbd> PAUSE</span>
-        </div>
+        <div class="flight-hints">${flightHints(this.settings, true)}</div>
 
         <div class="hud-session">
+          <div id="hud-net-badge" class="hud-net-badge" hidden>
+            <span class="dot online"></span>
+            <span id="hud-net-text">ONLINE · 30Hz</span>
+          </div>
           <span id="mission-time">00:00</span>
           <span id="fps"></span>
         </div>
@@ -193,12 +194,17 @@ class UI {
         <div id="damage-overlay"></div>
 
         <div id="touch-controls">
-          <div id="touch-stick" aria-label="Touch flight joystick"><i></i></div>
+          <div id="touch-stick" role="group" aria-label="Touch flight joystick"><i></i><span>STEER</span></div>
+          <label class="touch-throttle">THROTTLE <output id="touch-throttle-value">58%</output><input id="touch-throttle" type="range" min="0" max="100" step="1" value="58" aria-label="Throttle percentage"></label>
           <div class="touch-actions">
             <button data-touch="fire">FIRE</button>
             <button data-touch="missile">MSL</button>
             <button data-touch="flare">FLARE</button>
             <button data-touch="boost">BOOST</button>
+            <button data-touch="brake">BRAKE</button>
+            <button data-touch="gear">GEAR</button>
+            <button data-touch="camera">VIEW</button>
+            <button data-touch="pause">PAUSE</button>
           </div>
         </div>
       </div>
@@ -208,6 +214,7 @@ class UI {
     `;
 
     this.menuEl = root.querySelector("#menu");
+    this.menuEl.insertAdjacentHTML('beforeend','<nav class="public-links" aria-label="Information"><a href="/about">About</a><a href="/help">Help</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/storage">Storage settings</a></nav>');
     this.hudEl = root.querySelector("#hud");
     this.modal = root.querySelector("#modal-root");
     this.canvas = root.querySelector("#hud-canvas");
@@ -234,8 +241,14 @@ class UI {
         this.game.selectedMission = this.selected;
         this.updateMissionCards();
       }
+      if (b.dataset.settingsTab) this.showSettings(b.dataset.settingsTab);
+      if (b.dataset.flightMode) {
+        this.settings.flightMode = b.dataset.flightMode; this.saveSettings();
+        if (this.modalType === "controls") this.showControls(); else if (this.modalType === "preflight") this.showPreflight();
+      }
       if (b.dataset.mode) {
-        this.settings.input = b.dataset.mode;
+        this.settings.input = this.settings.device = b.dataset.mode;
+        this.game?.input?.clear?.();
         this.saveSettings();
         this.updateModes();
         if (this.modalType === "controls") this.showControls();
@@ -249,12 +262,32 @@ class UI {
     });
 
     this.updateModes();
+    this.multiplayerUI = new MultiplayerUI(this, this.game);
+
+    progression.onXPAward((e) => {
+      this.showXPAwardToast(e);
+    });
+    progression.onLevelUp((e) => {
+      this.showLevelUpModal(e);
+    });
+
     this.resize();
   }
 
   attach(game) {
     this.game = game;
+    if (this.multiplayerUI) this.multiplayerUI.game = game;
     this.updateAircraftCaption();
+    this.modalKey=event=>{
+      if(!this.modalType || this.cancelRebind)return;
+      const action=actionForCode(chordFromEvent(event),this.settings);
+      if(event.code==='Escape' || this.modalType==='map' && action==='tacticalMap'){
+        event.preventDefault();event.stopImmediatePropagation();this.closePanel();return;
+      }
+      trapFocus(event,this.modal);
+    };
+    window.addEventListener('keydown',this.modalKey,true);
+    let stickPointer=null;
     const stick = this.dom["touch-stick"],
       knob = stick.querySelector("i");
     const move = (e) => {
@@ -265,6 +298,8 @@ class UI {
       knob.style.transform = `translate(${x * 30}px,${y * 30}px)`;
     };
     stick.addEventListener("pointerdown", (e) => {
+      if(game.state!=="playing" || this.modalType || stickPointer!==null)return;
+      stickPointer=e.pointerId;
       e.preventDefault();
       stick.setPointerCapture(e.pointerId);
       game.input.touchActive = true;
@@ -273,29 +308,48 @@ class UI {
     stick.addEventListener("pointermove", (e) => {
       if (stick.hasPointerCapture(e.pointerId)) move(e);
     });
-    const release = () => {
+    const release = (event) => {
+      if(event && event.pointerId!==stickPointer)return;stickPointer=null;
+      if(!game.input)return;
       game.input.touchActive = false;
       game.input.mouse = { x: 0, y: 0 };
       knob.style.transform = "";
     };
     stick.addEventListener("pointerup", release);
     stick.addEventListener("pointercancel", release);
+    stick.addEventListener("lostpointercapture", release);
+    this.touchResets=[release];
 
+    const throttle=this.dom['touch-throttle'];
+    throttle.addEventListener('input',()=>{if(game.state!=='playing' || this.modalType)return;game.input.touchThrottle=Number(throttle.value)/100;this.text('touch-throttle-value',`${throttle.value}%`);});
+    for(const event of ['change','pointerup','pointercancel','lostpointercapture'])throttle.addEventListener(event,()=>{if(game.player && Number.isFinite(game.input.touchThrottle))game.player.throttle=game.input.touchThrottle;game.input.touchThrottle=null;});
+    window.addEventListener('blur',()=>{release();});
     this.root.querySelectorAll("[data-touch]").forEach((b) => {
+      let heldPointer=null;
       b.addEventListener("pointerdown", (e) => {
+        if(game.state!=="playing" || this.modalType || heldPointer!==null)return;heldPointer=e.pointerId;
         e.preventDefault();
         b.setPointerCapture(e.pointerId);
         if (b.dataset.touch === "fire") game.input.fire = true;
         if (b.dataset.touch === "boost") game.input.boost = true;
         if (b.dataset.touch === "missile") game.launch();
         if (b.dataset.touch === "flare") game.flare();
+        if (b.dataset.touch === "brake") game.input.touchBrake=true;
+        if (b.dataset.touch === "gear") game.toggleGear();
+        if (b.dataset.touch === "camera") game.cam.cycle();
+        if (b.dataset.touch === "pause") game.pause();
       });
-      const up = () => {
+      const up = (event) => {
+        if(event && event.pointerId!==heldPointer)return;heldPointer=null;
+        if(!game.input)return;
+        if (b.dataset.touch === "brake") game.input.touchBrake=false;
         if (b.dataset.touch === "fire") game.input.fire = false;
         if (b.dataset.touch === "boost") game.input.boost = false;
       };
+      this.touchResets.push(up);
       b.addEventListener("pointerup", up);
       b.addEventListener("pointercancel", up);
+      b.addEventListener("lostpointercapture", up);
     });
   }
 
@@ -303,12 +357,15 @@ class UI {
     try {
       localStorage.setItem("skybreak-settings", JSON.stringify(this.settings));
     } catch {}
+    this.hudEl.style.setProperty('--hud-scale',String(this.settings.hudScale || 1));
+    this.hudEl.style.setProperty('--hud-opacity',String(this.settings.highContrast ? Math.max(.97,this.settings.hudOpacity || .76) : this.settings.hudOpacity || .76));
+    this.hudEl.classList.toggle('high-contrast',!!this.settings.highContrast);
     if (!audioOnly) this.game?.applySettings();
     this.game?.audio.syncMix?.();
   }
 
   updateModes() {
-    this.root.querySelectorAll("[data-mode]").forEach((b) => b.classList.toggle("active", b.dataset.mode === this.settings.input));
+    this.root.querySelectorAll("[data-mode]").forEach(b => { const active = b.dataset.mode === this.settings.device; b.classList.toggle("active",active); b.setAttribute("aria-pressed",String(active)); });
     if (this.game?.mission && !this.hudEl.hidden) this.updateFlightHelp();
   }
 
@@ -322,18 +379,30 @@ class UI {
   }
 
   updateFlightHelp() {
+    const key = action => bindingLabel(action, this.settings);
     const free = !!this.game.mission.freeFlight;
-    this.root.querySelector(".flight-hints").innerHTML = flightHints(this.settings.input, free);
-    this.dom["practice-instructions"].innerHTML =
-      this.settings.input === "mouse"
-        ? "<p><kbd>MOUSE</kbd> Aim toward destination.</p><p>Center cursor = level wings.</p>"
-        : this.settings.input === "advanced"
-        ? "<p><kbd>S / W</kbd> Pitch up / down.</p><p><kbd>A / D</kbd> Roll. <kbd>Q / E</kbd> Yaw.</p>"
-        : "<p><kbd>↑</kbd> Climb &nbsp; <kbd>↓</kbd> Dive</p><p><kbd>←</kbd> Turn Left &nbsp; <kbd>→</kbd> Turn Right</p><p>Release keys = auto-level.</p>";
-    this.dom["practice-instructions"].innerHTML +=
-      "<p><kbd>SHIFT / TAB</kbd> Fast &nbsp; <kbd>B</kbd> Slow</p><p><kbd>M</kbd> Tactical Map &nbsp; <kbd>T</kbd> Time/Sky</p><small>Ground impact? Auto-recovery to safe altitude.</small>";
-    const missileKey = this.root.querySelector(".weapon kbd");
-    if (missileKey) missileKey.textContent = this.settings.input === "advanced" ? "RMB" : "E / RMB";
+    this.root.querySelector('.flight-hints').innerHTML = flightHints(this.settings, free);
+    this.dom['practice-instructions'].innerHTML = `<p><kbd>${key('pitchUp')}</kbd> Nose up · <kbd>${key('pitchDown')}</kbd> Nose down</p><p><kbd>${key('throttleUp')} / ${key('throttleDown')}</kbd> Throttle · <kbd>${key('airBrake')}</kbd> Brake</p><small>${this.settings.flightMode === 'manual' ? 'Manual flight · manage pitch, roll and yaw.' : 'Assisted flight · release to level.'}</small>`;
+    for (const [selector,action] of [['.weapon kbd','missile'],['.weapon.secondary kbd','cannon'],['.flare-line kbd','flare'],['[data-action="toggle-map"] small','tacticalMap'],['.help-btn small','help']]) {
+      const element = this.root.querySelector(selector); if (element) element.textContent = key(action);
+    }
+    this.dom.threat.innerHTML = `MISSILE WARNING <small>${key('flare')} · FLARES</small>`;
+    this.root.querySelectorAll('[data-bind]').forEach(el => el.textContent = key(el.dataset.bind));
+  }
+
+  async showAtlas() {
+    if (this.game.state === 'playing') this.game.pause?.();
+    this.modalType = 'atlas';
+    this.panel('FLIGHT PLANNING', 'World atlas', '<p role="status">Loading map…</p>');
+    try {
+      const {atlasMarkup, attachAtlas} = await import('./Atlas.js');
+      if (this.modalType !== 'atlas') return;
+      this.panel('FLIGHT PLANNING', 'World atlas', atlasMarkup());
+      this.modal.querySelector('.panel').classList.add('atlas-panel');
+      attachAtlas(this.modal);
+    } catch {
+      if (this.modalType === 'atlas') this.panel('FLIGHT PLANNING', 'World atlas', '<p role="status">The map could not load. Close this panel and try again.</p>');
+    }
   }
 
   action(a) {
@@ -350,18 +419,20 @@ class UI {
       this.game.pause();
       this.showControls();
     }
-    if (a === "atlas") { this.game.pause?.();this.modalType="atlas";this.panel("FLIGHT PLANNING", "Real-world atlas", atlasMarkup());this.modal.querySelector(".panel").classList.add("atlas-panel");attachAtlas(this.modal);return; }
     if (a === "toggle-map" || a === "map") this.toggleMap();
     if (a === "practice-reset") this.game.resetPracticePosition();
     if (a === "missions") this.showMissions();
+    if (a === "atlas") { void this.showAtlas(); return; }
     if (a === "land-bases") this.showAirbaseLandingModal();
     if (a === "toggle-gear") {
       this.game.toggleGear();
       if (this.modalType === "pause") this.showPause();
     }
+    if (a === "multiplayer") { this.multiplayerUI.showMultiplayerMenu(); return; }
     if (a === "hangar" || a === "jets") this.showHangar();
     if (a === "controls") this.showControls();
     if (a === "settings") this.showSettings();
+    if (a === "keybindings") this.showKeyBindings();
     if (a === "privacy") this.showPrivacy();
     if (a === "sounds") this.showSoundSettings();
     if (a === "sound-stop") this.stopSoundPreview();
@@ -400,6 +471,44 @@ class UI {
     this.toastTime = dur;
   }
 
+  showXPAwardToast(e) {
+    let container = this.root.querySelector("#xp-award-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "xp-award-container";
+      container.className = "xp-award-container";
+      this.root.appendChild(container);
+    }
+    const item = document.createElement("div");
+    item.className = "xp-award-item";
+    item.innerHTML = `<span class="xp-icon">⚡</span> <span class="xp-reason">${e.reason}</span>`;
+    container.appendChild(item);
+    setTimeout(() => item.classList.add("fade-out"), 2200);
+    setTimeout(() => item.remove(), 2800);
+  }
+
+  showLevelUpModal(e) {
+    this.game?.audio.play?.("warning");
+    this.panel(
+      "🎖️ PROMOTION NOTICE · INDIAN AIR FORCE COMMAND",
+      `COMMISSIONED: ${e.newRank.name.toUpperCase()}`,
+      `
+      <div class="levelup-modal-content" style="text-align:center;padding:12px 0;">
+        <div style="font-size:48px;color:#ffd700;margin-bottom:8px;">${e.newRank.insignia}</div>
+        <h3 style="color:#00e5ff;margin:0 0 8px;">CONGRATULATIONS, PILOT!</h3>
+        <p style="color:#e0f2fe;font-size:14px;line-height:1.5;">Your aerial combat excellence has earned you the prestigious rank of <strong>${e.newRank.name} (${e.newRank.code})</strong>!</p>
+        <div style="background:rgba(0,229,255,0.08);border:1px solid #00e5ff;border-radius:6px;padding:12px;margin:16px 0;text-align:left;">
+          <span style="font-size:10px;font-weight:bold;color:#ffd700;letter-spacing:1px;">NEW ASSET UNLOCKED</span>
+          <h4 style="margin:4px 0;color:#fff;font-size:14px;">${e.newRank.unlockName}</h4>
+          <p style="margin:0;color:#85c4b8;font-size:12px;">${e.newRank.unlockDesc}</p>
+        </div>
+        <p style="font-size:12px;color:#a0cdd5;">Visit the <strong>Hangar</strong> from the Main Menu to inspect and equip your newly unlocked fighter jet &amp; modifications.</p>
+        <button class="primary" data-action="close" style="margin-top:14px;">DISMISS &amp; RETURN TO FLIGHT ↗</button>
+      </div>
+      `
+    );
+  }
+
   triggerBorderAlert(cross) {
     this.borderAlertData = cross;
     this.borderAlertTimer = 6.0;
@@ -434,14 +543,14 @@ class UI {
               <span>🌐</span> TACTICAL THEATER AIRSPACE &amp; BOUNDARY MAP
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
-              <button data-action="land-bases" class="primary" style="padding:4px 10px;font-size:11px;">🛬 IAF Airbases [L]</button>
+              <button data-action="land-bases" class="primary" style="padding:4px 10px;font-size:11px;">Airbases · ${bindingLabel("landingAssist",this.settings)}</button>
               <button class="close-btn" data-action="close" aria-label="Close map">×</button>
             </div>
           </div>
           <canvas id="tactical-canvas" class="tactical-map-canvas" width="900" height="600"></canvas>
           <div class="tactical-map-footer">
             <span>AIRSPACE: <b id="map-airspace-name">SEARCHING...</b></span>
-            <span>PRESS <b>M</b> OR <b>ESC</b> TO RETURN TO FLIGHT</span>
+            <span>PRESS <b>${bindingLabel("tacticalMap",this.settings)}</b> OR <b>${bindingLabel("pause",this.settings)}</b> TO RETURN TO FLIGHT</span>
           </div>
         </div>
       </div>
@@ -722,19 +831,24 @@ class UI {
       const gps = getGPSCoordinates(g.player.position.x, g.player.position.z);
       const biome = getBiomeAt(g.player.position.x, g.player.position.z);
       const biomeStr = biome ? ` | ${biome.icon} ${biome.name.toUpperCase()} [${biome.elevationBand}]` : "";
-      airNameEl.innerHTML = `SIM COORD ${gps.formatted} | ${g.currentAirspace.flag || "📍"} ${g.currentAirspace.country} [${g.currentAirspace.state}]${biomeStr}`;
+      airNameEl.innerHTML = `📡 ${gps.formatted} | ${g.currentAirspace.flag || "📍"} ${g.currentAirspace.country} [${g.currentAirspace.state}]${biomeStr}`;
     }
   }
 
   panel(eyebrow, title, content, closeable = true) {
+    this.cancelRebind?.();
+    this.game?.input?.clear?.();
+    this.touchResets?.forEach(reset=>reset());
+    if(!this.modal.querySelector(".panel"))this.returnFocus=document.activeElement;
+    this.menuEl.inert=true;this.hudEl.inert=true;
     this.modal.innerHTML = `
       <div class="modal-backdrop">
-        <div class="panel">
+        <div class="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" tabindex="-1">
           <div class="panel-top">
             <span class="eyebrow">${eyebrow}</span>
             ${closeable ? `<button class="close-btn" data-action="close" aria-label="Close panel">${icon("close")}</button>` : ""}
           </div>
-          <h2>${title}</h2>
+          <h2 id="panel-title">${title}</h2>
           ${content}
         </div>
       </div>
@@ -743,7 +857,10 @@ class UI {
     f?.focus();
   }
 
+  releaseModalFocus() {this.menuEl.inert=false;this.hudEl.inert=false;this.returnFocus?.focus?.();}
+
   showMenu() {
+    this.releaseModalFocus();
     this.stopSoundPreview();
     this.modal.innerHTML = "";
     this.modalType = null;
@@ -755,15 +872,16 @@ class UI {
   }
 
   inGame() {
+    this.releaseModalFocus();
     this.stopSoundPreview();
     this.menuEl.hidden = true;
     this.hudEl.hidden = false;
     this.modal.innerHTML = "";
     this.modalType = null;
     const m = this.game.mission;
-    this.dom["mission-code"].textContent = m.code + " / " + m.region;
-    this.dom["mission-name"].textContent = m.name;
-    this.dom["mission-objective"].textContent = m.objective;
+    this.text("mission-code", m.code + " / " + m.region);
+    this.text("mission-name", m.name);
+    this.text("mission-objective", m.objective);
     const free = !!m.freeFlight;
     this.hudEl.classList.toggle("free-flight", free);
     this.root.querySelector(".hud-weapons").hidden = free;
@@ -772,6 +890,7 @@ class UI {
     this.dom["objective-fill"].parentElement.hidden = free;
     this.root.querySelectorAll('[data-touch="fire"], [data-touch="missile"], [data-touch="flare"]').forEach((b) => (b.hidden = free));
     this.updateFlightHelp();
+    document.getElementById("world")?.focus?.();
   }
 
   showPause() {
@@ -783,8 +902,8 @@ class UI {
       <p>Flight paused. Click Resume to fly, or check Help for controls.</p>
       <div class="stack-buttons">
         <button class="primary" data-action="resume">Resume flight <span>↗</span></button>
-        <button data-action="land-bases" style="border-color:#ffa751;color:#ffdfa9;">🛬 Land at IAF Air Base [L]</button>
-        <button data-action="atlas">Earth atlas</button><button data-action="toggle-gear">Toggle Landing Gear ⚙️ [G]</button>
+        <button data-action="land-bases" style="border-color:#ffa751;color:#ffdfa9;">Airbases · ${bindingLabel("landingAssist",this.settings)}</button>
+        <button data-action="toggle-gear">Landing gear · ${bindingLabel("landingGear",this.settings)}</button>
         <button data-action="hangar">✈️ Jet Modifications</button>
         <button data-action="toggle-map">Tactical World Map 🗺️</button>
         <button data-action="restart">Restart flight</button>
@@ -799,6 +918,9 @@ class UI {
   }
 
   closePanel() {
+    this.releaseModalFocus();
+    this.cancelRebind?.();
+    this.game?.input?.clear?.();
     if (this.modalType === "sounds") {
       this.stopSoundPreview();
       if (this.soundBack === "settings") {
@@ -814,6 +936,7 @@ class UI {
       this.modal.innerHTML = "";
       this.modalType = null;
       this.tacticalCanvas = null;
+      if(this.game.state==="paused")this.showPause();
       return;
     }
     if (this.game.state === "paused") {
@@ -830,22 +953,45 @@ class UI {
   showMissions() {
     this.modalType = "missions";
     this.panel(
-      "OPERATIONS BOARD",
-      "Choose your sortie.",
+      "OPERATIONS BOARD · SORTIE DISPATCH",
+      "Tactical Combat Operations",
       `
       <div class="briefings">
         ${FLIGHT_MODES.map(
-          (m) => `
-          <button class="briefing ${this.selected === m.id ? "selected" : ""}" data-mission="${m.id}">
-            <span class="eyebrow">${m.code} / ${m.region}</span>
-            <h3>${m.name}</h3>
-            <p>${m.brief}</p>
-            <span class="brief-objective">${m.objective}</span>
-          </button>
-        `
+          (m) => {
+            const isSelected = this.selected === m.id;
+            const threatTag = m.freeFlight
+              ? '<span class="threat-badge threat-none">TRAINING · NO THREAT</span>'
+              : m.bombers > 0
+              ? '<span class="threat-badge threat-critical">THREAT: CRITICAL</span>'
+              : m.fighters >= 8
+              ? '<span class="threat-badge threat-high">THREAT: HIGH</span>'
+              : '<span class="threat-badge threat-moderate">THREAT: MODERATE</span>';
+            const forcesInfo = m.freeFlight
+              ? "Unrestricted airspace · Free navigation & flight practice"
+              : `${m.fighters} Hostile Fighters${m.bombers ? ` · ${m.bombers} Supersonic Bombers` : ""}${m.allies ? ` · ${m.allies} Allied Escorts` : " · Solo Flight"}`;
+            return `
+              <button class="briefing ${isSelected ? "selected" : ""}" data-mission="${m.id}">
+                <div class="briefing-header">
+                  <span class="eyebrow">${m.code} / ${m.region}</span>
+                  ${threatTag}
+                </div>
+                <h3>${m.name}</h3>
+                <p>${m.brief}</p>
+                <div class="brief-intel">
+                  <span class="brief-forces">🎯 ${forcesInfo}</span>
+                  <span class="brief-time">⏱️ ${m.estimate}</span>
+                </div>
+                <div class="brief-objective-row">
+                  <span class="brief-obj-label">OBJECTIVE:</span>
+                  <strong class="brief-objective">${m.objective}</strong>
+                </div>
+              </button>
+            `;
+          }
         ).join("")}
       </div>
-      <button class="primary" data-action="play">Launch selected mission <span>↗</span></button>
+      <button class="primary" data-action="play">Launch Selected Operation <span>↗</span></button>
       `
     );
   }
@@ -855,97 +1001,58 @@ class UI {
     this.panel(
       "QUICK START · " + getMission(this.selected).name.toUpperCase(),
       "First flight? Here is how to fly.",
-      beginnerGuide(this.settings.input) +
+      beginnerGuide(this.settings) +
         '<button class="primary" data-action="launch-flight">Got it · Take Off ↗</button><p class="panel-footnote">Press H to reopen this guide anytime. Free Flight has no enemies or time limits.</p>'
     );
   }
 
   showControls() {
     this.modalType = "controls";
-    this.panel("BEGINNER FLIGHT GUIDE", "How to Play", beginnerGuide(this.settings.input, true));
+    this.panel("BEGINNER FLIGHT GUIDE", "How to Play", beginnerGuide(this.settings, true));
   }
 
-  showSettings() {
-    this.modalType = "settings";
-    const select = (key, label, choices) =>
-      `<label class="setting"><span>${label}</span><select data-setting="${key}">${choices
-        .map(([val, text]) => `<option value="${val}" ${this.settings[key] === val ? "selected" : ""}>${text}</option>`)
-        .join("")}</select></label>`;
-    const range = (key, label, min, max, step) =>
-      `<label class="setting"><span>${label}</span><div><input type="range" data-setting="${key}" min="${min}" max="${max}" step="${step}" value="${this.settings[key]}"><output>${this.settings[key]}</output></div></label>`;
-    const toggle = (key, label) =>
-      `<label class="setting"><span>${label}</span><input type="checkbox" data-setting="${key}" ${this.settings[key] ? "checked" : ""}></label>`;
+  showSettings(section = this.settingsSection || 'graphics') {
+    this.settingsSection = section;
+    this.modalType = 'settings';
+    this.panel('PILOT PREFERENCES', 'Make it your flight.', settingsMarkup(this.settings,section));
+    this.modal.querySelector('.panel').classList.add('settings-panel');
+    this.modal.querySelectorAll('[data-setting]').forEach(el => el.addEventListener('input', () => {
+      const key = el.dataset.setting;
+      this.settings[key] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? Number(el.value) : el.value;
+      if (key === 'device') { this.settings.input = this.settings.device; this.game?.input?.clear?.(); }
+      if (key === 'shakeIntensity') this.settings.shake = this.settings.shakeIntensity > 0;
+      const out = el.parentElement.querySelector('output');
+      if (out) { out.textContent = el.value; el.setAttribute('aria-valuetext',el.value); }
+      this.saveSettings(); this.updateModes();
+    }));
+  }
 
-    this.panel(
-      "PILOT PREFERENCES",
-      "Make it your flight.",
-      `
-      <div class="settings-list">
-        ${select("quality", "Graphics quality", [
-          ["low", "Low · performance"],
-          ["clear", "Clear & Smooth · integrated GPU"],
-          ["medium", "Medium · balanced"],
-          ["high", "High · bloom + detail"]
-        ])}
-        ${select("timeOfDay", "Time of Day / Atmosphere", [
-          ["day", "Day · clear daylight"],
-          ["sunset", "Sunset · golden hour dusk"],
-          ["night", "Night · dark starry night + runway lights"]
-        ])}
-        ${select("weather", "Weather Conditions", [
-          ["clear", "Clear skies"],
-          ["storm", "Thunderstorm · rain + dynamic lightning"]
-        ])}
-        ${select("difficulty", "Enemy difficulty", [
-          ["easy", "Easy"],
-          ["medium", "Medium"],
-          ["hard", "Hard"]
-        ])}
-        ${select("input", "Flight controls", [
-          ["keyboard", "Arrow keys · Easy"],
-          ["mouse", "Mouse · Easy"],
-          ["advanced", "Advanced · manual"]
-        ])}
-        ${range("sensitivity", "Mouse sensitivity", 0.3, 2, 0.1)}
-        <div class="setting"><span>Engine, weapons &amp; volumes</span><button data-action="sounds">Sounds &amp; previews ↗</button></div>
-        ${toggle("invert", "Invert mouse Y axis")}
-        ${toggle("shake", "Camera shake")}
-        <div class="setting"><span>Display</span><button data-action="fullscreen">Toggle fullscreen ⛶</button></div>
-        <div class="setting"><span>Privacy &amp; Safety</span><button data-action="privacy">Privacy Policy 🛡️</button></div>
-      </div>
-      <p class="panel-footnote">Settings save automatically on this device.</p>
-      `
-    );
-
-    this.modal.querySelectorAll("[data-setting]").forEach((el) =>
-      el.addEventListener("input", () => {
-        const key = el.dataset.setting;
-        this.settings[key] = el.type === "checkbox" ? el.checked : el.type === "range" ? Number(el.value) : el.value;
-        const out = el.parentElement.querySelector("output");
-        if (out) out.value = el.value;
-        this.saveSettings();
-        this.updateModes();
-        if (key === "timeOfDay") this.game?.atmosphere.setTimeOfDay(this.settings.timeOfDay);
-        if (key === "weather") this.game?.atmosphere.setWeather(this.settings.weather);
-      })
-    );
+  showKeyBindings() {
+    this.modalType = 'keybindings';
+    this.settings.keyBindings ||= {};
+    this.panel('FLIGHT CONTROLS','Keyboard bindings',`<p>Choose a control, then press a key. Escape cancels. Conflicting keys are rejected.</p><p id="binding-status" role="status"></p><div class="settings-list keybind-list">${Object.entries(ACTIONS).filter(([,definition]) => definition.key && !definition.fixed).map(([action,definition]) => `<div class="setting"><span>${definition.label}</span><button data-rebind="${action}">${formatKey(this.settings.keyBindings[action] || definition.key)}</button></div>`).join('')}</div><div class="settings-footer"><button class="primary" data-action="settings">Back to settings</button><button id="reset-keybinds-btn">Reset bindings</button></div>`);
+    this.modal.querySelectorAll('[data-rebind]').forEach(button => button.addEventListener('click', () => {
+      this.cancelRebind?.();
+      const action = button.dataset.rebind;
+      button.textContent = 'Press key…';
+      const cancel = () => { window.removeEventListener('keydown',handler,true); button.textContent = formatKey(this.settings.keyBindings[action] || ACTIONS[action].key); this.cancelRebind = null; };
+      const handler = event => {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (event.code === 'Escape') { cancel(); return; }
+        const code = chordFromEvent(event), error = bindingError(action,code,this.settings);
+        this.modal.querySelector('#binding-status').textContent = error || `${ACTIONS[action].label}: ${formatKey(code)}`;
+        if (error) return;
+        this.settings.keyBindings[action] = code; cancel(); this.saveSettings();
+        if (this.game?.mission) this.updateFlightHelp();
+      };
+      this.cancelRebind = cancel; window.addEventListener('keydown',handler,true);
+    }));
+    this.modal.querySelector('#reset-keybinds-btn').addEventListener('click', () => { this.settings.keyBindings = {}; this.saveSettings(); this.showKeyBindings(); if(this.game?.mission) this.updateFlightHelp(); });
   }
 
   showPrivacy() {
-    this.modalType = "privacy";
-    this.panel(
-      "SECURITY & PRIVACY",
-      "Privacy & Safety Assurance",
-      `
-      <div class="settings-list" style="max-width:540px;line-height:1.6;font-size:12px;color:#d5ede3;">
-        <p><b style="color:#5df2b6">🔒 100% Client-Side &amp; Private</b><br>Skybreak executes entirely inside your local browser WebGL sandbox. No trackers, no telemetry scripts, and no personal data is collected or sent to remote servers.</p>
-        <p><b style="color:#5df2b6">💾 Local Device Storage Only</b><br>Pilot preferences (controls, graphics quality, audio volumes) are stored solely in your browser's private <kbd>localStorage</kbd> on this device.</p>
-        <p><b style="color:#5df2b6">🛡️ Safe Permissions Policy (CSP)</b><br>Our strict Content Security Policy blocks browser access to camera, microphone, geolocation, and payment APIs.</p>
-        <p><b style="color:#5df2b6">🌍 GDPR &amp; COPPA Compliant</b><br>Zero personal tracking cookies, completely safe for pilots and students of all ages.</p>
-      </div>
-      <button class="primary" data-action="settings">Back to Settings ↗</button>
-      `
-    );
+    this.modalType='privacy';
+    this.panel('YOUR DATA','Privacy & storage',`<p>Preferences, pilot progression, aircraft choices, callsign and multiplayer server choice are saved in this browser.</p><p>Multiplayer sends your chosen callsign and game state to the connected server and other players. Hosting and multiplayer providers also receive connection information.</p><p>No analytics or advertising integrations were found in this build. Live provider logging and operator details still need owner review.</p><p><a href="/privacy">Read the draft privacy notice</a> · <a href="/terms">Draft terms</a> · <a href="/storage">Review or reset saved data</a></p><button data-action="settings">Back to settings</button>`);
   }
 
   showHangar() {
@@ -1097,17 +1204,24 @@ class UI {
   }
 
   resize() {
-    this.canvas.width = innerWidth;
-    this.canvas.height = innerHeight;
+    const dpr=Math.min(globalThis.devicePixelRatio || 1,2);
+    this.canvas.width=Math.round(innerWidth*dpr);this.canvas.height=Math.round(innerHeight*dpr);
+    this.canvas.style.width=innerWidth+"px";this.canvas.style.height=innerHeight+"px";
     if (this.tacticalCanvas) {
       this.tacticalCanvas.width = 900;
       this.tacticalCanvas.height = 600;
     }
   }
 
+  text(id,value) { const node=this.dom[id]; if(node && node.textContent!==String(value)) node.textContent=String(value); }
+  html(id,value) { this.htmlCache ||= {}; if(this.htmlCache[id]!==value && this.dom[id]) {this.dom[id].innerHTML=value;this.htmlCache[id]=value;} }
+
   update(g, dt) {
     if (this.hangarUI) {
       this.hangarUI.update(dt);
+    }
+    if (this.multiplayerUI) {
+      this.multiplayerUI.update(dt);
     }
 
     if (this.toastTime > 0) {
@@ -1132,34 +1246,50 @@ class UI {
       this.updateSoundStatus();
     }
 
+    if (this.modalType === 'settings' && this.settingsSection === 'controls') {
+      const preview=g.input.padPreview, status=this.modal.querySelector('#gamepad-status');
+      if(status && status.textContent!==g.input.padStatus) status.textContent=g.input.padStatus;
+      const stick=this.modal.querySelector('#gamepad-stick-preview');
+      if(stick) stick.style.transform=`translate(${(preview?.axes.roll || 0)*32}px,${(preview?.axes.pitch || 0)*32}px)`;
+      const values=this.modal.querySelector('#gamepad-values');
+      if(values) values.textContent=`Pitch ${(preview?.axes.pitch || 0).toFixed(2)} · Roll ${(preview?.axes.roll || 0).toFixed(2)}`;
+    }
     if (this.hudEl.hidden) return;
+    this.drawHUD(g);
+    this.timer += dt;
+    if (this.timer < .125 && this.hudStarted) return;
+    this.timer %= .125; this.hudStarted = true;
     const p = g.player;
-    this.dom["compact-speed"].textContent = Math.round(p.speed * 3.6) + " KM/H";
-    this.dom["compact-altitude"].textContent = Math.round(p.position.y) + " M";
+    this.text("compact-speed", Math.round(p.speed * 3.6) + " KM/H");
+    this.text("compact-altitude", Math.round(p.position.y) + " M");
     const remaining = g.enemies.filter((e) => e.alive).length,
       total = g.enemies.length;
-    this.dom["objective-count"].textContent = g.mission.freeFlight ? "NO ENEMIES · NO TIME LIMIT" : `${total - remaining} / ${total} HOSTILES DOWN`;
+    this.text("objective-count", g.mission.freeFlight ? "NO ENEMIES · NO TIME LIMIT" : `${total - remaining} / ${total} HOSTILES DOWN`);
     this.dom["objective-fill"].style.width = `${total ? ((total - remaining) / total) * 100 : 0}%`;
-    this.dom["hud-score"].textContent = String(g.score).padStart(6, "0");
+    this.text("hud-score", String(g.score).padStart(6, "0"));
     const maxHp = p.maxHp || 100;
     const hpPct = Math.round((p.hp / maxHp) * 100);
-    this.dom["health-value"].textContent = `${Math.ceil(p.hp)} HP (${hpPct}%)`;
+    this.text("health-value", `${Math.ceil(p.hp)} HP (${hpPct}%)`);
     this.dom["health-fill"].style.width = Math.min(100, Math.max(0, hpPct)) + "%";
     this.dom["health-fill"].style.background = hpPct < 35 ? "#ff6b58" : "";
-    this.dom.throttle.textContent = Math.round(p.throttle * 100) + "%";
+    this.text("throttle",Math.round(p.throttle*100)+"%");
+    if(!Number.isFinite(g.input?.touchThrottle) && this.dom["touch-throttle"]){this.dom["touch-throttle"].value=Math.round(p.throttle*100);this.text("touch-throttle-value",Math.round(p.throttle*100)+"%");}
     this.dom.burner.textContent = p.boost ? "AFTERBURNER" : "";
-    this.dom["camera-label"].textContent = g.cam.mode.toUpperCase();
+    this.text("camera-label", g.cam.mode.toUpperCase());
     if (this.dom["aircraft-pilot-code"]) {
-      this.dom["aircraft-pilot-code"].textContent = (JET_MODELS[p.modelId]?.code || "X-17") + " · ACTIVE";
+      this.text("aircraft-pilot-code", (JET_MODELS[p.modelId]?.code || "X-17") + " · ACTIVE");
     }
     const maxMissiles = p.stats?.missiles || 6;
-    this.dom["missile-value"].innerHTML = `${String(g.missilesLeft).padStart(2, "0")} <small>/ ${String(maxMissiles).padStart(2, "0")}</small>`;
-    this.dom["missile-bars"].innerHTML = Array.from({ length: maxMissiles }, (_, i) => `<i class="${i < g.missilesLeft ? "loaded" : ""}"></i>`).join("");
-    this.dom["cannon-value"].textContent = g.cannonLeft;
-    this.dom["flare-value"].textContent = g.flaresLeft;
-    this.dom["mission-time"].textContent = time(g.elapsed);
-    this.dom.fps.textContent = Math.round(Math.min(g.fps, 240)) + " FPS";
-    this.dom.threat.hidden = !g.incoming?.length;
+    this.html("missile-value", `${String(g.missilesLeft).padStart(2, "0")} <small>/ ${String(maxMissiles).padStart(2, "0")}</small>`);
+    if (this.lastAmmo !== `${g.missilesLeft}/${maxMissiles}`) {
+      this.html("missile-bars", Array.from({ length: maxMissiles }, (_, i) => `<i class="${i < g.missilesLeft ? "loaded" : ""}"></i>`).join(""));
+      this.lastAmmo = `${g.missilesLeft}/${maxMissiles}`;
+    }
+    this.text("cannon-value", g.cannonLeft);
+    this.text("flare-value", g.flaresLeft);
+    this.text("mission-time", time(g.elapsed));
+    this.text("fps",Math.round(g.fps)+" FPS");
+    this.dom.threat.hidden = true;
 
     // Update flight breadcrumbs
     this.breadcrumbTimer += dt;
@@ -1176,7 +1306,7 @@ class UI {
     const biome = getBiomeAt(p.position.x, p.position.z);
     if (air && this.dom["hud-airspace"]) {
       const cityText = city?.city ? ` · ${city.city.name.toUpperCase()} (${(city.distance / 1000).toFixed(0)}KM)` : "";
-      this.dom["hud-airspace"].innerHTML = `<span>SIM COORD ${gps.formatted}</span> <b>${air.flag || "📍"} ${air.country.toUpperCase()}</b> [${air.state.toUpperCase()}]${cityText}`;
+      this.html("hud-airspace", `<span>📡 ${gps.formatted}</span> <b>${air.flag || "📍"} ${air.country.toUpperCase()}</b> [${air.state.toUpperCase()}]${cityText}`);
     }
 
     // Approaching destination & live ETA readout
@@ -1185,59 +1315,72 @@ class UI {
     if (this.dom["hud-journey"] && journey?.destination) {
       const originStr = journey.origin?.name ? journey.origin.name.toUpperCase() : "BASE";
       const destStr = journey.destination.name.toUpperCase();
-      this.dom["hud-journey"].innerHTML = `<span class="journey-origin">🛫 ${originStr}</span><span class="journey-arrow">➔</span><span class="journey-dest">🎯 APPROACHING: <b>${destStr}</b></span><span class="journey-meta">${journey.distanceKm} KM · ETA ${journey.formattedETA}</span>`;
+      this.html("hud-journey", `<span class="journey-origin">🛫 ${originStr}</span><span class="journey-arrow">➔</span><span class="journey-dest">🎯 APPROACHING: <b>${destStr}</b></span><span class="journey-meta">${journey.distanceKm} KM · ETA ${journey.formattedETA}</span>`);
     }
 
+    // Multiplayer status badge
+    if (this.dom["hud-net-badge"]) {
+      if (g.multiplayer?.active) {
+        this.dom["hud-net-badge"].hidden = false;
+        const ping = g.multiplayer.network?.ping;
+        this.text("hud-net-text", `ONLINE · ${Number.isFinite(ping)?Math.round(ping)+"ms":"measuring ping"} · 30Hz TICK`);
+      } else {
+        this.dom["hud-net-badge"].hidden = true;
+      }
+    }
+
+    // ILS Glideslope Approach Detection
+    const nearestBaseInfo = getNearestIAFBase(p.position.x, p.position.z);
+    const isNearRunway = nearestBaseInfo?.base && nearestBaseInfo.distance < 12000;
+
     this.dom["lock-status"].textContent = g.mission.freeFlight
-      ? "H · HELP     M · MAP     T · TIME/SKY"
+      ? `${bindingLabel("help",this.settings)} · HELP     ${bindingLabel("tacticalMap",this.settings)} · MAP`
       : g.target?.alive
       ? g.lock >= 1.4
-        ? g.settings.input === "advanced"
-          ? "LOCKED · RIGHT CLICK"
-          : "LOCKED · E / RIGHT CLICK"
+        ? `LOCKED · ${bindingLabel("missile",this.settings)}`
         : g.lock > 0
         ? "ACQUIRING LOCK " + Math.round((g.lock / 1.4) * 100) + "%"
         : "KEEP TARGET IN RETICLE"
       : "NO HOSTILES";
     this.dom["lock-status"].classList.toggle("locked", g.lock >= 1.4);
-    this.dom["flight-warning"].textContent = p.isLanded ? "" : p.stall
-      ? "STALL · LOWER NOSE + INCREASE THROTTLE"
-      : g.outOfArea
-      ? "RETURN TO COMBAT AREA"
-      : p.position.y - Math.max(0, terrainHeight(p.position.x, p.position.z)) < 220
-      ? g.settings.input === "advanced"
-        ? "LOW ALTITUDE · PULL UP"
-        : "LOW ALTITUDE · PULL UP (↑ / MOUSE UP)"
-      : "";
+    const ground = Math.max(0, terrainHeight(p.position.x,p.position.z));
+    const context = hudContext(g,ground,nearestBaseInfo);
+    this.hudEl.dataset.context=context;
+    const warning=primaryWarning(g,ground,context);
+    this.text('flight-warning',warning.text);this.dom['flight-warning'].dataset.tone=warning.tone;
+    this.dom['flight-warning'].hidden=!warning.text;
+    const approach=this.dom['approach-instruments'];approach.hidden=!['ground','approach'].includes(context);
+    if(!approach.hidden) this.html('approach-instruments',`<span class="eyebrow">${context==='ground'?'GROUND ROLL':'APPROACH'}</span><b>${p.gearDown?'GEAR DOWN':'GEAR UP'} · ${p.airBrake?'BRAKE ON':'BRAKE OFF'}</b><span>V/S ${Math.round(p.velocity?.y || 0)} M/S · AGL ${Math.max(0,Math.round(p.position.y-ground))} M</span><small>${bindingLabel('airBrake',this.settings)} brake · ${bindingLabel('yawLeft',this.settings)} / ${bindingLabel('yawRight',this.settings)} steer</small>`);
     this.dom["damage-overlay"].style.opacity = g.damageFlash;
-    const n = g.notifications.at(-1);
-    this.dom.radio.innerHTML = n ? `<span>${n.who}</span> ${n.text}` : "";
+    const n = g.notifications[0];
+    this.html("radio",n ? `<span>${escapeHTML(n.who)}</span> ${escapeHTML(n.text)}` : "");
     if (this.borderAlertTimer > 0) {
       this.borderAlertTimer -= dt;
       if (this.borderAlertTimer <= 0) {
         if (this.dom["border-alert"]) this.dom["border-alert"].hidden = true;
       }
     }
-    this.drawHUD(g);
   }
 
   drawHUD(g) {
+    const scale = this.settings.hudScale || 1;
+    const dpr = Math.min(globalThis.devicePixelRatio || 1,2);
+    this.ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);
     const c = this.ctx,
-      w = innerWidth,
-      h = innerHeight,
+      w = innerWidth / scale,
+      h = innerHeight / scale,
       p = g.player,
       x = w / 2,
       y = h * 0.43;
     c.clearRect(0, 0, w, h);
-    c.shadowColor = "#03121c";
-    c.shadowBlur = 2;
-    c.shadowOffsetY = 1;
-    const ink = "#c4ffe8",
-      red = "#ff796c",
-      blue = "#65d8ff";
+    const ink = "#00f0ff",
+      red = "#ff3333",
+      blue = "#38bdf8";
+    c.shadowColor = "rgba(0, 0, 0, 0.75)";
+    c.shadowBlur = 3;
     c.strokeStyle = ink;
     c.fillStyle = ink;
-    c.lineWidth = 1;
+    c.lineWidth = 1.2;
     c.font = "12px ui-monospace, monospace";
     c.textAlign = "center";
     const hd = heading(p.quaternion);
@@ -1253,25 +1396,101 @@ class UI {
       }
       c.fillText("▼", x, 82);
     }
+    // True Military Pitch Ladder with Degree Numbers & Horizon Line
     const e = new T.Euler().setFromQuaternion(p.quaternion, "YXZ");
     c.save();
     c.translate(x, y);
     c.rotate(-e.z);
-    const py = e.x * 150;
-    for (let i = -2; i <= 2; i++) {
-      const yy = py + i * 50;
-      if (Math.abs(yy) > 135) continue;
-      c.globalAlpha = i === 0 ? 0.65 : 0.28;
-      c.beginPath();
-      c.moveTo(-80, yy);
-      c.lineTo(-25, yy);
-      c.moveTo(25, yy);
-      c.lineTo(80, yy);
-      c.stroke();
+    const py = e.x * 160;
+    c.font = "10px ui-monospace, monospace";
+    for (let deg = -50; deg <= 50; deg += 10) {
+      if (deg === 0) {
+        // Continuous Horizon Line with Center Gap
+        const yy = py;
+        if (Math.abs(yy) > 180) continue;
+        c.strokeStyle = "#00f0ff";
+        c.lineWidth = 1.6;
+        c.beginPath();
+        c.moveTo(-110, yy);
+        c.lineTo(-35, yy);
+        c.moveTo(35, yy);
+        c.lineTo(110, yy);
+        c.stroke();
+      } else {
+        const rad = (deg * Math.PI) / 180;
+        const yy = py - rad * 160;
+        if (Math.abs(yy) > 170) continue;
+        const isPos = deg > 0;
+        c.strokeStyle = isPos ? "rgba(0, 240, 255, 0.70)" : "rgba(0, 240, 255, 0.42)";
+        c.lineWidth = 1.2;
+        if (!isPos) c.setLineDash([4, 4]); // Dashed line for negative pitch dive
+        else c.setLineDash([]);
+        const armW = 42;
+        const tickH = isPos ? 5 : -5;
+        c.beginPath();
+        c.moveTo(-armW - 25, yy);
+        c.lineTo(-25, yy);
+        c.lineTo(-25, yy + tickH);
+        c.moveTo(25 + armW, yy);
+        c.lineTo(25, yy);
+        c.lineTo(25, yy + tickH);
+        c.stroke();
+        c.setLineDash([]);
+        c.fillStyle = isPos ? "rgba(0, 240, 255, 0.85)" : "rgba(0, 240, 255, 0.50)";
+        c.fillText(String(Math.abs(deg)), -armW - 36, yy + 3);
+        c.fillText(String(Math.abs(deg)), armW + 36, yy + 3);
+      }
     }
     c.restore();
+
+    // Flight Path Marker (Velocity Vector Indicator)
+    if (p.velocity && p.velocity.lengthSq() > 100) {
+      const fpmWorld = p.position.clone().addScaledVector(p.velocity.clone().normalize(), 120);
+      const fpmCamDir = g.camera.getWorldDirection(new T.Vector3());
+      if (fpmWorld.clone().sub(g.camera.position).dot(fpmCamDir) > 0) {
+        const fpmProj = fpmWorld.project(g.camera);
+        if (Math.abs(fpmProj.x) < 0.94 && Math.abs(fpmProj.y) < 0.94) {
+          const fpx = (fpmProj.x * 0.5 + 0.5) * w;
+          const fpy = (-fpmProj.y * 0.5 + 0.5) * h;
+          c.save();
+          c.strokeStyle = "#38f8d4";
+          c.lineWidth = 1.6;
+          c.beginPath();
+          c.arc(fpx, fpy, 6, 0, Math.PI * 2);
+          c.moveTo(fpx - 6, fpy);
+          c.lineTo(fpx - 16, fpy);
+          c.moveTo(fpx + 6, fpy);
+          c.lineTo(fpx + 16, fpy);
+          c.moveTo(fpx, fpy - 6);
+          c.lineTo(fpx, fpy - 13);
+          c.stroke();
+          c.restore();
+        }
+      }
+    }
+
+    // Annunciator Status Flags (BRAKE, GEAR)
+    c.save();
+    c.font = "bold 11px ui-monospace, monospace";
+    c.textAlign = "left";
+    const statusX = x - 170;
+    const statusY = y + 42;
+    if (p.airBrake) {
+      c.fillStyle = "#ffaa33";
+      c.fillRect(statusX - 42, statusY - 11, 52, 16);
+      c.fillStyle = "#000000";
+      c.fillText("BRAKE", statusX - 36, statusY + 1);
+    }
+    if (p.gearDown) {
+      c.fillStyle = "#00ffcc";
+      c.fillRect(statusX + 16, statusY - 11, 44, 16);
+      c.fillStyle = "#000000";
+      c.fillText("GEAR", statusX + 21, statusY + 1);
+    }
+    c.restore();
+
     c.globalAlpha = 1;
-    c.strokeStyle = "rgba(190,229,214,.13)";
+    c.strokeStyle = "rgba(0, 240, 255, 0.25)";
     c.setLineDash([5, 12]);
     c.beginPath();
     c.arc(x, y, h * 0.185, 0, Math.PI * 2);
@@ -1292,18 +1511,19 @@ class UI {
     c.fillRect(x - 2, y - 2, 4, 4);
 
     if (g.lock > 0) {
-      c.strokeStyle = g.lock >= 1.4 ? "#9affc6" : "#ffbf70";
+      c.strokeStyle = g.lock >= 1.4 ? "#00ff88" : "#ffaa00";
       c.lineWidth = 3;
       c.beginPath();
       c.arc(x, y, 37, -Math.PI / 2, -Math.PI / 2 + (g.lock / 1.4) * Math.PI * 2);
       c.stroke();
-      c.lineWidth = 1;
+      c.lineWidth = 1.2;
     }
 
-    if (g.settings.input === "mouse" && g.cam.mode !== "free") {
+    if (g.settings.device === "mouse" && !g.input.freeLook) {
+      c.strokeStyle="rgba(150,230,220,.5)";c.beginPath();c.ellipse(x,y,(g.settings.mouseDeadzone || .08)*w*.18,(g.settings.mouseDeadzone || .08)*h*.2,0,0,Math.PI*2);c.stroke();
       const mx = x + g.input.mouse.x * w * 0.18,
         my = y + g.input.mouse.y * h * 0.2;
-      c.strokeStyle = "rgba(220,246,233,.32)";
+      c.strokeStyle = "rgba(0, 240, 255, 0.45)";
       c.beginPath();
       c.moveTo(x, y);
       c.lineTo(mx, my);
@@ -1320,7 +1540,7 @@ class UI {
         c.strokeStyle = ink;
         c.font = "12px ui-monospace,monospace";
         c.fillText(label, sx, y - 42);
-        c.font = "22px ui-monospace,monospace";
+        c.font = "bold 22px ui-monospace,monospace";
         c.fillText(val, sx, y);
         c.strokeRect(sx - 43, y - 24, 86, 34);
         for (let i = -3; i <= 3; i++) {
@@ -1330,6 +1550,12 @@ class UI {
           c.stroke();
         }
       }
+
+      // Tactical G-Force Meter
+      const currentG = p.currentG || 1.0;
+      c.fillStyle = currentG > 6.0 ? "#ff3333" : "#00f0ff";
+      c.font = "bold 13px ui-monospace,monospace";
+      c.fillText(`${currentG.toFixed(1)} G`, x - 170, y + 28);
     }
 
     for (const j of [...g.enemies, ...g.allies]) {
@@ -1338,23 +1564,54 @@ class UI {
       if (dist > 16e3) continue;
       const proj = j.position.clone().project(g.camera);
       const selected = j === g.target;
-      const color = j.team === "ally" ? blue : selected && g.lock >= 1.4 ? "#afffd0" : red;
+      const color = j.team === "ally" ? blue : selected && g.lock >= 1.4 ? "#00ff88" : red;
       c.strokeStyle = color;
       c.fillStyle = color;
-      c.font = "12px ui-monospace,monospace";
+      c.font = "bold 12px ui-monospace,monospace";
       const front = j.position.clone().sub(g.camera.position).dot(g.camera.getWorldDirection(new T.Vector3())) > 0;
       if (front && Math.abs(proj.x) < 0.92 && Math.abs(proj.y) < 0.8) {
         const sx = (proj.x * 0.5 + 0.5) * w,
           sy = (-proj.y * 0.5 + 0.5) * h,
-          r = selected ? 20 : 11;
-        c.lineWidth = selected ? 1.8 : 1;
-        c.strokeRect(sx - r, sy - r, r * 2, r * 2);
+          r = selected ? 22 : 12;
+        c.lineWidth = selected ? 2.2 : 1.4;
+        if (j.team === "ally") {
+          // Calm Tactical Circle with Top Chevron for Allies
+          c.beginPath();
+          c.arc(sx, sy, r, 0, Math.PI * 2);
+          c.stroke();
+          c.beginPath();
+          c.moveTo(sx - 5, sy - r - 3);
+          c.lineTo(sx, sy - r - 9);
+          c.lineTo(sx + 5, sy - r - 3);
+          c.stroke();
+        } else {
+          // Tactical Military Diamond Reticle for Hostiles
+          c.beginPath();
+          c.moveTo(sx, sy - r * 1.15);
+          c.lineTo(sx + r * 1.15, sy);
+          c.lineTo(sx, sy + r * 1.15);
+          c.lineTo(sx - r * 1.15, sy);
+          c.closePath();
+          c.stroke();
+          // Corner Tactical Brackets for Selected Target
+          if (selected) {
+            const b = r + 6;
+            const bl = 6;
+            c.beginPath();
+            c.moveTo(sx - b, sy - b + bl); c.lineTo(sx - b, sy - b); c.lineTo(sx - b + bl, sy - b);
+            c.moveTo(sx + b - bl, sy - b); c.lineTo(sx + b, sy - b); c.lineTo(sx + b, sy - b + bl);
+            c.moveTo(sx + b, sy + b - bl); c.lineTo(sx + b, sy + b); c.lineTo(sx + b - bl, sy + b);
+            c.moveTo(sx - b + bl, sy + b); c.lineTo(sx - b, sy + b); c.lineTo(sx - b, sy + b - bl);
+            c.stroke();
+          }
+        }
         if (selected) {
-          c.fillText((j.bomber ? "BOMBER" : "BANDIT") + " " + String(j.id).padStart(2, "0"), sx, sy - r - 9);
-          c.fillText((dist / 1e3).toFixed(1) + " KM", sx, sy + r + 17);
-          c.globalAlpha = 0.5;
-          c.fillRect(sx - r, sy + r + 23, (r * 2 * j.hp) / (j.bomber ? 160 : 100), 3);
-          c.globalAlpha = 1;
+          c.fillText((j.bomber ? "HOSTILE BOMBER" : "HOSTILE BANDIT") + " " + String(j.id).padStart(2, "0"), sx, sy - r - 12);
+          c.fillText((dist / 1e3).toFixed(1) + " KM", sx, sy + r + 18);
+          c.fillStyle = "rgba(0, 0, 0, 0.75)";
+          c.fillRect(sx - r, sy + r + 24, r * 2, 4);
+          c.fillStyle = color;
+          c.fillRect(sx - r, sy + r + 24, (r * 2 * Math.max(0, j.hp)) / (j.bomber ? 160 : 100), 4);
         }
       } else if (selected) {
         const local = j.position.clone().sub(p.position).applyQuaternion(p.quaternion.clone().invert());
@@ -1366,13 +1623,113 @@ class UI {
         c.translate(sx, sy);
         c.rotate(angle);
         c.beginPath();
-        c.moveTo(0, -10);
-        c.lineTo(7, 5);
-        c.lineTo(-7, 5);
+        c.moveTo(0, -12);
+        c.lineTo(8, 6);
+        c.lineTo(-8, 6);
         c.closePath();
         c.fill();
         c.restore();
         c.fillText((dist / 1e3).toFixed(1) + " KM", sx, sy + 25);
+      }
+    }
+
+    // 3D In-World Incoming Missile Warning Reticles
+    if (g.incoming && g.incoming.length > 0) {
+      const camDir = g.camera.getWorldDirection(new T.Vector3());
+      for (const m of g.incoming) {
+        if (!m.active) continue;
+        const mDist = m.p.distanceTo(p.position);
+        const mProj = m.p.clone().project(g.camera);
+        const mFront = m.p.clone().sub(g.camera.position).dot(camDir) > 0;
+        if (mFront && Math.abs(mProj.x) < 0.94 && Math.abs(mProj.y) < 0.88) {
+          const mx = (mProj.x * 0.5 + 0.5) * w;
+          const my = (-mProj.y * 0.5 + 0.5) * h;
+          const flash = Math.sin(performance.now() * 0.024) > 0;
+          c.save();
+          c.strokeStyle = flash ? "#ff1111" : "#ffaa00";
+          c.fillStyle = flash ? "#ff1111" : "#ffaa00";
+          c.lineWidth = 2.2;
+          c.beginPath();
+          c.arc(mx, my, 13, 0, Math.PI * 2);
+          c.stroke();
+          c.beginPath();
+          c.moveTo(mx - 18, my); c.lineTo(mx + 18, my);
+          c.moveTo(mx, my - 18); c.lineTo(mx, my + 18);
+          c.stroke();
+          c.font = "bold 11px ui-monospace, monospace";
+          c.fillText("⚠ MISSILE " + (mDist / 1e3).toFixed(1) + " KM", mx, my - 18);
+          c.restore();
+        }
+      }
+    }
+
+    // Multiplayer Remote Aircraft HUD Markers & Floating Name Tags
+    if (g.multiplayer?.active) {
+      const camDir = g.camera.getWorldDirection(new T.Vector3());
+      for (const remote of g.multiplayer.remotePlayers.values()) {
+        if (!remote.alive || !remote.model) continue;
+        const dist = remote.model.position.distanceTo(p.position);
+        if (dist > 18e3) continue;
+
+        const isEnemy = remote.team !== g.multiplayer.localTeam;
+        const selected = g.target?.id === remote.id;
+        const color = isEnemy ? (selected && g.lock >= 1.4 ? "#afffd0" : red) : blue;
+
+        const tagPos = remote.model.position.clone().add(new T.Vector3(0, 3.2, 0));
+        const front = tagPos.clone().sub(g.camera.position).dot(camDir) > 0;
+        const proj = tagPos.project(g.camera);
+
+        if (front && Math.abs(proj.x) < 0.94 && Math.abs(proj.y) < 0.85) {
+          const sx = (proj.x * 0.5 + 0.5) * w;
+          const sy = (-proj.y * 0.5 + 0.5) * h;
+          const r = selected ? 22 : 12;
+
+          c.save();
+          c.strokeStyle = color;
+          c.fillStyle = color;
+          c.lineWidth = selected ? 2 : 1;
+
+          // Target reticle box
+          c.strokeRect(sx - r, sy - r, r * 2, r * 2);
+
+          // Name Tag
+          c.font = "bold 11px ui-monospace, monospace";
+          c.textAlign = "center";
+          c.fillText(`[${remote.team.toUpperCase()}] ${remote.name}`, sx, sy - r - 8);
+
+          // Distance Tag
+          c.font = "10px ui-monospace, monospace";
+          c.fillText(`${(dist / 1000).toFixed(1)} KM`, sx, sy + r + 15);
+
+          // Remote Player Health Bar
+          c.fillStyle = "rgba(0, 0, 0, 0.6)";
+          c.fillRect(sx - r, sy + r + 20, r * 2, 4);
+          c.fillStyle = isEnemy ? "#ff6b58" : "#5df2b6";
+          const maxRemoteHp = 100;
+          c.fillRect(sx - r, sy + r + 20, Math.max(0, (r * 2 * (remote.hp || 100)) / maxRemoteHp), 4);
+
+          c.restore();
+        } else if (selected && isEnemy) {
+          // Off-screen pointer for target
+          const local = remote.model.position.clone().sub(p.position).applyQuaternion(p.quaternion.clone().invert());
+          const angle = Math.atan2(local.x, local.y || -1);
+          const radius = Math.min(w * 0.32, h * 0.33);
+          const sx = x + Math.sin(angle) * radius,
+            sy = y - Math.cos(angle) * radius;
+          c.save();
+          c.fillStyle = color;
+          c.translate(sx, sy);
+          c.rotate(angle);
+          c.beginPath();
+          c.moveTo(0, -10);
+          c.lineTo(7, 5);
+          c.lineTo(-7, 5);
+          c.closePath();
+          c.fill();
+          c.restore();
+          c.font = "10px ui-monospace, monospace";
+          c.fillText((dist / 1e3).toFixed(1) + " KM", sx, sy + 25);
+        }
       }
     }
 
@@ -1389,7 +1746,7 @@ class UI {
           if (Math.abs(proj.x) < 0.94 && Math.abs(proj.y) < 0.85) {
             const sx = (proj.x * 0.5 + 0.5) * w;
             const sy = (-proj.y * 0.5 + 0.5) * h;
-            const alpha = 1;
+            const alpha = Math.max(0.35, 1 - dist / 38000);
 
             c.save();
             c.globalAlpha = alpha;
@@ -1420,9 +1777,9 @@ class UI {
 
     c.lineWidth = 1;
     this.drawILSGuidance(c, g, w, h);
-    // Keep flight instruments free of lens-glare overlays.
+    this.drawLensFlare(c, g, w, h);
     this.drawHighGVignette(c, g, w, h);
-    this.drawRadar(g, c, w, h);
+    if(!g.mission.freeFlight || this.root.querySelector(".hud-navigation")?.open)this.drawRadar(g,c,w,h);
 
     if (g.cam.mode === "cockpit") {
       // Canopy Structural Arch
@@ -1496,7 +1853,6 @@ class UI {
   }
 
   showAirbaseLandingModal() {
-    this.game.pause?.();
     this.modalType = "landing";
     const p = this.game.player.position;
 
@@ -1520,7 +1876,7 @@ class UI {
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-left:14px;">
             <div style="font-size:12px;font-family:ui-monospace,monospace;color:#ffd074;font-weight:bold;">${distKm} KM</div>
             <div style="display:flex;gap:6px;">
-              <button class="primary" style="padding:6px 12px;font-size:11px;" data-base-land="${b.id}">Start parked</button>
+              <button class="primary" style="padding:6px 12px;font-size:11px;" data-base-land="${b.id}">Touchdown 🛬</button>
               <button style="padding:6px 12px;font-size:11px;border-color:#5df2b6;color:#e8fff6;" data-base-approach="${b.id}">ILS Approach ✈️</button>
             </div>
           </div>
@@ -1532,10 +1888,13 @@ class UI {
       "IAF STRATEGIC AIRBASES DISPATCH",
       "Land at Indian Air Force Base",
       `
-      <p style="margin-bottom:14px;font-size:12px;color:#94bac5;">
-        Practice: start parked or fly a manual 3° approach. PgUp/PgDn adjusts throttle; K flaps, G gear, B brakes. Touch down aligned, then stop for 5 seconds for ground service. Airfield layouts are fictionalized.
+      <div style="margin-bottom:12px;padding:9px 12px;background:rgba(93,242,182,0.12);border:1px solid rgba(93,242,182,0.4);border-radius:6px;font-size:11px;color:#5df2b6;line-height:1.4;">
+        ✈️ <b>Manual In-Flight Landing:</b> You can fly manually to any airbase! Lower gear with <b>${bindingLabel("landingGear",this.settings)}</b>, line up with the runway, and touch down smoothly on the tarmac. No reset, no warp.
+      </div>
+      <p style="margin-bottom:12px;font-size:11px;color:#94bac5;">
+        Select an airbase below for immediate touchdown or to enter on a 3-mile visual ILS glideslope approach:
       </p>
-      <div style="max-height:55vh;overflow-y:auto;padding-right:6px;">
+      <div style="max-height:52vh;overflow-y:auto;padding-right:6px;">
         ${baseCards}
       </div>
       <button class="primary" data-action="close" style="margin-top:12px;">Resume Flight</button>
@@ -1545,40 +1904,12 @@ class UI {
 
   drawILSGuidance(c, g, w, h) {
     const p = g.player;
+    if(p.isLanded)return;
     const near = getNearestIAFBase(p.position.x, p.position.z);
-    if (!near || near.distance > 15000 || !(p.landingMode || p.gearDown || p.isLanded)) return;
+    if (!near || near.distance > 15000) return;
     const base = near.base;
-    const guidance=approachInfo(base,p);
 
     c.save();
-    // ILS status box on HUD
-    const by = 80;
-    c.fillStyle = "rgba(7, 24, 34, 0.75)";
-    c.strokeStyle = p.gearDown ? "rgba(93, 242, 182, 0.6)" : "rgba(255, 121, 108, 0.6)";
-    c.lineWidth = 1.5;
-    c.fillRect(w * 0.5 - 170, by, 340, 86);
-    c.strokeRect(w * 0.5 - 170, by, 340, 86);
-
-    c.textAlign = "center";
-    c.fillStyle = "#fff";
-    c.font = "bold 11px ui-monospace, monospace";
-    c.fillText(`ILS: ${base.shortName.toUpperCase()} · ${(near.distance / 1000).toFixed(1)} KM`, w * 0.5, by + 18);
-
-    c.font = "10px ui-monospace, monospace";
-    if (p.gearDown) {
-      c.fillStyle = "#5df2b6";
-      const altOver = Math.round(p.position.y - base.elevation);
-      c.fillText(`GEAR DOWN [G] · AGL: ${altOver}M · ${p.isLanded ? "GROUND" : "APPROACH"}`, w * 0.5, by + 36);
-    } else {
-      c.fillStyle = "#ff796c";
-      c.fillText("⚠ GEAR UP · PRESS [G] TO LOWER LANDING GEAR", w * 0.5, by + 36);
-    }
-
-    c.font="10px ui-monospace, monospace";c.fillStyle="#d7e9ed";
-    c.fillText(`GS ${guidance.glideError>0?"HIGH":"LOW"} ${Math.abs(guidance.glideError).toFixed(0)}M · LOC ${guidance.crossTrack>0?"RIGHT":"LEFT"} ${Math.abs(guidance.crossTrack).toFixed(0)}M`,w*.5,by+53);
-    c.fillText(`${p.landingMode?"MANUAL THROTTLE":"CRUISE"} · FLAPS ${p.flaps?"DOWN":"UP"} · SINK ${guidance.sink.toFixed(1)} M/S`,w*.5,by+68);
-    c.fillText(p.isLanded?"PgUp POWER · ↑ ROTATE · B BRAKES":"J LANDING MODE · PgUp/PgDn POWER · K FLAPS",w*.5,by+81);
-
     // 3D ILS Touchdown Zone Runway Marker
     if (g.camera && near.distance < 12000) {
       const rwPos = new T.Vector3(base.x, base.elevation + 2, base.z);
@@ -1606,9 +1937,11 @@ class UI {
 
   drawLensFlare(c, g, w, h) {
     if (!g.camera) return;
-    const camDir = g.camera.getWorldDirection(new T.Vector3());
-    const sunPos = g.world?.sun ? g.world.sun.position.clone() : new T.Vector3(-45000, 32000, -55000);
-    const toSun = sunPos.clone().sub(g.camera.position).normalize();
+    const visibility=(g.world?.sunVisibilityValue || 0)*(g.settings.effectIntensity ?? .8);
+    if(visibility<.01)return;
+    const camDir=g.camera.getWorldDirection(this._flareDirection ??=new T.Vector3());
+    const toSun=g.world.sunDirection;
+    const sunPos=(this._flarePosition ??=new T.Vector3()).copy(g.camera.position).addScaledVector(toSun,30000);
     const dot = camDir.dot(toSun);
     if (dot <= 0.4) return;
 
@@ -1619,7 +1952,7 @@ class UI {
     const sy = (-sunProj.y * 0.5 + 0.5) * h;
     const cx = w * 0.5;
     const cy = h * 0.5;
-    const intensity = Math.pow((dot - 0.4) / 0.6, 2.0);
+    const intensity = Math.pow((dot - 0.4) / 0.6, 2.0)*visibility*.45;
 
     c.save();
     // 1. Sun Radial Glow
@@ -1814,6 +2147,23 @@ class UI {
       c.fillText(city.name.substring(0, 4).toUpperCase(), pxc, pyc - 3);
     }
 
+    // Moving Map: Strategic Airbases & Runways on Radar
+    for (const base of IAF_BASES) {
+      const dxb = ((base.x - p.position.x) / 30e3) * r;
+      const dzb = ((base.z - p.position.z) / 30e3) * r;
+      if (Math.hypot(dxb, dzb) > r * 0.94) continue;
+      const pxb = x + dxb * Math.cos(angle) - dzb * Math.sin(angle);
+      const pyb = y + dxb * Math.sin(angle) + dzb * Math.cos(angle);
+      c.fillStyle = "#38f8d4";
+      c.fillRect(pxb - 3, pyb - 1.5, 6, 3);
+      c.strokeStyle = "#ffffff";
+      c.lineWidth = 1;
+      c.strokeRect(pxb - 3, pyb - 1.5, 6, 3);
+      c.font = "bold 8px ui-monospace, monospace";
+      c.fillStyle = "#38f8d4";
+      c.fillText((base.code || "AFB").substring(0, 4), pxb, pyb - 4);
+    }
+
     // Combat contacts plotting (enemies, allies, missiles, base)
     const plot = (pos, color, selected = false) => {
       const dx = ((pos.x - p.position.x) / 15e3) * r,
@@ -1833,6 +2183,15 @@ class UI {
     if (g.mission.id === 1) plot(BASE, "#ffdf84");
     for (const m of g.weapons.missiles) if (m.active && m.owner.team === "enemy") plot(m.p, "#ffcd5a");
 
+    // Multiplayer Radar Contacts
+    if (g.multiplayer?.active) {
+      for (const remote of g.multiplayer.remotePlayers.values()) {
+        if (!remote.alive || !remote.model) continue;
+        const color = remote.team === g.multiplayer.localTeam ? "#65d8ff" : "#ff796c";
+        plot(remote.model.position, color, g.target?.id === remote.id);
+      }
+    }
+
     // Player Jet Icon at center
     c.fillStyle = "#c4f7eb";
     c.beginPath();
@@ -1845,6 +2204,10 @@ class UI {
     c.font = "11px ui-monospace,monospace";
     c.textAlign = "center";
     c.fillText("NAV MAP / 30 KM", x, y + r + 18);
+  }
+
+  showMultiplayerResult(msg) {
+    this.multiplayerUI?.showMultiplayerResult(msg);
   }
 }
 

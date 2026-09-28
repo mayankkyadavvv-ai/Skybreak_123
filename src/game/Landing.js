@@ -1,4 +1,8 @@
 import * as T from 'three';
+const up=new T.Vector3();
+export function canTouchdown(player,sinkRate){
+  return player.gearDown && sinkRate>=0 && sinkRate<=18 && player.speed<140 && up.set(0,1,0).applyQuaternion(player.quaternion).y>.85;
+}
 export const WHEEL_HEIGHT = 3.2;
 export const GLIDE_ANGLE = 3 * Math.PI / 180;
 export function runwayLocal(base, p) {

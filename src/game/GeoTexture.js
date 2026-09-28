@@ -1,5 +1,5 @@
 import * as T from "three";
-import { CITIES, INTERNATIONAL_BORDERS } from "./GeoWorld.js";
+import { CITIES, INTERNATIONAL_BORDERS, IAF_BASES } from "./GeoWorld.js";
 
 /**
  * Generates a high-resolution (2048x2048) satellite map texture for 3D terrain.
@@ -24,22 +24,22 @@ function createGeoTexture(width = 2048, height = 2048) {
   const toX = (wx) => ((wx - minX) / (maxX - minX)) * width;
   const toY = (wz) => ((wz - minZ) / (maxZ - minZ)) * height;
 
-  // 1. Base Geographic Biome Gradients (North to South / East to West)
+  // 1. Base Geographic Biome Gradients (High Contrast, Vivid Natural Tones)
   const baseGrad = ctx.createLinearGradient(0, 0, width, height);
-  baseGrad.addColorStop(0, "#345839");   // Northern pine foothills & valleys
-  baseGrad.addColorStop(0.28, "#66884a"); // Punjab & Haryana agricultural belt
-  baseGrad.addColorStop(0.52, "#d4ac64"); // Thar & Sindh desert golden sands
-  baseGrad.addColorStop(0.82, "#968158"); // Semi-arid Gujarat & coastal scrub
-  baseGrad.addColorStop(1, "#36665a");   // Coastal rim & Arabian sea edge
+  baseGrad.addColorStop(0, "#364e3a");    // Himalayan pine foothills
+  baseGrad.addColorStop(0.24, "#486e39"); // Punjab & Haryana agricultural green
+  baseGrad.addColorStop(0.48, "#dfb568"); // Thar & Sindh golden desert
+  baseGrad.addColorStop(0.78, "#af8e5c"); // Semi-arid scrubland
+  baseGrad.addColorStop(1, "#18424e");    // Coastal shallows
   ctx.fillStyle = baseGrad;
   ctx.fillRect(0, 0, width, height);
 
   // 2. Himalayan Snow Peaks, Glaciers & Rocky Moraines (Far North)
   const mountainGrad = ctx.createLinearGradient(0, 0, 0, height * 0.28);
-  mountainGrad.addColorStop(0, "rgba(248, 250, 255, 0.94)"); // Crisp snowpack
-  mountainGrad.addColorStop(0.4, "rgba(215, 230, 245, 0.85)"); // Glacial blue-white
-  mountainGrad.addColorStop(0.72, "rgba(110, 120, 130, 0.65)"); // Granite rock shadow
-  mountainGrad.addColorStop(1, "rgba(65, 85, 60, 0)");          // Pine tree line fade
+  mountainGrad.addColorStop(0, "rgba(255, 255, 255, 0.98)");   // Brilliant alpine snowpack
+  mountainGrad.addColorStop(0.38, "rgba(215, 235, 255, 0.90)"); // Glacial ice blue
+  mountainGrad.addColorStop(0.70, "rgba(70, 80, 92, 0.78)");    // Sharp granite rock ridges
+  mountainGrad.addColorStop(1, "rgba(54, 78, 58, 0)");           // Pine tree line fade
   ctx.fillStyle = mountainGrad;
   ctx.fillRect(0, 0, width, height * 0.28);
 
@@ -70,14 +70,24 @@ function createGeoTexture(width = 2048, height = 2048) {
   // 4. White Salt Flats of the Great Rann of Kutch (Gujarat / Sindh border)
   const kutchX = toX(-3000);
   const kutchY = toY(22000);
-  const kutchGrad = ctx.createRadialGradient(kutchX, kutchY, 10, kutchX, kutchY, 150);
-  kutchGrad.addColorStop(0, "rgba(250, 250, 245, 0.85)"); // White crystalline salt
-  kutchGrad.addColorStop(0.5, "rgba(230, 230, 220, 0.60)");
+  const kutchGrad = ctx.createRadialGradient(kutchX, kutchY, 10, kutchX, kutchY, 160);
+  kutchGrad.addColorStop(0, "rgba(255, 255, 252, 0.95)"); // Pure white crystalline salt
+  kutchGrad.addColorStop(0.35, "rgba(245, 248, 245, 0.88)");
+  kutchGrad.addColorStop(0.70, "rgba(220, 224, 215, 0.65)");
   kutchGrad.addColorStop(1, "rgba(180, 185, 175, 0)");
   ctx.fillStyle = kutchGrad;
   ctx.beginPath();
-  ctx.ellipse(kutchX, kutchY, 170, 80, -Math.PI / 10, 0, Math.PI * 2);
+  ctx.ellipse(kutchX, kutchY, 185, 95, -Math.PI / 10, 0, Math.PI * 2);
   ctx.fill();
+
+  // Fine polygonal salt-crust crack striations
+  ctx.strokeStyle = "rgba(205, 210, 202, 0.42)";
+  ctx.lineWidth = 1.5;
+  for (let s = 0; s < 32; s++) {
+    const sx = kutchX + (Math.sin(s * 1.7) * 125);
+    const sy = kutchY + (Math.cos(s * 2.3) * 65);
+    ctx.strokeRect(sx, sy, 18 + (s % 5) * 6, 14 + (s % 4) * 4);
+  }
 
   // 5. Ocean & Arabian Sea Coastline (South-West)
   ctx.fillStyle = "#123440";
@@ -93,6 +103,53 @@ function createGeoTexture(width = 2048, height = 2048) {
   ctx.strokeStyle = "rgba(75, 190, 200, 0.55)";
   ctx.lineWidth = 18;
   ctx.stroke();
+
+  // Coastline breaking surf foam fringe
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
+  ctx.lineWidth = 3.5;
+  ctx.stroke();
+
+  // Coastal Islands in the Arabian Sea (Beaches, Rocky bluffs & vegetation)
+  const islands = [
+    { x: -18000, y: 46000, rx: 38, ry: 24, rot: 0.4 },
+    { x: -11000, y: 52000, rx: 32, ry: 20, rot: -0.3 },
+    { x: -25000, y: 43000, rx: 28, ry: 18, rot: 0.2 },
+    { x: -6000, y: 45000, rx: 26, ry: 16, rot: -0.5 }
+  ];
+
+  for (const isl of islands) {
+    const ix = toX(isl.x);
+    const iy = toY(isl.y);
+    // Turquoise shallow reef halo
+    ctx.fillStyle = "rgba(64, 198, 208, 0.42)";
+    ctx.beginPath();
+    ctx.ellipse(ix, iy, isl.rx + 16, isl.ry + 12, isl.rot, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Breaking surf foam ring around island
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.72)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(ix, iy, isl.rx + 2, isl.ry + 2, isl.rot, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Sandy golden perimeter beach
+    ctx.fillStyle = "#d8c494";
+    ctx.beginPath();
+    ctx.ellipse(ix, iy, isl.rx, isl.ry, isl.rot, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Coastal greenery & rocky ridge core
+    ctx.fillStyle = "#557d4a";
+    ctx.beginPath();
+    ctx.ellipse(ix, iy, isl.rx * 0.72, isl.ry * 0.68, isl.rot, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#6b6255";
+    ctx.beginPath();
+    ctx.ellipse(ix, iy, isl.rx * 0.38, isl.ry * 0.34, isl.rot, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // 6. Real River Systems
   // A. Indus River winding from Kashmir down to Arabian Sea delta
@@ -248,23 +305,56 @@ function createGeoTexture(width = 2048, height = 2048) {
     }
   }
 
-  // 9. Military Airbase Runway Strips on Satellite Texture
-  ctx.fillStyle = "#1e2226";
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
-  for (const city of CITIES) {
-    if (!city.militaryBase) continue;
-    const ax = toX(city.x);
-    const ay = toY(city.z);
+  // 9. Military Airbase Runway Strips on Satellite Texture (IAF Bases + Cities)
+  const allAirfields = [
+    ...IAF_BASES.map((b) => ({ x: b.x, z: b.z, heading: b.runwayHeading || 0 })),
+    ...CITIES.filter((c) => c.militaryBase).map((c) => ({ x: c.x, z: c.z, heading: 0 }))
+  ];
 
-    // Dark asphalt runway strip
-    ctx.fillRect(ax - 3, ay - 14, 6, 28);
+  for (const af of allAirfields) {
+    const ax = toX(af.x);
+    const ay = toY(af.z);
 
-    // Centerline markings
+    ctx.save();
+    ctx.translate(ax, ay);
+    ctx.rotate(((af.heading || 0) * Math.PI) / 180);
+
+    // Dark high-contrast asphalt runway strip
+    ctx.fillStyle = "#121417";
+    ctx.fillRect(-5, -24, 10, 48);
+
+    // Runway apron / taxiway
+    ctx.fillStyle = "#1e2227";
+    ctx.fillRect(4, -10, 8, 20);
+
+    // Bright white runway threshold piano keys
+    ctx.fillStyle = "#ffffff";
+    for (let k = -3; k <= 3; k += 2) {
+      ctx.fillRect(k, -22, 1, 4);
+      ctx.fillRect(k, 18, 1, 4);
+    }
+
+    // Bright white centerline markings
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(0, -18);
+    ctx.lineTo(0, 18);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Yellow taxiway threshold bars
+    ctx.strokeStyle = "#ffd23f";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(ax, ay - 12);
-    ctx.lineTo(ax, ay + 12);
+    ctx.moveTo(-4, -18);
+    ctx.lineTo(4, -18);
+    ctx.moveTo(-4, 18);
+    ctx.lineTo(4, 18);
     ctx.stroke();
+
+    ctx.restore();
   }
 
   // 10. Urban City Footprints and Night Lights
@@ -319,7 +409,7 @@ function createGeoTexture(width = 2048, height = 2048) {
 
   // Create and configure Three.js texture
   const texture = new T.CanvasTexture(canvas);
-  texture.colorSpace = T.SRGBColorSpace;
+  texture.colorSpace=T.SRGBColorSpace;
   texture.wrapS = T.ClampToEdgeWrapping;
   texture.wrapT = T.ClampToEdgeWrapping;
   texture.generateMipmaps = true;

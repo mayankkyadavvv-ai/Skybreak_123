@@ -1,4 +1,5 @@
-import { aircraftDetail } from "./SurfaceDetail.js";
+import { disposeObject } from "./Resources.js";
+import { FLAGSHIP_ASSET, loadJetAsset } from "./JetAsset.js";
 import * as T from "three";
 import { forward } from "./math.js";
 import { JET_MODELS, LIVERIES, computeJetStats, DEFAULT_PLAYER_CONFIG } from "./JetConfigs.js";
@@ -19,36 +20,155 @@ function mesh(g, m, x = 0, y = 0, z = 0) {
   return o;
 }
 
+function createControlSurface(x, y, z, width, chord, thickness, rotY = 0, rotZ = 0, mat) {
+  const pivot = new T.Group();
+  pivot.position.set(x, y, z);
+  pivot.rotation.y = rotY;
+  pivot.rotation.z = rotZ;
+  const geo = new T.BoxGeometry(width, thickness, chord);
+  geo.translate(0, 0, chord * 0.5);
+  const m = new T.Mesh(geo, mat);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  pivot.add(m);
+  return pivot;
+}
+
+function createRudderSurface(x, y, z, height, chord, thickness, rotY = 0, rotZ = 0, mat) {
+  const pivot = new T.Group();
+  pivot.position.set(x, y, z);
+  pivot.rotation.y = rotY;
+  pivot.rotation.z = rotZ;
+  const geo = new T.BoxGeometry(thickness, height, chord);
+  geo.translate(0, height * 0.5, chord * 0.5);
+  const m = new T.Mesh(geo, mat);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  pivot.add(m);
+  return pivot;
+}
+
+let _panelTexture = null;
+function getAircraftPanelTexture() {
+  if (_panelTexture) return _panelTexture;
+  if (typeof document === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.fillStyle = "#808080";
+  ctx.fillRect(0, 0, 512, 512);
+
+  // Technical Panel Line Grooves
+  ctx.strokeStyle = "#383838";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, 64); ctx.lineTo(512, 64);
+  ctx.moveTo(0, 128); ctx.lineTo(512, 128);
+  ctx.moveTo(0, 256); ctx.lineTo(512, 256);
+  ctx.moveTo(0, 384); ctx.lineTo(512, 384);
+  ctx.moveTo(0, 448); ctx.lineTo(512, 448);
+  for (let x = 32; x < 512; x += 48) {
+    ctx.moveTo(x, 0); ctx.lineTo(x, 512);
+  }
+  ctx.stroke();
+
+  // Avionics / Maintenance Hatches
+  ctx.fillStyle = "#686868";
+  const hatches = [
+    [72, 80, 40, 28], [180, 80, 56, 32], [320, 80, 44, 28],
+    [72, 280, 48, 36], [190, 280, 60, 40], [330, 280, 50, 32],
+    [120, 400, 36, 24], [260, 400, 42, 28], [380, 400, 36, 24]
+  ];
+  for (const [hx, hy, hw, hh] of hatches) {
+    ctx.strokeRect(hx, hy, hw, hh);
+    ctx.fillRect(hx + 2, hy + 2, hw - 4, hh - 4);
+    ctx.fillStyle = "#2a2a2a";
+    ctx.fillRect(hx + 4, hy + 4, 2, 2);
+    ctx.fillRect(hx + hw - 6, hy + 4, 2, 2);
+    ctx.fillRect(hx + 4, hy + hh - 6, 2, 2);
+    ctx.fillRect(hx + hw - 6, hy + hh - 6, 2, 2);
+    ctx.fillStyle = "#686868";
+  }
+
+  // Flush Rivets
+  ctx.fillStyle = "#2c2c2c";
+  for (let y = 16; y < 512; y += 32) {
+    for (let x = 8; x < 512; x += 12) {
+      if (x % 48 !== 0 && y % 64 !== 0) {
+        ctx.fillRect(x, y, 2, 2);
+      }
+    }
+  }
+
+  _panelTexture = new T.CanvasTexture(canvas);
+  _panelTexture.wrapS = T.RepeatWrapping;
+  _panelTexture.wrapT = T.RepeatWrapping;
+  _panelTexture.repeat.set(3, 3);
+  return _panelTexture;
+}
+
+function applyAviationRimLighting(mat) {
+  if (!mat) return;
+  mat.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <dithering_fragment>",
+      `#include <dithering_fragment>
+      #ifdef USE_NORMAL
+        // Subtle aerodynamic Fresnel rim highlight ensuring aircraft silhouette pops against clouds, sky & night
+        float vRim = 1.0 - max(0.0, dot(normalize(vNormal), normalize(vViewPosition)));
+        vRim = pow(vRim, 3.2) * 0.28;
+        gl_FragColor.rgb += vec3(0.52, 0.74, 0.98) * vRim * (1.0 - roughness * 0.45);
+      #endif
+      `
+    );
+  };
+}
+
 export function createJet(team = "player", bomber = false, modelId = "x17", liveryId = "grey", mods = {}) {
   const g = new T.Group();
   const modelDef = JET_MODELS[modelId] || JET_MODELS.x17;
   const livery = LIVERIES[liveryId] || LIVERIES.grey;
+  const panelBump = getAircraftPanelTexture();
 
   // Materials
-  let bodyMat, darkMat, stripeMat, metalMat, glassMat;
+  let bodyMat, darkMat, stripeMat, metalMat, glassMat, titaniumHeatMat;
   if (team === "enemy") {
-    bodyMat = new T.MeshStandardMaterial({ color: 0x5a6358, metalness: 0.65, roughness: 0.45 });
-    darkMat = new T.MeshStandardMaterial({ color: 0x1c211b, metalness: 0.75, roughness: 0.4 });
-    stripeMat = new T.MeshStandardMaterial({ color: 0xd93838, metalness: 0.4, roughness: 0.35 });
-    metalMat = new T.MeshStandardMaterial({ color: 0x6e736c, metalness: 0.85, roughness: 0.28 });
-    glassMat = new T.MeshStandardMaterial({ color: 0xc87070, metalness: 0.82, roughness: 0.12 });
+    bodyMat = new T.MeshStandardMaterial({ color: 0x24282f, metalness: 0.70, roughness: 0.35, bumpMap: panelBump, bumpScale: 0.04 });
+    darkMat = new T.MeshStandardMaterial({ color: 0x111418, metalness: 0.80, roughness: 0.30, bumpMap: panelBump, bumpScale: 0.03 });
+    stripeMat = new T.MeshStandardMaterial({ color: 0xff2020, metalness: 0.45, roughness: 0.30 });
+    metalMat = new T.MeshStandardMaterial({ color: 0x9298a0, metalness: 0.88, roughness: 0.22 });
+    glassMat = new T.MeshStandardMaterial({ color: 0xeb3434, metalness: 0.88, roughness: 0.10, transparent: true, opacity: 0.88 });
+    titaniumHeatMat = new T.MeshStandardMaterial({ color: 0x364254, metalness: 0.92, roughness: 0.25, bumpMap: panelBump, bumpScale: 0.03 });
   } else if (team === "ally") {
-    bodyMat = new T.MeshStandardMaterial({ color: 0x586b7c, metalness: 0.70, roughness: 0.40 });
-    darkMat = new T.MeshStandardMaterial({ color: 0x17212b, metalness: 0.78, roughness: 0.35 });
-    stripeMat = new T.MeshStandardMaterial({ color: 0x3b82f6, metalness: 0.38, roughness: 0.38 });
-    metalMat = new T.MeshStandardMaterial({ color: 0x768594, metalness: 0.85, roughness: 0.28 });
-    glassMat = new T.MeshStandardMaterial({ color: 0x88ccff, metalness: 0.82, roughness: 0.12 });
+    bodyMat = new T.MeshStandardMaterial({ color: 0xd2d9e2, metalness: 0.65, roughness: 0.38, bumpMap: panelBump, bumpScale: 0.04 });
+    darkMat = new T.MeshStandardMaterial({ color: 0x182436, metalness: 0.75, roughness: 0.32, bumpMap: panelBump, bumpScale: 0.03 });
+    stripeMat = new T.MeshStandardMaterial({ color: 0x1e88e5, metalness: 0.45, roughness: 0.32 });
+    metalMat = new T.MeshStandardMaterial({ color: 0x8aa0b4, metalness: 0.88, roughness: 0.22 });
+    glassMat = new T.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.88, roughness: 0.10, transparent: true, opacity: 0.88 });
+    titaniumHeatMat = new T.MeshStandardMaterial({ color: 0x3b4c62, metalness: 0.92, roughness: 0.25, bumpMap: panelBump, bumpScale: 0.03 });
   } else {
-    bodyMat = new T.MeshStandardMaterial({ color: livery.bodyColor, metalness: livery.metalness, roughness: livery.roughness });
-    darkMat = new T.MeshStandardMaterial({ color: livery.darkColor, metalness: Math.min(1, livery.metalness + 0.08), roughness: livery.roughness * 0.85 });
+    bodyMat = new T.MeshStandardMaterial({ color: livery.bodyColor, metalness: livery.metalness, roughness: livery.roughness, bumpMap: panelBump, bumpScale: 0.04 });
+    darkMat = new T.MeshStandardMaterial({ color: livery.darkColor, metalness: Math.min(1, livery.metalness + 0.08), roughness: livery.roughness * 0.85, bumpMap: panelBump, bumpScale: 0.03 });
     stripeMat = new T.MeshStandardMaterial({ color: livery.stripeColor, metalness: 0.42, roughness: 0.36 });
     metalMat = new T.MeshStandardMaterial({ color: livery.metalColor || 0x76808f, metalness: 0.88, roughness: 0.25 });
-    glassMat = new T.MeshStandardMaterial({ color: livery.glassColor || 0x98b4cc, metalness: 0.85, roughness: 0.10 });
+    glassMat = new T.MeshStandardMaterial({ color: livery.glassColor || 0x98b4cc, metalness: 0.85, roughness: 0.10, transparent: true, opacity: 0.88 });
+    titaniumHeatMat = new T.MeshStandardMaterial({ color: 0x3e4e66, metalness: 0.92, roughness: 0.24, bumpMap: panelBump, bumpScale: 0.03 });
   }
 
-  aircraftDetail(bodyMat);
+  glassMat.metalness=.05;glassMat.roughness=.14;glassMat.opacity=.62;glassMat.depthWrite=false;glassMat.envMapIntensity=1.25;
+  if(modelId==='x17'){bodyMat.roughness=Math.max(.48,bodyMat.roughness);bodyMat.metalness=Math.min(.48,bodyMat.metalness);bodyMat.bumpScale=.018;}
+  applyAviationRimLighting(bodyMat);
+  applyAviationRimLighting(darkMat);
+  applyAviationRimLighting(metalMat);
+  applyAviationRimLighting(titaniumHeatMat);
+
   const elevators = [];
   const canards = [];
+  const ailerons = [];
+  const rudders = [];
   const flames = [];
 
   // ==========================================
@@ -129,6 +249,23 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
   canopy.scale.set(modelId === "su57" ? 0.92 : 0.85, 0.82, modelId === "f22" ? 2.6 : 2.4);
   g.add(canopy);
 
+  // Canopy Structural Frame Arch
+  const frameArch = mesh(new T.BoxGeometry(modelId === "su57" ? 1.72 : 1.58, 0.08, 0.16), darkMat, 0, modelId === "a10x" ? 1.45 : 1.35, canopyZ - 0.5);
+  frameArch.rotation.x = -0.15;
+  g.add(frameArch);
+
+  // Cockpit Interior: Instrument Glare Shield, Ejection Seat & HUD
+  const cockpitGroup = new T.Group();
+  cockpitGroup.name = "cockpit_interior";
+  const glareShield = mesh(new T.BoxGeometry(0.72, 0.16, 1.2), darkMat, 0, modelId === "a10x" ? 0.88 : 0.76, canopyZ - 1.1);
+  glareShield.rotation.x = 0.18;
+  const hudGlass = mesh(new T.BoxGeometry(0.28, 0.22, 0.04), glassMat, 0, modelId === "a10x" ? 1.08 : 0.95, canopyZ - 0.9);
+  hudGlass.rotation.x = -0.35;
+  const seatHeadrest = mesh(new T.BoxGeometry(0.36, 0.42, 0.26), darkMat, 0, modelId === "a10x" ? 1.05 : 0.92, canopyZ + 0.6);
+  const seatBack = mesh(new T.BoxGeometry(0.44, 0.72, 0.24), darkMat, 0, modelId === "a10x" ? 0.65 : 0.54, canopyZ + 0.52);
+  cockpitGroup.add(glareShield, hudGlass, seatHeadrest, seatBack);
+  g.add(cockpitGroup);
+
   // A-10X 30mm Rotary Cannon Protrusion
   if (modelId === "a10x") {
     const cannonBarrel = mesh(new T.CylinderGeometry(0.26, 0.26, 3.2, 12), metalMat, -0.35, -0.4, -9.8);
@@ -161,6 +298,11 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       g.add(elev);
       elevators.push(elev);
 
+      // Articulated Wing Trailing-Edge Aileron
+      const aileron = createControlSurface(side * 6.5, 0, 4.2, 2.4, 0.85, 0.18, side * -0.18, 0, stripeMat);
+      g.add(aileron);
+      ailerons.push(aileron);
+
     } else if (modelId === "f22") {
       // Diamond Stealth Wings
       g.add(poly([[side * 0.9, -3.5], [side * 7.6, 2.5], [side * 6.2, 5.2], [side * 1.0, 3.2]], 0.24, bodyMat));
@@ -170,6 +312,11 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       const elev = poly([[side * 0.9, 4.8], [side * 4.6, 6.8], [side * 3.6, 8.4], [side * 0.7, 7.2]], 0.18, bodyMat);
       g.add(elev);
       elevators.push(elev);
+
+      // Articulated Wing Trailing-Edge Aileron
+      const aileron = createControlSurface(side * 5.4, 0, 3.4, 2.2, 0.8, 0.16, side * -0.15, 0, stripeMat);
+      g.add(aileron);
+      ailerons.push(aileron);
 
     } else if (modelId === "vajra9") {
       // Compound Tailless Delta Wing
@@ -186,6 +333,11 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       g.add(elev);
       elevators.push(elev);
 
+      // Outboard Articulated High-Roll Aileron
+      const aileron = createControlSurface(side * 5.0, 0, 4.2, 2.0, 0.8, 0.16, side * -0.16, 0, stripeMat);
+      g.add(aileron);
+      ailerons.push(aileron);
+
     } else if (modelId === "a10x") {
       // Straight High-Lift Heavy Wings
       g.add(poly([[side * 0.9, -1.2], [side * 9.8, -0.6], [side * 9.5, 2.6], [side * 0.9, 2.4]], 0.34, bodyMat));
@@ -196,6 +348,11 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       g.add(elev);
       elevators.push(elev);
 
+      // Long-Span Articulated Flap / Aileron
+      const aileron = createControlSurface(side * 6.8, 0, 2.4, 2.8, 0.8, 0.18, 0, 0, stripeMat);
+      g.add(aileron);
+      ailerons.push(aileron);
+
     } else {
       // Default X-17 Delta
       g.add(poly([[side * 0.8, -3], [side * 8, 3.5], [side * 7, 5], [side * 1, 3.1]], 0.26, bodyMat));
@@ -203,6 +360,11 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       const elev = poly([[side * 0.8, 4.5], [side * 4.4, 6.7], [side * 3.7, 8.1], [side * 0.6, 7]], 0.18, bodyMat);
       g.add(elev);
       elevators.push(elev);
+
+      // Articulated Delta Wing Aileron
+      const aileron = createControlSurface(side * 5.6, 0, 3.8, 2.2, 0.8, 0.16, side * -0.20, 0, stripeMat);
+      g.add(aileron);
+      ailerons.push(aileron);
     }
 
     // ==========================================
@@ -224,6 +386,11 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       hfin.position.set(side * 4.6, 0.2, 5.8);
       g.add(hfin);
 
+      // Articulated H-Tail Twin Rudder
+      const rud = createRudderSurface(side * 4.6, 0.35, 5.8, 2.2, 0.65, 0.14, 0, 0, stripeMat);
+      g.add(rud);
+      rudders.push(rud);
+
     } else if (modelId === "f22") {
       // 28-degree canted V-tails
       const fs = new T.Shape();
@@ -238,6 +405,11 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       fin.rotation.z = -side * 0.48; // Heavily canted
       fin.position.set(side * 1.5, 0.3, 4.4);
       g.add(fin);
+
+      // Articulated Canted V-Tail Rudder
+      const rud = createRudderSurface(side * 1.5, 0.4, 4.4, 2.4, 0.7, 0.14, 0, -side * 0.48, stripeMat);
+      g.add(rud);
+      rudders.push(rud);
 
     } else if (modelId === "su57") {
       // Wide-spaced outward-canted twin rudders
@@ -254,6 +426,11 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       fin.position.set(side * 1.8, 0.4, 4.6);
       g.add(fin);
 
+      // Articulated Twin Rudder
+      const rud = createRudderSurface(side * 1.8, 0.5, 4.6, 2.4, 0.7, 0.14, 0, -side * 0.35, stripeMat);
+      g.add(rud);
+      rudders.push(rud);
+
     } else {
       // Default X-17 twin canted fins
       const fs = new T.Shape();
@@ -268,6 +445,11 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       fin.rotation.z = -side * 0.27;
       fin.position.set(side * 1.1, 0.4, 4.2);
       g.add(fin);
+
+      // Articulated Twin Rudder
+      const rud = createRudderSurface(side * 1.1, 0.5, 4.2, 2.3, 0.7, 0.14, 0, -side * 0.27, stripeMat);
+      g.add(rud);
+      rudders.push(rud);
     }
 
     // ==========================================
@@ -292,22 +474,36 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       strut.rotation.z = side * 0.4;
       g.add(strut);
 
-      // Triple underwing heavy weapon racks
+      // Triple underwing heavy weapon pylons with launch rails
       for (let j = 0; j < 3; j++) {
-        const m = mesh(new T.CylinderGeometry(0.16, 0.16, 3.2, 8), metalMat, side * (2.8 + j * 1.4), -0.7, 1.0 + j * 0.2);
+        const px = side * (2.8 + j * 1.4);
+        const pz = 1.0 + j * 0.2;
+        const pylon = mesh(new T.BoxGeometry(0.10, 0.26, 2.2), bodyMat, px, -0.48, pz);
+        g.add(pylon);
+        const rail = mesh(new T.BoxGeometry(0.14, 0.08, 2.8), darkMat, px, -0.60, pz);
+        g.add(rail);
+        const m = mesh(new T.CylinderGeometry(0.16, 0.16, 3.2, 8), metalMat, px, -0.74, pz);
         m.rotation.x = Math.PI / 2;
         g.add(m);
       }
 
     } else if (modelId === "vajra9") {
-      // Single engine belly air-intake & side pylons
+      // Single engine belly air-intake with boundary layer splitter plate
+      const splitter = mesh(new T.BoxGeometry(0.08, 0.75, 2.8), darkMat, side * 0.72, -0.4, -0.8);
+      g.add(splitter);
       const intake = mesh(new T.BoxGeometry(0.85, 0.75, 2.8), darkMat, side * 1.1, -0.4, -0.8);
       intake.rotation.y = -side * 0.12;
       g.add(intake);
 
-      // Underwing missile racks
+      // Underwing aerodynamic pylons with launch rails
       for (let j = 0; j < 3; j++) {
-        const m = mesh(new T.CylinderGeometry(0.12, 0.12, 2.6, 6), metalMat, side * (2.2 + j * 1.1), -0.6, 1.2 + j * 0.3);
+        const px = side * (2.2 + j * 1.1);
+        const pz = 1.2 + j * 0.3;
+        const pylon = mesh(new T.BoxGeometry(0.08, 0.20, 1.8), bodyMat, px, -0.42, pz);
+        g.add(pylon);
+        const rail = mesh(new T.BoxGeometry(0.12, 0.07, 2.2), darkMat, px, -0.52, pz);
+        g.add(rail);
+        const m = mesh(new T.CylinderGeometry(0.12, 0.12, 2.6, 6), metalMat, px, -0.64, pz);
         m.rotation.x = Math.PI / 2;
         g.add(m);
       }
@@ -319,26 +515,39 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
       engine.rotation.x = Math.PI / 2;
       g.add(engine);
 
+      // Titanium Heat Shield Discoloration Collar ahead of nozzle
+      const heatCollar = mesh(new T.CylinderGeometry(0.68, 0.70, 0.75, 14, 1, false), titaniumHeatMat, nacelleX, -0.15, 7.05);
+      heatCollar.rotation.x = Math.PI / 2;
+      g.add(heatCollar);
+
       if (modelId === "f22") {
         // Rectangular 2D Stealth Vectoring Nozzles
         const nozzle = mesh(new T.BoxGeometry(1.2, 0.75, 1.2), darkMat, nacelleX, -0.15, 7.8);
         g.add(nozzle);
       } else {
-        // Round Nozzles
+        // Round Variable Geometry Iris Nozzles
         const nozzle = mesh(new T.CylinderGeometry(0.56, 0.65, 0.8, 14, 1, true), darkMat, nacelleX, -0.15, 7.8);
         nozzle.rotation.x = Math.PI / 2;
         g.add(nozzle);
       }
 
-      // Air Intakes
+      // Air Intakes with Boundary-Layer Splitter Plates
+      const splitter = mesh(new T.BoxGeometry(0.08, 0.88, 2.6), darkMat, side * 1.25, -0.42, -0.5);
+      g.add(splitter);
       const intake = mesh(new T.BoxGeometry(0.96, 0.9, 2.5), darkMat, side * 1.7, -0.42, -0.5);
       intake.rotation.y = -side * 0.12;
       g.add(intake);
 
-      // Missiles on pylons
+      // Missiles on aerodynamic pylons with launch rails
       const missileCount = modelId === "su57" ? 4 : 3;
       for (let j = 0; j < missileCount; j++) {
-        const m = mesh(new T.CylinderGeometry(0.12, 0.12, 2.7, 6), metalMat, side * (2.4 + j * 1.15), -0.65, 1.2 + j * 0.3);
+        const px = side * (2.4 + j * 1.15);
+        const pz = 1.2 + j * 0.3;
+        const pylon = mesh(new T.BoxGeometry(0.08, 0.22, 1.9), bodyMat, px, -0.44, pz);
+        g.add(pylon);
+        const rail = mesh(new T.BoxGeometry(0.12, 0.08, 2.4), darkMat, px, -0.54, pz);
+        g.add(rail);
+        const m = mesh(new T.CylinderGeometry(0.12, 0.12, 2.7, 8), metalMat, px, -0.66, pz);
         m.rotation.x = Math.PI / 2;
         g.add(m);
       }
@@ -362,10 +571,20 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
     vfin.position.set(0, 0.5, 4.2);
     g.add(vfin);
 
+    // Articulated Centerline Rudder
+    const rud = createRudderSurface(0, 0.7, 4.2, 2.8, 0.75, 0.16, 0, 0, stripeMat);
+    g.add(rud);
+    rudders.push(rud);
+
     // Single Central Large Turbofan Engine & Nozzle
     const engine = mesh(new T.CylinderGeometry(0.82, 0.88, 4.4, 16, 1, false), metalMat, 0, -0.1, 5.4);
     engine.rotation.x = Math.PI / 2;
     g.add(engine);
+
+    // Titanium Heat Shield Collar on single nozzle
+    const heatCollar = mesh(new T.CylinderGeometry(0.80, 0.84, 0.75, 16, 1, false), titaniumHeatMat, 0, -0.1, 7.05);
+    heatCollar.rotation.x = Math.PI / 2;
+    g.add(heatCollar);
 
     const nozzle = mesh(new T.CylinderGeometry(0.72, 0.82, 0.9, 16, 1, true), darkMat, 0, -0.1, 7.7);
     nozzle.rotation.x = Math.PI / 2;
@@ -504,13 +723,16 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
   const strutMat = new T.MeshStandardMaterial({ color: 0x4a525a, metalness: 0.85, roughness: 0.3 });
   const wheelMat = new T.MeshStandardMaterial({ color: 0x181818, roughness: 0.9 });
 
-  // 1. Nose landing gear
+  // 1. Nose landing gear with taxi floodlight
   const noseStrut = new T.Mesh(new T.CylinderGeometry(0.08, 0.08, 1.2, 6), strutMat);
   noseStrut.position.set(0, -0.9, -5.2);
   const noseWheel = new T.Mesh(new T.CylinderGeometry(0.35, 0.35, 0.25, 8), wheelMat);
   noseWheel.rotation.z = Math.PI / 2;
   noseWheel.position.set(0, -1.45, -5.2);
-  gearGroup.add(noseStrut, noseWheel);
+  const taxiLight = new T.SpotLight(0xfff6dd, 2.5, 80, Math.PI / 6, 0.45);
+  taxiLight.position.set(0, -1.0, -5.4);
+  taxiLight.target.position.set(0, -2.5, -45);
+  gearGroup.add(noseStrut, noseWheel, taxiLight, taxiLight.target);
 
   // 2. Left main gear
   const leftStrut = new T.Mesh(new T.CylinderGeometry(0.1, 0.1, 1.3, 6), strutMat);
@@ -530,7 +752,37 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
 
   g.add(gearGroup);
 
-  g.userData = { flames, elevators, canards, vaporCone, muzzleLight, gearGroup, modelId, liveryId, shockDiamonds, exhaustLight, wingVapor, wingVaporMat };
+  // Navigation & Formation Strobe Lights
+  const span = JET_MODELS[modelId]?.geometry?.wingSpan || 16;
+  const halfSpan = span * 0.48;
+  const navPort = mesh(new T.SphereGeometry(0.15, 6, 6), new T.MeshBasicMaterial({ color: 0xff1818 }), -halfSpan, 0, 3.2);
+  const navStbd = mesh(new T.SphereGeometry(0.15, 6, 6), new T.MeshBasicMaterial({ color: 0x18ff38 }), halfSpan, 0, 3.2);
+  const strobeMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 });
+  const navTail = mesh(new T.SphereGeometry(0.18, 6, 6), strobeMat, 0, 3.8, 8.2);
+  g.add(navPort, navStbd, navTail);
+  const navLights = { port: navPort, stbd: navStbd, strobe: navTail };
+
+  // Articulated Dorsal Air Brake Flap
+  const airBrakeGeo = new T.BoxGeometry(modelId === "su57" ? 1.4 : 0.9, 0.12, 2.2);
+  const airBrakeMesh = new T.Mesh(airBrakeGeo, bodyMat);
+  airBrakeMesh.position.set(0, 0.95, 0.8);
+  g.add(airBrakeMesh);
+
+  const detailGroup=new T.Group();detailGroup.name='airframe_detail';
+  if(modelId==='x17'){
+    // Original procedural service panels, fasteners and intake lips.
+    for(const side of [-1,1]){
+      const lip=mesh(new T.BoxGeometry(.12,.55,2.4),metalMat,side*1.38,-.28,-2.0);detailGroup.add(lip);
+      for(let i=0;i<6;i++){const vent=mesh(new T.BoxGeometry(.38,.035,.075),darkMat,side*.73,.72,.2+i*.22);detailGroup.add(vent);}
+      const panel=mesh(new T.BoxGeometry(.8,.025,1.2),darkMat,side*2.4,.27,2.3);detailGroup.add(panel);
+    }
+    const antenna=mesh(new T.BoxGeometry(.065,.35,.5),darkMat,0,1.04,2.3);detailGroup.add(antenna);
+  }
+  g.add(detailGroup);
+  const anchors={};for(const [name,position] of Object.entries({wingtip_left:[-(modelDef.geometry.wingSpan || 16)/2,0,3.5],wingtip_right:[(modelDef.geometry.wingSpan || 16)/2,0,3.5],exhaust:[0,0,6]})){
+    const anchor=new T.Object3D();anchor.name=name;anchor.position.fromArray(position);g.add(anchor);anchors[name]=anchor;
+  }
+  g.userData = { detailGroup,anchors,flames, elevators, canards, ailerons, rudders, vaporCone, muzzleLight, gearGroup, modelId, liveryId, shockDiamonds, exhaustLight, wingVapor, wingVaporMat, navLights, airBrakeMesh };
   g.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true;
@@ -540,6 +792,8 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
   if (bomber) g.scale.set(1.85, 1.3, 1.55);
   return g;
 }
+
+export function disposeJetModel(model){disposeObject(model,new Set([_panelTexture]));}
 
 let counter = 0;
 export class Jet {
@@ -553,8 +807,10 @@ export class Jet {
 
     this.stats = computeJetStats(this.modelId, this.modifications);
     this.model = createJet(team, bomber, this.modelId, this.liveryId, this.modifications);
-    this.position = this.model.position;
-    this.quaternion = this.model.quaternion;
+    this.position = this.model.position.clone();
+    this.quaternion = this.model.quaternion.clone();
+    this.previousPosition = this.position.clone(); this.previousQuaternion = this.quaternion.clone();
+    this.renderPosition = this.position.clone(); this.renderQuaternion = this.quaternion.clone();
     this.velocity = new T.Vector3();
     this.angular = new T.Vector3();
 
@@ -573,30 +829,58 @@ export class Jet {
     this.radius = bomber ? 22 : 12;
     this._wingLeft = new T.Vector3();
     this._wingRight = new T.Vector3();
+    this._wingTips = {left:this._wingLeft,right:this._wingRight};
+    this._exhaust = new T.Vector3();
 
     // Landing Gear & Touchdown State
-    this.gearDown = true;
+    this.gearDown = true;this.gearProgress=1;
     this.isLanded = false;
     this.landedElev = 38;
     this.currentBase = null;
+    if(FLAGSHIP_ASSET && this.modelId==='x17' && !this.bomber)void this.loadVisual(FLAGSHIP_ASSET);
+  }
+
+  beginStep() { this.previousPosition.copy(this.position); this.previousQuaternion.copy(this.quaternion); }
+  resetInterpolation() {
+    this.previousPosition.copy(this.position); this.previousQuaternion.copy(this.quaternion);
+    this.renderPosition.copy(this.position); this.renderQuaternion.copy(this.quaternion);
+    this.model.position.copy(this.position); this.model.quaternion.copy(this.quaternion);
+  }
+  renderInterpolated(alpha = 1) {
+    if (this.previousPosition.distanceToSquared(this.position) > 250000) this.resetInterpolation();
+    this.renderPosition.lerpVectors(this.previousPosition,this.position,alpha);
+    this.renderQuaternion.copy(this.previousQuaternion).slerp(this.quaternion,alpha);
+    this.model.position.copy(this.renderPosition); this.model.quaternion.copy(this.renderQuaternion);
   }
 
   toggleGear() {
-    if (this.isLanded) return this.gearDown;
+    if (this.isLanded) { this.setGear(true); return true; }
     this.gearDown = !this.gearDown;
-    if (this.model?.userData?.gearGroup) {
-      this.model.userData.gearGroup.visible = this.gearDown;
-    }
+    if(this.gearDown && this.model.userData.gearGroup)this.model.userData.gearGroup.visible=true;
     return this.gearDown;
   }
 
   setGear(down) {
-    this.gearDown = Boolean(down);
-    if (this.model?.userData?.gearGroup) {
-      this.model.userData.gearGroup.visible = this.gearDown;
-    }
+    this.gearDown = Boolean(down);this.gearProgress=this.gearDown?1:0;this.lastGearTime=null;
+    this.updateGearVisual();
   }
 
+  updateGearVisual() {
+    const gear=this.model?.userData?.gearGroup;if(!gear)return;
+    const rest=gear.userData.skybreakGearRest ||= {position:gear.position.clone(),scale:gear.scale.clone()};
+    gear.visible=this.gearProgress>.01;
+    gear.scale.copy(rest.scale);gear.scale.y*=Math.max(.01,this.gearProgress);
+    gear.position.copy(rest.position);gear.position.y+=(1-this.gearProgress)*.4;
+  }
+
+  async loadVisual(asset){
+    const generation=this.assetGeneration=(this.assetGeneration || 0)+1;
+    try{const visual=await loadJetAsset(asset);if(this.disposed || generation!==this.assetGeneration){disposeObject(visual);return false;}
+      const parent=this.model.parent;disposeObject(this.model,new Set([_panelTexture]));this.model=visual;parent?.add(visual);this.updateGearVisual();this.resetInterpolation();this.assetError=null;return true;
+    }catch(error){this.assetError=error.message;return false;}
+  }
+  updateVisualLOD(distance){if(this.model.userData.detailGroup)this.model.userData.detailGroup.visible=distance<350;}
+  dispose(){this.disposed=true;this.assetGeneration=(this.assetGeneration || 0)+1;disposeObject(this.model,new Set([_panelTexture]));}
   get forward() {
     return forward(this.quaternion);
   }
@@ -615,9 +899,22 @@ export class Jet {
 
   getWingTips() {
     const span = (JET_MODELS[this.modelId]?.geometry?.wingSpan || 16) / 2;
-    this._wingLeft.set(-span, 0, 3.5).applyQuaternion(this.quaternion).add(this.position);
-    this._wingRight.set(span, 0, 3.5).applyQuaternion(this.quaternion).add(this.position);
-    return { left: this._wingLeft, right: this._wingRight };
+    this.getAttachmentPoint('wingtip_left',this._wingLeft.set(-span,0,3.5));
+    this.getAttachmentPoint('wingtip_right',this._wingRight.set(span,0,3.5));
+    return this._wingTips;
+  }
+
+  getAttachmentPoint(name,target) {
+    const anchor=this.model.userData.anchors?.[name];
+    if(anchor){
+      target.set(0,0,0);
+      for(let node=anchor;node && node!==this.model;node=node.parent){node.updateMatrix();target.applyMatrix4(node.matrix);}
+    }
+    return target.multiply(this.model.scale).applyQuaternion(this.quaternion).add(this.position);
+  }
+
+  getExhaustPosition() {
+    return this.getAttachmentPoint('exhaust',this._exhaust.set(0,0,6));
   }
 
   applyCustomization(config) {
@@ -631,101 +928,147 @@ export class Jet {
     const oldQuat = this.quaternion.clone();
     const parent = this.model.parent;
 
-    // Dispose old mesh geometry/materials
-    this.model.traverse((o) => {
-      if (o.isMesh) {
-        o.geometry?.dispose?.();
-        if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose?.());
-        else o.material?.dispose?.();
-      }
-    });
-
-    if (parent) parent.remove(this.model);
+    this.assetGeneration=(this.assetGeneration || 0)+1;
+    disposeObject(this.model,new Set([_panelTexture]));
 
     // Build new 3D model
     this.model = createJet(this.team, this.bomber, this.modelId, this.liveryId, this.modifications);
     this.model.position.copy(oldPos);
     this.model.quaternion.copy(oldQuat);
-    this.position = this.model.position;
-    this.quaternion = this.model.quaternion;
+    this.position = this.model.position.clone();
+    this.quaternion = this.model.quaternion.clone();
+    this.previousPosition = this.position.clone(); this.previousQuaternion = this.quaternion.clone();
+    this.renderPosition = this.position.clone(); this.renderQuaternion = this.quaternion.clone();
 
     if (parent) parent.add(this.model);
+
+    this.updateGearVisual();
+    if(FLAGSHIP_ASSET && this.modelId==='x17' && !this.bomber)void this.loadVisual(FLAGSHIP_ASSET);
 
     this.maxHp = this.bomber ? 160 : this.stats.maxHp;
     this.hp = Math.min(this.hp, this.maxHp);
   }
 
-  animate(t, boost = false, pitch = 0, roll = 0, speed = 245, firing = false) {
+  animate(t, boost = false, pitch = 0, roll = 0, speed = 245, firing = false, yaw = 0, airBrake = false) {
     const u = this.model.userData;
     if (!u) return;
 
     if (u.flames) {
       u.flames.forEach((f, i) => {
-        f.visible = !(this.isLanded && this.throttle < .05);
-        f.scale.set(1, boost ? 1.6 + Math.sin(t * 18 + i) * 0.08 : 0.72 + this.throttle * 0.7, 1);
-        f.material.color.setHex(boost ? (i % 2 ? 11526143 : 16740908) : i % 2 ? 12775167 : 6458367);
+        const isInnerCore = i % 2 !== 0;
+        if (boost) {
+          f.scale.set(1, 1.85 + Math.sin(t * 60 + i) * 0.22, 1);
+          // Inner core = incandescent cyan-white plasma; Outer sheath = supersonic amber-orange
+          f.material.color.setHex(isInnerCore ? 0x99ddff : 0xff7711);
+          f.material.opacity = isInnerCore ? 0.95 : 0.85;
+        } else {
+          const th = this.throttle || 0.58;
+          f.scale.set(1, 0.6 + th * 0.8, 1);
+          f.material.color.setHex(isInnerCore ? 0x55aaff : 0x2266cc);
+          f.material.opacity = 0.25 + th * 0.45;
+        }
       });
+    }
+
+    if (u.airBrakeMesh) {
+      const targetAngle = (airBrake || this.airBrake) ? -1.15 : 0;
+      u.airBrakeMesh.rotation.x += (targetAngle - u.airBrakeMesh.rotation.x) * 0.25;
+    }
+
+    if (u.navLights?.strobe) {
+      const isStrobeOn = (Math.sin(t * 7.5) > 0.65) ? 1.0 : 0.15;
+      u.navLights.strobe.material.opacity = isStrobeOn;
     }
 
     if (u.shockDiamonds) {
       const showDiamonds = boost || this.throttle > 0.82;
-      const diaOpacity = boost ? 0.85 + Math.sin(t * 20) * 0.08 : this.throttle > 0.82 ? 0.45 : 0;
+      const diaOpacity = boost ? 0.88 + Math.sin(t * 60) * 0.12 : this.throttle > 0.82 ? 0.5 : 0;
       u.shockDiamonds.forEach((dia, i) => {
         dia.material.opacity = diaOpacity;
         if (showDiamonds) {
-          const pulse = 1.0 + Math.sin(t * 16 + i * 1.5) * 0.06;
-          dia.scale.set(0.85 * pulse, 0.85 * pulse, 1.4 * pulse);
+          const pulse = 1.0 + Math.sin(t * 45 + i * 1.5) * 0.12;
+          dia.scale.set(0.88 * pulse, 0.88 * pulse, 1.45 * pulse);
         }
       });
     }
 
     if (u.exhaustLight) {
       if (boost) {
-        u.exhaustLight.intensity = 3.2 + Math.sin(t * 40) * 0.5;
+        u.exhaustLight.intensity = 3.6 + Math.sin(t * 40) * 0.6;
         u.exhaustLight.color.setHex(0x5599ff);
       } else if (this.throttle > 0.7) {
-        u.exhaustLight.intensity = (this.throttle - 0.7) * 3.0;
+        u.exhaustLight.intensity = (this.throttle - 0.7) * 3.2;
         u.exhaustLight.color.setHex(0xffaa44);
       } else {
         u.exhaustLight.intensity = 0;
       }
     }
 
+    // High-G Wing Condensation Vapor Sheet
     if (u.wingVaporMat) {
       const gPull = Math.abs(pitch);
-      const isHighG = gPull > 0.38 && speed > 150;
+      const isHighG = (gPull > 0.32 || Math.abs(roll) > 0.5) && speed > 130;
       if (isHighG) {
-        const vaporIntensity = Math.min(0.52, (gPull - 0.38) * 1.6 + Math.abs(roll) * 0.15);
-        u.wingVaporMat.opacity = vaporIntensity * (0.85 + Math.sin(t * 24) * 0.15);
+        const vaporIntensity = Math.min(0.65, (gPull - 0.32) * 1.8 + Math.abs(roll) * 0.22);
+        u.wingVaporMat.opacity = vaporIntensity * (0.85 + Math.sin(t * 26) * 0.15);
       } else {
         u.wingVaporMat.opacity = 0;
       }
     }
 
+    // Articulated Ailerons (Roll bank & high-lift flap droop)
+    if (u.ailerons) {
+      u.ailerons.forEach((a, i) => {
+        // i=0 is left wing (side -1), i=1 is right wing (side +1)
+        // Rolling right (+roll): right aileron pivots up (-x), left aileron pivots down (+x)
+        const rollDeflection = (i === 0 ? 1 : -1) * roll * 0.65;
+        const pitchDroop = Math.max(-0.25, Math.min(0.25, -pitch * 0.22));
+        a.rotation.x = rollDeflection + pitchDroop;
+      });
+    }
+
+    // Articulated Vertical Rudders (Yaw pedal & coordinated banking)
+    if (u.rudders) {
+      u.rudders.forEach((r) => {
+        // Yaw deflection around local Y hinge line
+        r.rotation.y = -yaw * 0.68 + roll * 0.12;
+      });
+    }
+
+    // All-Moving Tail Elevators / Stabilators
     if (u.elevators) {
       u.elevators.forEach((e, i) => {
-        e.rotation.x = pitch * 0.17 + roll * (i ? 1 : -1) * 0.14;
+        e.rotation.x = pitch * 0.58 + roll * (i ? 1 : -1) * 0.28;
       });
     }
 
+    // Active Foreplane Canards
     if (u.canards) {
       u.canards.forEach((c, i) => {
-        c.rotation.x = -pitch * 0.22 + roll * (i ? 1 : -1) * 0.12;
+        c.rotation.x = -pitch * 0.62 + roll * (i ? 1 : -1) * 0.25;
       });
     }
 
+    // Supersonic Transonic Vapor Cone (Prandtl-Glauert Singularity)
     if (u.vaporCone) {
       const kmh = speed * 3.6;
-      if (kmh > 1080) {
-        const intensity = Math.min(0.72, (kmh - 1080) / 380) * (0.85 + Math.sin(t * 35) * 0.15);
-        u.vaporCone.material.opacity = intensity;
+      if (kmh > 980) {
+        const machDist = Math.abs(kmh - 1200);
+        const machPeak = Math.max(0, 1.0 - machDist / 260);
+        const pulse = 0.88 + Math.sin(t * 38) * 0.12;
+        const opacity = (machPeak * 0.75 + Math.max(0, (kmh - 1200) / 800) * 0.25) * pulse;
+        u.vaporCone.material.opacity = Math.min(0.85, opacity);
+        const coneScale = 1.0 + machPeak * 0.35 + Math.sin(t * 30) * 0.05;
+        u.vaporCone.scale.set(coneScale, coneScale, 1.0 + Math.min(0.8, (kmh - 980) / 1200));
       } else {
         u.vaporCone.material.opacity = 0;
       }
     }
 
     if (u.gearGroup) {
-      u.gearGroup.visible = Boolean(this.gearDown);
+      const dt=Math.min(.1,Math.max(0,t-(this.lastGearTime ?? t-1/60)));this.lastGearTime=t;
+      this.gearProgress=T.MathUtils.damp(this.gearProgress,this.gearDown?1:0,5,dt);
+      this.updateGearVisual();
     }
 
     if (u.muzzleLight) {

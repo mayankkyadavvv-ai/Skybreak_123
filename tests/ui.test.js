@@ -27,6 +27,20 @@ function screen() {
 }
 function click(document, selector) { const target = document.querySelector(selector);assert.ok(target, selector);target.click(); }
 
+test('world atlas remains available with region, world and city selection', async () => {
+  const {document,ui,window}=screen();
+  assert.ok(document.querySelector('[data-action="atlas"]'));
+  await ui.showAtlas();
+  assert.equal(ui.modalType,'atlas');
+  const svg=document.querySelector('#earth-atlas');assert.ok(svg);
+  assert.ok(svg.querySelectorAll('.atlas-country').length>100);
+  click(document,'[data-atlas-view="world"]');assert.equal(svg.getAttribute('viewBox'),'0 0 360 180');
+  const select=document.querySelector('#atlas-city-select');
+  select.querySelectorAll('option')[1].selected=true;
+  select.dispatchEvent(new window.Event('change',{bubbles:true}));
+  assert.match(document.querySelector('#atlas-readout').textContent,/° N/);
+  ui.closePanel();assert.equal(ui.modalType,null);
+});
 test('first launch defaults to Free Flight, shows arrow guidance, then starts the selected mode', () => {
   const { document, ui, settings, starts } = screen();
   assert.equal(ui.selected, 3);
@@ -34,13 +48,13 @@ test('first launch defaults to Free Flight, shows arrow guidance, then starts th
   assert.equal(document.querySelector('.mission-card.selected').dataset.mission, '3');
   click(document, '[data-action="play"]');
   assert.equal(ui.modalType, 'preflight');
-  assert.match(ui.modal.textContent, /↑ Climb/);assert.match(ui.modal.textContent, /↓ Dive/);
+  assert.match(ui.modal.textContent, /↓ Nose up/);assert.match(ui.modal.textContent, /↑ Nose down/);
   assert.equal(starts.length, 0);
   click(document, '[data-action="launch-flight"]');
   assert.deepEqual(starts, [3]);assert.equal(settings.guideSeen, true);
   assert.equal(ui.hudEl.hidden, false);assert.equal(ui.dom['practice-help'].hidden, false);
   assert.equal(document.querySelector('.hud-weapons').hidden, true);
-  assert.match(document.querySelector('.flight-hints').textContent, /↑ ↓ ← →/);
+  assert.match(document.querySelector('.flight-hints').textContent, /↓ NOSE UP/);
 });
 test('mission selection, switching modes and Help all use the current controls', () => {
   const { document, ui, game, settings, starts } = screen();
@@ -52,9 +66,9 @@ test('mission selection, switching modes and Help all use the current controls',
   assert.equal(game.state, 'paused');assert.equal(ui.modalType, 'controls');
   click(document, '#modal-root [data-mode="mouse"]');
   assert.equal(settings.input, 'mouse');assert.match(ui.modal.textContent, /Aim mouse toward/);
-  assert.match(ui.modal.textContent, /E \/ RIGHT CLICK/);
-  click(document, '#modal-root [data-mode="advanced"]');
-  assert.match(ui.modal.textContent, /W = pitch down, S = pitch up/);
+  assert.match(ui.modal.textContent, /M \/ RMB/);
+  click(document, '#modal-root [data-flight-mode="manual"]');
+  assert.match(ui.modal.textContent, /Manual flight keeps inertia/);
   ui.closePanel();assert.equal(ui.modalType, 'pause');ui.closePanel();assert.equal(game.state, 'playing');
 });
 test('Free Flight HUD has no zero-division progress or hostile objective; reset button works', () => {
@@ -87,7 +101,7 @@ test('Sounds is reachable in the menu, Settings and paused Free Flight; closing 
   assert.equal(ui.modal.querySelectorAll('[data-preview]').length, 8);
   assert.equal(ui.modal.querySelectorAll('input[type="range"]').length, 6);
   ui.closePanel();assert.equal(ui.modalType, null);assert.equal(game.state, 'menu');
-  ui.showSettings();click(document, '#modal-root [data-action="sounds"]');ui.closePanel();assert.equal(ui.modalType, 'settings');
+  ui.showSettings('audio');click(document, '#modal-root [data-action="sounds"]');ui.closePanel();assert.equal(ui.modalType, 'settings');
   game.start(3);game.state = 'playing';game.pause();
   click(document, '#modal-root [data-action="sounds"]');assert.equal(ui.modalType, 'sounds');assert.equal(game.state, 'paused');
   ui.closePanel();assert.equal(ui.modalType, 'pause');ui.closePanel();assert.equal(game.state, 'playing');
@@ -128,4 +142,28 @@ test('closing during audio unlock discards delayed UI feedback', async () => {
   let resolve;game.audio.preview = () => new Promise(done => { resolve = done; });
   const pending = ui.previewSound('engine');ui.closePanel();resolve(false);await pending;
   assert.equal(ui.modalType, null);assert.equal(ui.modal.textContent, '');
+});
+
+test('settings panels have dialog semantics, current bindings and release gameplay on close',()=>{
+ const {ui,document,game}=screen();game.state='playing';game.pause();ui.showSettings('controls');
+ const panel=document.querySelector('[role="dialog"]');assert.ok(panel);assert.equal(panel.getAttribute('aria-modal'),'true');assert.ok(document.getElementById(panel.getAttribute('aria-labelledby')));
+ assert.equal(ui.hudEl.inert,true);assert.ok(document.querySelector('[data-setting="gamepadInvert"]'));
+ ui.closePanel();ui.closePanel();assert.equal(game.state,'playing');assert.equal(ui.hudEl.inert,false);
+});
+test('touch exposes throttle, brake, gear, camera and pause; held input clears on modal opening',()=>{
+ const {ui,document,game,window}=screen();game.state='playing';
+ game.input.clear=()=>{game.input.fire=false;game.input.boost=false;game.input.touchBrake=false;};
+ for(const action of ['fire','missile','flare','boost','brake','gear','camera','pause'])assert.ok(document.querySelector(`[data-touch="${action}"]`));
+ const button=document.querySelector('[data-touch="fire"]');button.setPointerCapture=()=>{};
+ const down=new window.Event('pointerdown');Object.defineProperty(down,'pointerId',{value:5});button.dispatchEvent(down);assert.equal(game.input.fire,true);
+ ui.showSettings();assert.equal(game.input.fire,false);
+ ui.closePanel();game.state='playing';button.dispatchEvent(down);assert.equal(game.input.fire,true);
+ const cancel=new window.Event('pointercancel');Object.defineProperty(cancel,'pointerId',{value:5});button.dispatchEvent(cancel);assert.equal(game.input.fire,false);
+});
+test('controller pause edges work in both flight and paused menus without repeated toggles',()=>{
+ const {document,game}=screen();game.state='playing';const actions=[];
+ const input=new Input(document.getElementById('world'),action=>{actions.push(action);if(action==='pause'){game.state=game.state==='playing'?'paused':'playing';input.clear();}},()=>game.state==='playing',()=>({device:'gamepad'}));
+ const pad={mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({value:0,pressed:false}))};
+ pad.buttons[9].pressed=true;input.poll(.016,[pad]);input.poll(.016,[pad]);assert.equal(game.state,'paused');assert.equal(actions.length,1);
+ pad.buttons[9].pressed=false;input.poll(.016,[pad]);pad.buttons[9].pressed=true;input.poll(.016,[pad]);assert.equal(game.state,'playing');assert.equal(actions.length,2);input.dispose();
 });

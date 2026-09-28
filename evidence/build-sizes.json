@@ -1,0 +1,70 @@
+{
+  "note": "Raw/gzip bytes, not transfer timings or Web Vitals",
+  "files": [
+    {
+      "path": "index.html",
+      "bytes": 3232,
+      "gzipBytes": 1226
+    },
+    {
+      "path": "about.html",
+      "bytes": 3659,
+      "gzipBytes": 1359
+    },
+    {
+      "path": "help.html",
+      "bytes": 6259,
+      "gzipBytes": 2322
+    },
+    {
+      "path": "privacy.html",
+      "bytes": 5851,
+      "gzipBytes": 2263
+    },
+    {
+      "path": "terms.html",
+      "bytes": 4152,
+      "gzipBytes": 1642
+    },
+    {
+      "path": "storage.html",
+      "bytes": 4364,
+      "gzipBytes": 1602
+    },
+    {
+      "path": "404.html",
+      "bytes": 2664,
+      "gzipBytes": 944
+    },
+    {
+      "path": "site.css",
+      "bytes": 2457,
+      "gzipBytes": 1061
+    },
+    {
+      "path": "storage.js",
+      "bytes": 1235,
+      "gzipBytes": 565
+    },
+    {
+      "path": "assets/GLTFLoader-D2LBJewJ.js",
+      "bytes": 43907,
+      "gzipBytes": 12921
+    },
+    {
+      "path": "assets/index-BnZ8YSf4.js",
+      "bytes": 356769,
+      "gzipBytes": 111375
+    },
+    {
+      "path": "assets/index-DGlVpHhp.css",
+      "bytes": 74994,
+      "gzipBytes": 16329
+    },
+    {
+      "path": "assets/three-Cl3_BbMT.js",
+      "bytes": 565554,
+      "gzipBytes": 144771
+    }
+  ]
+}

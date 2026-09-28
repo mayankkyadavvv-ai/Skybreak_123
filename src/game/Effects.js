@@ -1,81 +1,80 @@
 import * as T from "three";
 
+/**
+ * Effects Engine: Manages particle systems, signature aerodynamic contrails,
+ * multi-stage explosions, missile smoke trails, afterburner exhaust glow, and shockwaves.
+ */
 class Effects {
   constructor(scene) {
     this.scene = scene;
-    this.capacity = 2600;
+    this.capacity = 4200;
     this.particles = Array.from({ length: this.capacity }, () => ({
       p: new T.Vector3(),
       v: new T.Vector3(),
       life: 0,
       max: 1,
       color: new T.Color(),
-      size: 1
+      size: 1,
+      expandRate: 1.5,
+      gravity: 0
     }));
-    this.cursor = 0;
+    this.cursor = 0;this.budget=this.capacity;this.intensity=1;
+
     const geo = new T.BufferGeometry();
     this.positions = new Float32Array(this.capacity * 3);
     this.colors = new Float32Array(this.capacity * 3);
     this.sizes = new Float32Array(this.capacity);
+    this.channels=new Float32Array(this.capacity);this.alphas=new Float32Array(this.capacity);
     geo.setAttribute("position", new T.BufferAttribute(this.positions, 3));
     geo.setAttribute("color", new T.BufferAttribute(this.colors, 3));
     geo.setAttribute("size", new T.BufferAttribute(this.sizes, 1));
+    geo.setAttribute("channel",new T.BufferAttribute(this.channels,1));
+    geo.setAttribute("alpha",new T.BufferAttribute(this.alphas,1));
     this.geometry = geo;
+
     const mat = new T.ShaderMaterial({
       transparent: true,
       depthWrite: false,
       vertexColors: true,
       blending: T.AdditiveBlending,
-      vertexShader: `attribute float size;
-      varying vec3 vColor;
-      #include <common>
-      #include <logdepthbuf_pars_vertex>
-      void main(){
-        vColor=color;
-        vec4 mv=modelViewMatrix*vec4(position,1.0);
-        gl_Position=projectionMatrix*mv;
-        #include <logdepthbuf_vertex>
-        gl_PointSize=clamp(size*550.0/max(1.0,-mv.z),0.0,110.0);
-      }`,
-      fragmentShader: `varying vec3 vColor;
-      #include <logdepthbuf_pars_fragment>
-      void main(){
-        float r=length(gl_PointCoord-0.5)*2.0;
-        if(r>1.0)discard;
-        #include <logdepthbuf_fragment>
-        gl_FragColor=vec4(vColor,(1.0-smoothstep(0.18,1.0,r))*0.85);
-      }`
+      uniforms:{selectedChannel:{value:1}},
+      vertexShader: `
+        attribute float size; attribute float channel; attribute float alpha;
+        uniform float selectedChannel;
+        varying vec3 vColor; varying float vAlpha; varying float vVisible;
+        void main() {
+          vColor = color;vAlpha=alpha;vVisible=abs(channel-selectedChannel)<.1?1.0:0.0;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = abs(channel-selectedChannel)<.1 ? clamp(size * 580.0 / max(1.0, -mv.z), 0.0, 100.0) : 0.0;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vColor; varying float vAlpha; varying float vVisible;
+        void main() {
+          if(vVisible<.5)discard;
+          float r = length(gl_PointCoord - 0.5) * 2.0;
+          if (r > 1.0) discard;
+          float alpha = pow(1.0 - r, 1.6) * 0.82;
+          gl_FragColor = vec4(vColor, alpha*vAlpha);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }
+      `
     });
+
     this.points = new T.Points(geo, mat);
     this.points.frustumCulled = false;
     scene.add(this.points);
+    const smokeMaterial=mat.clone();smokeMaterial.blending=T.NormalBlending;smokeMaterial.uniforms.selectedChannel.value=0;
+    this.smokePoints=new T.Points(geo,smokeMaterial);this.smokePoints.frustumCulled=false;scene.add(this.smokePoints);
     this.quality = 1;
-    this.smokePool=Array.from({length:500},()=>({p:new T.Vector3(),v:new T.Vector3(),life:0,max:1,size:1,dark:false}));
-    this.smokeCursor=0;
-    const sg=new T.BufferGeometry();
-    this.smokePositions=new Float32Array(1500);this.smokeSizes=new Float32Array(500);this.smokeOpacity=new Float32Array(500);this.smokeTone=new Float32Array(500);
-    sg.setAttribute('position',new T.BufferAttribute(this.smokePositions,3));sg.setAttribute('size',new T.BufferAttribute(this.smokeSizes,1));sg.setAttribute('opacity',new T.BufferAttribute(this.smokeOpacity,1));sg.setAttribute('tone',new T.BufferAttribute(this.smokeTone,1));
-    this.smokeGeometry=sg;
-    const sm=new T.ShaderMaterial({transparent:true,depthWrite:false,blending:T.NormalBlending,
-      vertexShader:`attribute float size;attribute float opacity;attribute float tone;varying float a;varying float t;
-      #include <common>
-      #include <logdepthbuf_pars_vertex>
-      void main(){a=opacity;t=tone;vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;gl_PointSize=clamp(size*650./max(1.,-mv.z),0.,180.);
-      #include <logdepthbuf_vertex>
-      }`,
-      fragmentShader:`varying float a;varying float t;
-      #include <logdepthbuf_pars_fragment>
-      void main(){float r=length(gl_PointCoord-.5)*2.;if(r>1.)discard;
-      #include <logdepthbuf_fragment>
-      float soft=pow(1.-r,1.3);gl_FragColor=vec4(mix(vec3(.72,.77,.8),vec3(.09,.085,.08),t),soft*a);}`});
-    const smokePoints=new T.Points(sg,sm);smokePoints.frustumCulled=false;scene.add(smokePoints);
-
 
     // 3D Expanding Explosion Shockwaves pool
     this.shockwaves = [];
-    const ringGeo = new T.RingGeometry(0.94, 1.06, 64);
+    const ringGeo = new T.RingGeometry(0.8, 1.25, 48);
     ringGeo.rotateX(-Math.PI / 2);
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       const swMat = new T.MeshBasicMaterial({
         color: 0xffaa44,
         transparent: true,
@@ -96,19 +95,26 @@ class Effects {
         maxRadius: 180
       });
     }
+
+    // Pre-allocated vector for zero garbage collection
+    this._tempV = new T.Vector3();
   }
 
-  emit(pos, vel, color = 16753477, size = 20, life = 0.6) {
-    const p = this.particles[this.cursor++ % this.capacity];
+  emit(pos, vel, color = 16753477, size = 20, life = 0.6, expandRate = 1.5, gravity = 0, glow = true) {
+    if(this.intensity<=0)return;
+    const index=this.cursor++ % this.budget;const p = this.particles[index];
+    this.channels[index]=glow?1:0;p.glow=glow;
     p.p.copy(pos);
     p.v.copy(vel);
     p.color.set(color);
     p.size = size;
     p.life = p.max = life;
+    p.expandRate = expandRate;
+    p.gravity = gravity;
   }
 
   shockwave(pos, maxRadius = 180, color = 0xffaa44) {
-    if (!this.shockwaves || this.shockwaves.length === 0) return;
+    if (this.intensity<=0 || !this.shockwaves || this.shockwaves.length === 0) return;
     const sw = this.shockwaves.find((s) => s.life <= 0) || this.shockwaves[0];
     sw.mesh.position.copy(pos);
     sw.mesh.visible = true;
@@ -119,62 +125,170 @@ class Effects {
     sw.mat.opacity = 0.85;
   }
 
+  /**
+   * Multi-stage high-impact explosion sequence:
+   * 1. Instantaneous ionizing flash
+   * 2. Expanding 3D shockwave ring
+   * 3. Fiery plasma core & tumbling shrapnel
+   * 4. Lingering dark smoke plumes
+   */
   burst(pos, count = 45, size = 24) {
-    if (count >= 30) {
-      this.shockwave(pos, size * 5.5, 0xffaa44);
-      for(let i=0;i<18;i++) this.smoke(pos,true,size*(1+Math.random()));
+    // Stage 1: Intense core flash
+    this.emit(pos, new T.Vector3(0, 0, 0), 0xffffff, size * 2.5, 0.08, 0.5, 0);
+
+    // Stage 2: 3D shockwave ring
+    if (count >= 25) {
+      this.shockwave(pos, size * 6.5, 0xffbb44);
     }
-    for (let i = 0; i < count * this.quality; i++) {
+
+    const effectiveCount = Math.floor(count * this.quality);
+    for (let i = 0; i < effectiveCount; i++) {
+      const speed = 25 + Math.random() * 85;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = (Math.random() - 0.5) * Math.PI;
+      const vx = Math.cos(theta) * Math.cos(phi) * speed;
+      const vy = (Math.sin(phi) * 0.8 + 0.3) * speed;
+      const vz = Math.sin(theta) * Math.cos(phi) * speed;
+      const vel = new T.Vector3(vx, vy, vz);
+
+      if (i % 4 === 0) {
+        // Lingering dark smoke billowing upward
+        this.emit(
+          pos,
+          new T.Vector3(vx * 0.15, 6 + Math.random() * 12, vz * 0.15),
+          0x282a2e,
+          size * (0.8 + Math.random() * 0.8),
+          1.6 + Math.random() * 1.4,
+          2.6,
+          -1.2, false
+        );
+      } else if (i % 3 === 0) {
+        // Fiery golden shrapnel / embers falling with gravity
+        this.emit(pos, vel, 0xffd244, size * 0.5, 0.9 + Math.random() * 0.8, 1.2, -18);
+      } else {
+        // High-temperature fireball burst
+        const col = i % 2 === 0 ? 0xff6b1a : 0xff3b11;
+        this.emit(pos, vel, col, size * (0.6 + Math.random() * 0.9), 0.5 + Math.random() * 0.7, 2.0, 0);
+      }
+    }
+  }
+
+  smoke(pos, dark = false, size = 14) {
+    const vel = new T.Vector3(
+      (Math.random() - 0.5) * 6,
+      6 + Math.random() * 8,
+      (Math.random() - 0.5) * 6
+    );
+    const color = dark ? 0x222428 : 0x7c858e;
+    this.emit(pos, vel, color, size, 1.6 + Math.random() * 0.6, 2.2, 0, false);
+  }
+
+  /**
+   * Skybreak Signature Aerodynamic Contrail:
+   * Uses non-white aerodynamic palette (icy blue / pale teal / cool bluish-grey)
+   * Engine combustion glow is emitted separately at the nozzles.
+   * Modulates trail length and dissipation based on altitude and airspeed.
+   */
+  contrail(pos, size = 16, life = 1.0, isBoost = false, altitude = 1500) {
+    // Altitude-dependent trail persistence
+    // Higher altitude (>5,000m) produces longer, denser stratospheric contrails
+    const altFactor = Math.min(2.2, Math.max(0.65, altitude / 4200));
+    const finalLife = life * altFactor;
+
+    // Outer Aerodynamic Vortex (Icy Blue / Pale Teal)
+    const palette = [0x92e5f8, 0x7ae2d4, 0xabe8f8, 0x88d4e8];
+    const aeroColor = palette[Math.floor(Math.random() * palette.length)];
+    const driftVel = new T.Vector3(
+      (Math.random() - 0.5) * 1.5,
+      (Math.random() - 0.5) * 1.2,
+      (Math.random() - 0.5) * 1.5
+    );
+
+    this.emit(pos, driftVel, aeroColor, size * 0.35, finalLife, 2.0, 0, false);
+
+
+  }
+
+  /**
+   * Guided Missile Rocket Motor Smoke Plume & Exhaust Glow
+   */
+  missileTrail(pos, dir, speed = 400) {
+    // Intense incandescent motor exhaust point
+    this.emit(pos, new T.Vector3(0, 0, 0), 0xfff0bb, 18, 0.09, 0.5, 0);
+
+    // Expanding rocket propellant smoke puff
+    const wakeVel = dir.clone().multiplyScalar(-speed * 0.08).add(new T.Vector3(
+      (Math.random() - 0.5) * 3,
+      1.5 + Math.random() * 2,
+      (Math.random() - 0.5) * 3
+    ));
+    this.emit(pos, wakeVel, 0x909aa2, 14, 1.3, 2.5, 0, false);
+  }
+
+  waterWake(pos, vel, speed = 250) {
+    const sprayCount = Math.min(5, Math.max(2, Math.floor(speed / 60)));
+    for (let i = 0; i < sprayCount; i++) {
+      const sprayVel = new T.Vector3(
+        (Math.random() - 0.5) * 16,
+        3.0 + Math.random() * 7.0,
+        (Math.random() - 0.5) * 16
+      ).addScaledVector(vel, 0.08);
+
+      const sprayPos = new T.Vector3(
+        pos.x + (Math.random() - 0.5) * 8,
+        1.5 + Math.random() * 1.5,
+        pos.z + (Math.random() - 0.5) * 8
+      );
+
       this.emit(
-        pos,
-        new T.Vector3((Math.random() - 0.5) * 100, (Math.random() - 0.25) * 90, (Math.random() - 0.5) * 100),
-        i % 3 ? 16751927 : 16772532,
-        size * (0.5 + Math.random()),
-        0.5 + Math.random() * 1.8
+        sprayPos,
+        sprayVel,
+        i % 2 === 0 ? 0xffffff : 0xd2edfc,
+        22 + Math.random() * 16,
+        0.85 + Math.random() * 0.65,
+        1.8,
+        -9.8, false
       );
     }
   }
 
-  smoke(pos, dark=false, size=14) {
-    const p=this.smokePool[this.smokeCursor++%this.smokePool.length];
-    p.p.copy(pos);p.v.set((Math.random()-.5)*3,4+Math.random()*3,(Math.random()-.5)*3);
-    p.life=p.max=dark?3.8:2.4;p.size=size;p.dark=dark;
-  }
-  tireSmoke(pos,velocity) {
-    for(let i=0;i<18;i++) {this.smoke(pos,false,5+Math.random()*8);const p=this.smokePool[(this.smokeCursor-1)%this.smokePool.length];p.v.addScaledVector(velocity,.15);p.v.y=1+Math.random();}
-  }
-
-  contrail(pos, size = 14, life = 0.9) {
-    this.emit(pos, new T.Vector3(0, 0, 0), 0xddeeff, size, life);
+  exhaustGlow(pos, vel) {
+    const p = new T.Vector3(
+      pos.x + (Math.random() - 0.5) * 1.4,
+      pos.y + (Math.random() - 0.5) * 1.4,
+      pos.z + (Math.random() - 0.5) * 1.4
+    );
+    const v = new T.Vector3(
+      (Math.random() - 0.5) * 1.5,
+      2.0 + Math.random() * 2.5,
+      (Math.random() - 0.5) * 1.5
+    ).addScaledVector(vel, 0.15);
+    this.emit(p, v, 0xffd588, 18, 0.22, 1.4, 0);
   }
 
   update(dt) {
-    this.smokePool.forEach((p,i)=>{
-      p.life=Math.max(0,p.life-dt);
-      const f=p.life/p.max;
-      p.p.addScaledVector(p.v,dt);
-      this.smokePositions.set([p.p.x,p.p.y,p.p.z],i*3);
-      this.smokeSizes[i]=p.life>0?p.size*(1+(1-f)*3):0;
-      this.smokeOpacity[i]=Math.min(1,(1-f)*8)*f*.7;
-      this.smokeTone[i]=p.dark?1:0;
-    });
-    for(const a of Object.values(this.smokeGeometry.attributes))a.needsUpdate=true;
-
-    for (let i = 0; i < this.capacity; i++) {
+    for (let i = 0; i < this.budget; i++) {
       const p = this.particles[i];
       p.life -= dt;
       if (p.life > 0) {
+        if (p.gravity !== 0) {
+          p.v.y += p.gravity * dt;
+        }
         p.p.addScaledVector(p.v, dt);
         p.v.multiplyScalar(Math.exp(-0.6 * dt));
+
         const idx = i * 3;
         this.positions[idx] = p.p.x;
         this.positions[idx + 1] = p.p.y;
         this.positions[idx + 2] = p.p.z;
+
         const f = p.life / p.max;
-        this.colors[idx] = p.color.r * f;
-        this.colors[idx + 1] = p.color.g * f;
-        this.colors[idx + 2] = p.color.b * f;
-        this.sizes[i] = p.size * (1 + (1 - f) * 1.5);
+        const luminance=p.glow?2.5:1;
+        this.colors[idx]=p.color.r*luminance;this.colors[idx+1]=p.color.g*luminance;this.colors[idx+2]=p.color.b*luminance;
+        this.alphas[i]=f*Math.min(1,this.intensity)*(p.glow?1:.5);
+
+        // Smooth aerodynamic wake expansion
+        this.sizes[i] = p.size * (1 + (1 - f) * p.expandRate);
       } else {
         this.sizes[i] = 0;
       }
@@ -182,6 +296,7 @@ class Effects {
     this.geometry.attributes.position.needsUpdate = true;
     this.geometry.attributes.color.needsUpdate = true;
     this.geometry.attributes.size.needsUpdate = true;
+    this.geometry.attributes.channel.needsUpdate=true;this.geometry.attributes.alpha.needsUpdate=true;
 
     // Update 3D shockwave rings
     if (this.shockwaves) {
@@ -199,9 +314,10 @@ class Effects {
     }
   }
 
+  setQuality(budget,intensity=1){this.budget=Math.min(this.capacity,Math.max(1,budget));this.intensity=intensity;this.quality=this.budget/this.capacity;this.geometry.setDrawRange(0,this.budget);for(let i=this.budget;i<this.capacity;i++){this.particles[i].life=0;this.sizes[i]=0;}if(intensity===0)this.clear();}
+  dispose(){this.points.removeFromParent();this.smokePoints.removeFromParent();this.geometry.dispose();this.points.material.dispose();this.smokePoints.material.dispose();const geometries=new Set();for(const sw of this.shockwaves){sw.mesh.removeFromParent();geometries.add(sw.mesh.geometry);sw.mat.dispose();}for(const geo of geometries)geo.dispose();}
   clear() {
     this.particles.forEach((p) => (p.life = 0));
-    this.smokePool.forEach(p=>p.life=0);
     if (this.shockwaves) {
       this.shockwaves.forEach((sw) => {
         sw.life = 0;
@@ -212,6 +328,4 @@ class Effects {
   }
 }
 
-export {
-  Effects
-};
+export { Effects };

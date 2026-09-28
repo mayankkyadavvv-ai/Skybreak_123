@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.env*
+.openai
+.vercel
+qa-artifacts
+evidence
+*.zip
+SKYBREAK_ALL_CODES.md
+__pycache__

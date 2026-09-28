@@ -1,27 +1,28 @@
 import "./style.css";
+import "./upgrade.css";
 import { Game } from "./game/Game.js";
 import { UI } from "./ui/UI.js";
-import { AUDIO_DEFAULTS, normalizeAudioSettings } from "./game/SoundDesign.js";
-const defaults = { quality: "clear", difficulty: "easy", input: "keyboard", sensitivity: 0.8, ...AUDIO_DEFAULTS, invert: false, shake: true, guideSeen: false, controlsVersion: 2 };
+import { normalizeSettings } from './game/Settings.js';
 let saved = {};
-try {
-  saved = JSON.parse(localStorage.getItem("skybreak-settings") || "{}");
-} catch {
-}
-if (!saved || typeof saved !== 'object') saved = {};
-const settings = normalizeAudioSettings({ ...defaults, ...saved });
-if (saved.controlsVersion !== 2) {
-  settings.input = "keyboard";
-  settings.guideSeen = false;
-  settings.controlsVersion = 2;
-}
-for (const [key, allowed] of Object.entries({ quality: ["low", "clear", "medium", "high"], difficulty: ["easy", "medium", "hard"], input: ["mouse", "keyboard", "advanced"] })) if (!allowed.includes(settings[key])) settings[key] = defaults[key];
-if (!Number.isFinite(settings.sensitivity)) settings.sensitivity = defaults.sensitivity;
+try { saved = JSON.parse(localStorage.getItem('skybreak-settings') || '{}'); } catch {}
+const { settings, notices } = normalizeSettings(saved, window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 const ui = new UI(document.getElementById("app"), settings);
 try {
   const game = new Game(document.getElementById("world"), ui, settings);
+  window.game = game;
+  window.addEventListener("pagehide",event=>{if(!event.persisted)game.dispose();});
   ui.attach(game);
+  if (notices.length) { ui.settingsNotices = notices; ui.message(notices[0], 10); }
+  ui.saveSettings(true);
+  const bootLoader = document.getElementById("preflight-boot-loader");
+  if (bootLoader) {
+    bootLoader.classList.add("boot-complete");
+    setTimeout(() => bootLoader.remove(), 650);
+  }
 } catch (error) {
   console.error(error);
-  document.getElementById("app").innerHTML = '<div class="unsupported"><h1>WebGL 2 is required.</h1><p>Enable graphics acceleration in your browser settings, then reload this page.</p><button onclick="location.reload()">Try again</button></div>';
+  const bootLoader = document.getElementById("preflight-boot-loader");
+  if (bootLoader) bootLoader.remove();
+  document.getElementById("app").innerHTML = '<div class="unsupported"><h1>Graphics could not start.</h1><p>Skybreak needs WebGL 2 and browser graphics acceleration. Check the console for the startup error.</p><button id="retry-graphics">Try again</button><a href="/help">Controls &amp; help</a></div>';
+  document.getElementById('retry-graphics').addEventListener('click', () => location.reload());
 }

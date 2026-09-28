@@ -90,6 +90,8 @@ test("createJet: generates valid 3D hierarchies for all 5 fighter jet models", (
     assert.ok(jetMesh.children.length > 5, `Jet ${modelId} has full fuselage, wings, elevators, engines`);
     assert.ok(jetMesh.userData.flames.length >= 2, `Jet ${modelId} has afterburner flames`);
     assert.ok(jetMesh.userData.elevators.length >= 2, `Jet ${modelId} has elevators`);
+    assert.ok(jetMesh.userData.ailerons.length >= 2, `Jet ${modelId} has articulated ailerons`);
+    assert.ok(jetMesh.userData.rudders.length >= 1, `Jet ${modelId} has articulated rudders`);
 
     if (modelId === "su57" || modelId === "vajra9") {
       assert.ok(jetMesh.userData.canards.length >= 2, `Jet ${modelId} has animated canards`);
