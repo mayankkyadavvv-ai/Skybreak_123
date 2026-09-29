@@ -4,6 +4,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 FROM node:24-alpine
+ARG SKYBREAK_DEPLOY_REVISION
+ENV SKYBREAK_DEPLOY_REVISION=$SKYBREAK_DEPLOY_REVISION
 ENV NODE_ENV=production PORT=8080 HOST=0.0.0.0
 WORKDIR /app
 COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules

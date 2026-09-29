@@ -1082,7 +1082,11 @@
         "server/GameServer",
         "server/Room",
         "server/MatchState",
-        "Dockerfile.match"
+        "Dockerfile.match",
+        "server/ServiceConfig",
+        "scripts/verify-match-endpoint.mjs",
+        "ops/compose.yaml",
+        "ops/Caddyfile"
       ],
       "evidence": [
         "tests/multiplayer-socket.test.js",
@@ -1093,15 +1097,17 @@
         "evidence/pending-completion/README.md",
         "evidence/pending-completion/network.json",
         "evidence/pending-completion/ci-tests.log",
-        "evidence/pending-completion/ci-network.json"
+        "evidence/pending-completion/ci-network.json",
+        "tests/service-deployment.test.js",
+        "evidence/server-readiness/README.md"
       ],
       "blockers": [
         "Authorized continuous WSS worker not provisioned; four humans/two real networks not tested"
       ],
-      "delta": "Protocol-2 continuous worker, health/readiness, rate/room limits, CPU/tick/bandwidth telemetry and deployment recipe",
+      "delta": "Protocol-2 continuous worker, health/readiness, rate/room limits, CPU/tick/bandwidth telemetry and deployment recipe; validated production startup, Compose/Caddy TLS gateway and real endpoint readiness/room/input/reconnect/cleanup smoke check",
       "acceptance_scope": "Automated checks cover logic/integration only. Authorized continuous WSS worker not provisioned; four humans/two real networks not tested",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
+      "commit": "Review branch feature/skybreak-40-upgrade; server preparation revision recorded in evidence/server-readiness/README.md; deployment/human gates still pending"
     },
     {
       "id": "F32",
@@ -1353,7 +1359,9 @@
         "tests/upgrade40-authority.test.js",
         "tests/security.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/pending-completion/ci-tests.log"
+        "evidence/pending-completion/ci-tests.log",
+        "tests/service-deployment.test.js",
+        "evidence/server-readiness/README.md"
       ],
       "blockers": [
         "TURN resource/secret not provisioned; real microphone/output changes and relay-required cross-network voice are blocked"
@@ -1361,7 +1369,7 @@
       "delta": "Team-authorized expiring target/location pings; opt-in WebRTC PTT/mute/deafen/per-user gain and short-lived TURN credentials",
       "acceptance_scope": "Automated checks cover logic/integration only. TURN resource/secret not provisioned; real microphone/output changes and relay-required cross-network voice are blocked",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
+      "commit": "Review branch feature/skybreak-40-upgrade; server preparation revision recorded in evidence/server-readiness/README.md; deployment/human gates still pending"
     },
     {
       "id": "F39",

@@ -13,6 +13,12 @@ No new paid resource has been purchased. An existing suitable VM can be reused. 
 
 Vercel Functions currently support WebSockets in beta, but connections have duration limits and new connections need not land on the same instance. This in-memory authoritative server must not be deployed there as if every client were guaranteed the same persistent room owner. A distributed store/room router would be a further architecture change; the prepared deployment uses a continuous single worker. Source checked 2026-09-28: https://vercel.com/docs/functions/websockets .
 
+## Ready deployment files
+
+`ops/compose.yaml` + `ops/Caddyfile` provide a single match worker behind automatic HTTPS/WSS, with worker port 8080 internal, healthcheck, resource limits and bounded logs. `ops/README_HINGLISH.md` is the operator guide. Production startup validates exact origins, capacities and complete TURN configuration. `npm run verify:server` exercises an authorized idle endpoint through readiness, private room create/join/start, input acknowledgement, ten-second reconnect and cleanup; TURN checks prove expiring credential issuance only, not audio relay.
+
+Current host access, DNS and TURN resource/secret are still missing. Preparation and local/CI checks are not public deployment.
+
 ## Prepared worker configuration
 
 `Dockerfile.match` builds successfully in GitHub Actions run `36530102137` for runtime `2dac955028de20fd9245e8c31b5d982e59ab16d4`. The Node entry point is exercised by the real-socket soak and LAN package checks. This verifies packaging, not a public WSS deployment.

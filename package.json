@@ -18,7 +18,8 @@
     "verify:lan": "node scripts/lan-acceptance.mjs",
     "verify:upgrade40": "node scripts/upgrade40-browser.mjs",
     "verify:browser-build": "node scripts/verify-browser-build.mjs",
-    "verify:network": "node scripts/upgrade40-network-soak.mjs"
+    "verify:network": "node scripts/upgrade40-network-soak.mjs",
+    "verify:server": "node scripts/verify-match-endpoint.mjs"
   },
   "dependencies": {
     "qrcode": "1.5.4",

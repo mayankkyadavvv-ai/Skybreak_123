@@ -50,7 +50,27 @@ jobs:
           SKYBREAK_SOAK_SECONDS: ${{ github.event_name == 'workflow_dispatch' && inputs.long_run && '600' || '65' }}
           SKYBREAK_SOAK_OUTPUT: qa-artifacts/ci/network.json
       - name: Build continuous match-worker image
-        run: docker build -f Dockerfile.match -t skybreak-match:acceptance .
+        run: docker build --build-arg SKYBREAK_DEPLOY_REVISION="$GITHUB_SHA" -f Dockerfile.match -t skybreak-match:acceptance .
+      - name: Check production Compose and Caddy configuration
+        run: |
+          cp ops/worker.env.example ops/.env.worker
+          docker compose -f ops/compose.yaml config --quiet
+          docker run --rm -e SKYBREAK_MATCH_DOMAIN -v "$PWD/ops/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.11.4-alpine caddy validate --config /etc/caddy/Caddyfile
+          rm ops/.env.worker
+        env:
+          SKYBREAK_DEPLOY_REVISION: ${{ github.sha }}
+          SKYBREAK_MATCH_DOMAIN: match.example.test
+      - name: Exercise the actual production container and reconnect
+        run: |
+          trap 'docker stop skybreak-acceptance-worker >/dev/null 2>&1 || true' EXIT
+          docker run -d --rm --name skybreak-acceptance-worker -p 127.0.0.1:8082:8080 -e SKYBREAK_ALLOWED_ORIGINS=https://skybreak-iota.vercel.app skybreak-match:acceptance
+          curl --retry 20 --retry-all-errors --retry-delay 1 --fail --silent http://127.0.0.1:8082/ready > qa-artifacts/ci/container-ready.json
+          npm run verify:server
+        env:
+          SKYBREAK_VERIFY_ENDPOINT: ws://127.0.0.1:8082/ws
+          SKYBREAK_VERIFY_ORIGIN: https://skybreak-iota.vercel.app
+          SKYBREAK_VERIFY_REVISION: ${{ github.sha }}
+          SKYBREAK_VERIFY_OUTPUT: qa-artifacts/ci/container-smoke.json
       - name: Retain reports and runnable LAN package
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

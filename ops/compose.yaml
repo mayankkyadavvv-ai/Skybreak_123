@@ -1,0 +1,40 @@
+name: skybreak-match
+services:
+  match:
+    build:
+      context: ..
+      dockerfile: Dockerfile.match
+      args:
+        SKYBREAK_DEPLOY_REVISION: ${SKYBREAK_DEPLOY_REVISION:?Set the full checked-out commit SHA}
+    env_file: .env.worker
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 100
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  gateway:
+    image: caddy:2.11.4-alpine
+    restart: unless-stopped
+    environment:
+      SKYBREAK_MATCH_DOMAIN: ${SKYBREAK_MATCH_DOMAIN:?Set the match DNS hostname}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      match: {condition: service_healthy}
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+volumes:
+  caddy_data:
+  caddy_config:

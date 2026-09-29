@@ -53,9 +53,10 @@ Source and evidence are published to `feature/skybreak-40-upgrade`, [draft PR #1
 - [evidence/pending-completion/README.md](evidence/pending-completion/README.md): current test/build/LAN, real Chromium and CI evidence with exact scope.
 - [UPGRADE40_QA.md](UPGRADE40_QA.md): automated and required physical/human acceptance.
 - [UPGRADE40_RELEASE.md](UPGRADE40_RELEASE.md): match/voice service requirements and production gates.
+- [Public server setup — Hinglish](ops/README_HINGLISH.md): Docker/Caddy configuration and `npm run verify:server` for the actual authorized worker.
 - [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) and [DATA_INVENTORY.md](DATA_INVENTORY.md): assets, storage and network behavior.
 
-Current automated suite: **217 tests**. Browser screenshots and two-browser local-party evidence now exist; actual hardware GPU FPS, physical touch/controllers/split-screen, four humans on two networks, offline physical LAN and relay-required voice remain separate requirements. A persistent public WSS worker and authorized TURN configuration are still needed. No licensed external GLB was supplied; the procedural X-17 remains the active model.
+Current automated suite: **226 tests**. Browser screenshots and two-browser local-party evidence now exist; actual hardware GPU FPS, physical touch/controllers/split-screen, four humans on two networks, offline physical LAN and relay-required voice remain separate requirements. A persistent public WSS worker and authorized TURN configuration are still needed. No licensed external GLB was supplied; the procedural X-17 remains the active model.
 
 ## F01–F40 candidate upgrade (2.0.0-rc.1)
 
