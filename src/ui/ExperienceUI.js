@@ -147,12 +147,13 @@ export const experienceMethods={
     if(this.modalType==='settings'&&this.settingsSection==='controls')this.updateControlStudio(dt);
     if(g.state==='playing'){this.flightSchool?.update(g,dt);this.captureReplayFrame(g);}
     this.updateSchool();
-    if(this.hudEl.hidden)return;this.hudEl.dataset.detail=this.settings.hudDetail || 'full';
+    if(this.hudEl.hidden)return;this.hudEl.dataset.detail=this.settings.hudDetail || 'full';this.hudEl.dataset.camera=g.cam?.mode || 'chase';
     this.experienceTimer=(this.experienceTimer || 0)+dt;if(this.experienceTimer<.125)return;this.experienceTimer=0;
     this.html('threat-awareness',threatMarkup(g));this.dom['threat-awareness'].hidden=!this.dom['threat-awareness'].textContent;
     const urgent=threatState(g).find(c=>c.urgency>=3);if(urgent)g.audio?.alert?.(`${urgent.kind==='missile'?'MISSILE INCOMING':'HOSTILE LOCK'} · ${urgent.direction} ${urgent.altitude} · ${urgent.kind==='missile'?bindingLabel('flare',this.settings)+' FLARES':'BREAK TRACK'}`);
     const radio=g.notifications?.[0];if(radio && radio!==this.lastRadio){this.lastRadio=radio;g.audio?.radio?.(radio.who,radio.text,{ttl:radio.ttl || 4});}
     const subtitle=g.audio?.currentSubtitle?.();this.text('audio-subtitle',this.settings.subtitles===false?'':subtitle?.text || '');this.dom['audio-subtitle'].hidden=!this.dom['audio-subtitle'].textContent;
+    this.hudEl.classList.toggle('radio-subtitled',!!radio && this.dom['audio-subtitle'].textContent===`${radio.who}: ${radio.text}`);
     if(g.operation?.snapshot){const op=g.operation.snapshot();this.text('mission-objective',op.objective || op.description || op.state || '');}
     const activity=currentActivity(g);if(activity)this.text('mission-objective',activitySummary(activity,g.multiplayer?.active?g.multiplayer.localId:g.player.id));
   },

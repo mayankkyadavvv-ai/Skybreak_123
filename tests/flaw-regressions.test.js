@@ -18,6 +18,7 @@ import { FlightSchool } from '../src/game/FlightSchool.js';
 import { openSkiesFlightSettings } from '../src/game/FlightAssists.js';
 import { battleGuide } from '../src/ui/OpenSkiesUI.js';
 import { LocalCoop } from '../src/game/LocalCoop.js';
+import { MultiplayerUI } from '../src/ui/MultiplayerUI.js';
 
 const control = (...keys) => ({ keys: new Set(keys), heldActions: new Set(), mouse: { x: 0, y: 0 }, axes: {}, look: { x: 0, y: 0 }, levelTimer: 0,
   clear() { this.keys.clear(); this.heldActions.clear(); this.levelTimer = 0; } });
@@ -49,6 +50,41 @@ function globals(t, values) {
   for (const [k, value] of Object.entries(values)) Object.defineProperty(globalThis, k, { value, configurable: true, writable: true });
   t.after(() => { for (const [k, descriptor] of Object.entries(previous)) { if (descriptor) Object.defineProperty(globalThis, k, descriptor); else delete globalThis[k]; } });
 }
+
+test('Friends offline Free Flight clears the old battle, damage and controls and restarts the chosen mode', t => {
+  const g = harness(t, 2), oldAircraft = [...g.enemies, ...g.allies];
+  let disposed = 0;
+  for (const jet of oldAircraft) { const dispose = jet.dispose.bind(jet); jet.dispose = () => { disposed++; dispose(); }; }
+  g.player.systems.engine = .2; g.player.angular.x = 1; g.input.keys.add('ArrowUp');
+  g.menu();
+  MultiplayerUI.prototype.launchInstantDuel.call({ game: g, ui: g.ui }, 'free_flight');
+  assert.equal(g.openSkies, null); assert.equal(g.operation, null);
+  assert.equal(g.mission.freeFlight, true); assert.equal(g.enemies.length, 0);
+  assert.equal(disposed, oldAircraft.length); assert.equal(g.player.systems.engine, 1);
+  assert.equal(g.player.angular.length(), 0); assert.equal(g.input.keys.size, 0);
+  const sortie = g.sortieId;
+  restart(g);
+  assert.equal(g.mission.freeFlight, true); assert.equal(g.openSkies, null);
+  assert.equal(g.enemies.length, 0); assert.notEqual(g.sortieId, sortie);
+});
+
+test('Friends offline Ace Duel leaves campaign runtime and restarts with one valid hostile', t => {
+  const g = harness(t);
+  g.newCampaign(912); g.startCampaignSector('strait');
+  const campaign = JSON.stringify(g.campaignState);
+  g.menu();
+  MultiplayerUI.prototype.launchInstantDuel.call({ game: g, ui: g.ui });
+  assert.equal(g.operation, null); assert.equal(g.training, false);
+  assert.equal(g.mission.duel, true); assert.equal(g.state, 'playing');
+  assert.equal(g.enemies.length, 1); assert.equal(g.enemies[0].modelId, 'su57');
+  assert.equal(g.target, g.enemies[0]); assert.equal(g.player.gearDown, false);
+  const sortie = g.sortieId, mission = g.mission.id;
+  restart(g);
+  assert.equal(g.mission.id, mission); assert.equal(g.enemies.length, 1);
+  assert.equal(g.enemies[0].modelId, 'su57'); assert.notEqual(g.sortieId, sortie);
+  assert.equal(JSON.stringify(g.campaignState), campaign);
+  assert.equal(normalizeSettings({ lastMissionId: mission }).settings.lastMissionId, mission);
+});
 
 test('A01 UI Restart preserves custom preset and new campaign attempt advances its sector exactly once', t => {
   const g = harness(t);

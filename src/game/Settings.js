@@ -37,7 +37,7 @@ export function normalizeSettings(saved = {}, reducedMotion = false) {
   for (const key of ['adaptiveQuality','targetCamera','lastSoloPlayed']) value[key]=value[key]===true;
   for (const key of ['subtitles','warningDucking']) value[key]=value[key]!==false;
   value.openSkiesEasyControls=value.openSkiesEasyControls!==false;
-  value.lastMissionId=Number.isInteger(value.lastMissionId)&&value.lastMissionId>=0&&value.lastMissionId<=7?value.lastMissionId:3;
+  value.lastMissionId=Number.isInteger(value.lastMissionId)&&value.lastMissionId>=0&&value.lastMissionId<=8?value.lastMissionId:3;
   value.gamepadIndex=Number.isInteger(value.gamepadIndex)&&value.gamepadIndex>=0&&value.gamepadIndex<=15?value.gamepadIndex:-1;
   value.adaptiveTargetFps=value.adaptiveTargetFps===30?30:60;
   value.touchLayout=normalizeTouchLayout(value.touchLayout);

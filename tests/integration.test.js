@@ -124,24 +124,7 @@ test("missile collision crosses its full flight segment each tick", () => {
   assert.equal(state.missiles.length, 0);
 });
 
-test("offline instant duel starts with a valid hostile jet", () => {
-  const player = new Jet("player");
-  const game = {
-    audio: { init() {} }, enemies: [], allies: [],
-    scene: { add() {}, remove() {} },
-    weapons: { clear() {} }, effects: { clear() {} },
-    resetSessionCounters() {},
-    player,
-    lastPlayerPos: player.position.clone(),
-    cam: { reset() {} },
-    ui: { inGame() {} }
-  };
-  const ui = { game, ui: { closePanel() {}, message() {} } };
-  MultiplayerUI.prototype.launchInstantDuel.call(ui);
-  assert.equal(game.state, "playing");
-  assert.equal(game.enemies.length, 1);
-  assert.equal(game.enemies[0].modelId, "su57");
-});
+// Offline duel coverage now uses the real Game lifecycle in flaw-regressions.test.js.
 
 test("scoreboard renders remote jet models without treating a Three.js object as text", () => {
   const originalDocument = globalThis.document;

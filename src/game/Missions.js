@@ -18,13 +18,19 @@ const FREE_FLIGHT = {
   tag: "NO ENEMIES",
   estimate: "NO TIME LIMIT"
 };
+const SOLO_DUEL = {
+  id: 8, name: 'Ace Duel', code: 'OFFLINE PRACTICE', region: 'OPEN COAST',
+  brief: 'Face one hostile ace. Practise target selection, a steady lock and missile defence without an online server.',
+  objective: 'Destroy the hostile ace fighter', fighters: 1, bombers: 0, allies: 0,
+  duel: true, tag: '1 VS AI', estimate: '2–4 MIN',
+};
 const OPERATION_MISSIONS = Object.entries(MISSION_TEMPLATES).map(([template, entry]) => ({
   id: entry.id, name: entry.name, code: `OPERATION ${String(entry.id).padStart(2, '0')}`,
   region: template === 'base-defence' ? MISSION_LOCATIONS.coast.name.toUpperCase() : MISSION_LOCATIONS.aegis.name.toUpperCase(),
   brief: entry.brief, objective: entry.objective, template, operation: true, fighters: 0, bombers: 0, allies: 0,
   tag: entry.role.toUpperCase(), estimate: '4–8 MIN', coopEligible: true,
 }));
-const FLIGHT_MODES = [FREE_FLIGHT, ...MISSIONS, ...OPERATION_MISSIONS];
+const FLIGHT_MODES = [FREE_FLIGHT, ...MISSIONS, ...OPERATION_MISSIONS, SOLO_DUEL];
 function getMission(id) {
   return FLIGHT_MODES.find((mission) => mission.id === id) || FREE_FLIGHT;
 }
@@ -37,6 +43,7 @@ function missionStatus(enemies, player, base) {
 export {
   MISSIONS,
   FREE_FLIGHT,
+  SOLO_DUEL,
   FLIGHT_MODES,
   OPERATION_MISSIONS,
   getMission,

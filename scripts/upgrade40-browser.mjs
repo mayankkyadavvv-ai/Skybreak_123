@@ -4,6 +4,7 @@ import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
+import { browserPartyJourney } from './browser-party-journey.mjs';
 
 const origin = process.env.SKYBREAK_QA_URL || 'http://localhost:4173';
 const label = (process.env.SKYBREAK_QA_LABEL || 'candidate').replace(/[^a-z0-9_-]/gi, '_');
@@ -14,7 +15,7 @@ const preset = process.env.SKYBREAK_QA_PRESET || 'medium', seed = 4422;
 await mkdir(out, { recursive: true });
 let revision = 'unavailable'; try { revision = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(); } catch {}
 const report = { label, origin, started: new Date().toISOString(), status: 'running', revision, environment: { os: `${os.platform()} ${os.release()}`, cpu: os.cpus()[0]?.model, logicalCPUs: os.cpus().length, memoryGiB: Math.round(os.totalmem() / 1024 ** 3), node: process.version }, configuration: { preset, seed, dpr: 1, sampleSeconds, warmUpSeconds: 5, emulatedMobile: true }, console: [], errors: [], checks: [], layouts: [], captures: [], samples: [], restarts: [], unverified: ['human screenshot review and visual-readability judgement', 'physical laptop/mobile GPU performance', 'physical controller and touchscreen feel', 'audible audio and microphone capture', 'two-network human co-op/PvP session', 'two physical LAN devices with internet disconnected', 'two humans using actual split-screen controllers'] };
-let browser;
+let browser, activePage;
 function check(condition, label, detail) { report.checks.push({ label, passed: !!condition, detail }); if (!condition) report.errors.push(label); }
 const percentile = (values, quantile) => { if (!values.length) return null; const sorted = [...values].sort((a, b) => a - b); return sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * quantile))]; };
 
@@ -31,11 +32,12 @@ try {
   if (!browser) { report.status = 'blocked'; throw Error('No usable local Chrome/Edge/Chromium. No rendered evidence or frame-time measurements were collected.'); }
   for (const [width, height] of viewports) {
     const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, hasTouch: width < 900, isMobile: width < 900 });
-    const page = await context.newPage(); page.setDefaultTimeout(15000);
+    await context.addInitScript(preset => localStorage.setItem('skybreak-settings', JSON.stringify({ quality: preset, adaptiveQuality: false, reducedMotion: true, device: 'keyboard', controlsVersion: 5 })), preset);
+    const page = await context.newPage(); activePage = page; page.setDefaultTimeout(30000);
     page.on('pageerror', error => report.errors.push(`${width}x${height}: ${error.message}`));
     page.on('console', message => { if (['error', 'warning'].includes(message.type())) { const item = { viewport: `${width}x${height}`, type: message.type(), text: message.text().slice(0, 3000) }; if (report.console.length < 200) report.console.push(item); if (message.type() === 'error') report.errors.push(item.text); } });
     page.on('requestfailed', request => report.errors.push(`Request failed: ${request.url()} ${request.failure()?.errorText}`));
-    const capture = async name => { const file = `${name}-${width}x${height}.png`; await page.screenshot({ path: join(out, file) }); const actual = await page.evaluate(() => ({ state: window.game?.state, timeOfDay: window.game?.atmosphere?.timeOfDay, weather: window.game?.atmosphere?.weather, camera: window.game?.cam?.mode })); report.captures.push({ viewport: [width, height], name, path: file, actual }); };
+    const capture = async name => { const file = `${name}-${width}x${height}.png`; await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))); await page.screenshot({ path: join(out, file) }); const actual = await page.evaluate(() => ({ state: window.game?.state, timeOfDay: window.game?.atmosphere?.timeOfDay, weather: window.game?.atmosphere?.weather, camera: window.game?.cam?.mode })); report.captures.push({ viewport: [width, height], name, path: file, actual }); };
     const start = Date.now(); const response = await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 45000 }); check(response?.ok(), 'Game page serves successfully', { width, status: response?.status() });
     if (!report.build) { const buildResponse = await page.request.get(origin.replace(/\/$/, '') + '/build-manifest.json'); if (buildResponse.ok()) { const build = await buildResponse.json(); report.build = { sourceRevision: build.sourceRevision, sourceDigest: build.sourceDigest, assetsDigest: build.assetsDigest }; } }
     await page.waitForFunction(() => window.game?.state === 'menu', null, { timeout: 45000 });
@@ -47,23 +49,33 @@ try {
     report.layouts.push({ viewport: [width, height], timeToMenuMs: Date.now() - start, ...(await page.evaluate(() => ({ documentOverflow: document.documentElement.scrollWidth > innerWidth + 1, bodyTextLength: document.body.innerText.trim().length, errorOverlay: !!document.querySelector('vite-error-overlay,[data-nextjs-dialog]') }))) });
     await capture('menu');
     for (const [action, name] of [['settings', 'settings'], ['hangar', 'hangar']]) {
-      const button = page.locator(`[data-action="${action}"]`).first(); if (await button.count()) { await button.click(); await page.waitForTimeout(250); await capture(name); await page.keyboard.press('Escape'); await page.evaluate(() => { if (window.game.state !== 'menu') window.game.menu(); }); }
+      const button = page.locator(`[data-action="${action}"]`).first(); if (await button.count()) { await button.click({ noWaitAfter: true }); await page.waitForFunction(type => type === 'hangar' ? window.game.state === 'hangar' && !!document.getElementById('hangar-modal') : window.game.ui.modalType === type, action); await capture(name); await page.keyboard.press('Escape'); await page.evaluate(() => { if (window.game.state !== 'menu') window.game.menu(); }); }
     }
     await page.evaluate(seed => window.game.start(2, { seed }), seed); await page.waitForTimeout(500); await capture('open-skies');
     report.layouts.push(await page.evaluate(() => { const selectors = ['#battle-wing', '#battle-coach', '#hud', '.battle-actions', '#radio', '#weapons']; return { viewport: [innerWidth, innerHeight], screen: 'open-skies', documentOverflow: document.documentElement.scrollWidth > innerWidth + 1, boxes: selectors.flatMap(selector => { const element = document.querySelector(selector); if (!element || !element.getClientRects().length) return []; const r = element.getBoundingClientRect(); return [{ selector, x: r.x, y: r.y, width: r.width, height: r.height }]; }) }; }));
+    const weaponBounds = await page.evaluate(() => {
+      const panel = document.querySelector('.hud-weapons');
+      if (!panel?.getClientRects().length) return { visible: false, clipped: [] };
+      const box = panel.getBoundingClientRect();
+      return { visible: true, clipped: [...panel.querySelectorAll('.weapon>span,.weapon>strong,.flare-line')].filter(el => el.getClientRects().length).filter(el => { const r = el.getBoundingClientRect(); return r.left < box.left - 1 || r.right > box.right + 1 || el.scrollWidth > el.clientWidth + 1; }).map(el => el.textContent.trim()) };
+    });
+    check(!weaponBounds.clipped.length, 'Visible weapon values stay inside their panel', { viewport: [width, height], ...weaponBounds });
     const orders = page.locator('[data-action="squadron"]').first();
-    if (await orders.count()) { await orders.click(); await capture('orders'); const regroup = page.locator('[data-order="regroup"]').first(); if (await regroup.count()) await regroup.click(); }
+    if (await orders.count()) { await orders.click({ noWaitAfter: true }); await capture('orders'); const regroup = page.locator('[data-order="regroup"]').first(); if (await regroup.count()) await regroup.click({ noWaitAfter: true }); }
     await page.evaluate(() => { window.game.menu(); window.game.start(3); }); await page.waitForTimeout(250);
     const pitchStart = await page.evaluate(() => window.game.player.forward.y);
-    await page.keyboard.down('ArrowUp'); await page.waitForTimeout(400); await page.keyboard.up('ArrowUp');
+    await page.keyboard.down('ArrowUp');
+    try { await page.waitForFunction(start => window.game.player.forward.y > start + .003, pitchStart); } finally { await page.keyboard.up('ArrowUp'); }
     const pitchUp = await page.evaluate(() => window.game.player.forward.y);
-    await page.keyboard.down('ArrowDown'); await page.waitForTimeout(800); await page.keyboard.up('ArrowDown');
+    await page.keyboard.down('ArrowDown');
+    try { await page.waitForFunction(up => window.game.player.forward.y < up - .003, pitchUp); } finally { await page.keyboard.up('ArrowDown'); }
     const pitchDown = await page.evaluate(() => window.game.player.forward.y);
     check(pitchUp > pitchStart, 'Arrow Up raises nose', { viewport: [width, height], pitchStart, pitchUp });
     check(pitchDown < pitchUp, 'Arrow Down lowers nose', { viewport: [width, height], pitchUp, pitchDown });
     await page.evaluate(() => window.game.resetPracticePosition());
     const throttleStart = await page.evaluate(() => window.game.player.throttle);
-    await page.keyboard.down('w'); await page.waitForTimeout(350); await page.keyboard.up('w');
+    await page.keyboard.down('w');
+    try { await page.waitForFunction(start => window.game.player.throttle > start + .01, throttleStart); } finally { await page.keyboard.up('w'); }
     const throttleHold = await page.evaluate(() => window.game.player.throttle); await page.waitForTimeout(300); const throttleRelease = await page.evaluate(() => window.game.player.throttle);
     check(throttleHold > throttleStart && Math.abs(throttleHold - throttleRelease) < 0.015, 'Throttle increases and holds on release', { throttleStart, throttleHold, throttleRelease });
     // Use the actual input listener, lock accumulation and weapon system.
@@ -78,6 +90,21 @@ try {
     await page.keyboard.press('e');
     check(await page.evaluate(() => window.game.missilesLeft) === pausedAmmo, 'E cannot fire through a pause menu');
     await page.evaluate(() => { window.game.menu(); window.game.start(3); });
+    if (width === viewports[0][0] && height === viewports[0][1]) {
+      await page.keyboard.press('Escape');
+      await page.locator('[data-action="menu"]').click({ noWaitAfter: true });
+      await page.locator('[data-action="multiplayer"]').first().click({ noWaitAfter: true });
+      await page.locator('#mp-offline-duel-btn').click({ noWaitAfter: true });
+      check(await page.evaluate(() => window.game.mission.duel && window.game.enemies.length === 1), 'Friends offline Ace Duel starts the selected mode');
+      await page.keyboard.press('Escape');
+      await page.locator('[data-action="restart"]').click({ noWaitAfter: true });
+      check(await page.evaluate(() => window.game.mission.duel && window.game.enemies.length === 1), 'Offline Ace Duel Restart retains one hostile');
+      await page.keyboard.press('Escape'); await page.locator('[data-action="menu"]').click({ noWaitAfter: true });
+      await page.locator('[data-action="multiplayer"]').first().click({ noWaitAfter: true });
+      await page.locator('#mp-offline-free-btn').click({ noWaitAfter: true });
+      await page.keyboard.press('Escape'); await page.locator('[data-action="restart"]').click({ noWaitAfter: true });
+      check(await page.evaluate(() => window.game.mission.freeFlight && !window.game.openSkies && !window.game.operation && window.game.enemies.length === 0), 'Friends Free Flight and Restart cannot restore the previous battle');
+    }
     for (const mode of ['chase', 'cockpit', 'cinematic']) { await page.evaluate(mode => { window.game.cam.mode = mode; }, mode); await page.waitForTimeout(300); await capture(mode); }
     if (width === viewports[0][0] && height === viewports[0][1]) {
       for (const [time, weather] of [['midday', 'clear'], ['sunset', 'clear'], ['midday', 'cloudy']]) {
@@ -98,13 +125,17 @@ try {
       report.frameTime = { samples: frameTimes.length, p50ms: percentile(frameTimes, 0.5), p95ms: percentile(frameTimes, 0.95), p99ms: percentile(frameTimes, 0.99), longestMs: frameTimes.length ? Math.max(...frameTimes) : null, note: 'Real requestAnimationFrame intervals; automated battle restarts are listed separately. This is not a human-completed sortie.' };
       await capture('post-sample');
     }
-    await context.close();
+    await context.close(); activePage = null;
   }
   const page = await browser.newPage();
   report.publicPages = [];
   for (const route of ['/about', '/help', '/privacy', '/terms', '/storage']) { const response = await page.goto(origin.replace(/\/$/, '') + route); report.publicPages.push({ route, status: response?.status() }); check(response?.status() === 200, `Public page ${route} loads`); }
   for (const layout of report.layouts) { check(!layout.documentOverflow, 'Viewport has no horizontal document overflow', layout); if ('errorOverlay' in layout) check(!layout.errorOverlay && layout.bodyTextLength > 50, 'Meaningful menu with no framework overlay', layout); }
+  if (process.env.SKYBREAK_QA_PARTY === '1') {
+    report.partyJourney = await browserPartyJourney(browser, origin, out);
+    check(report.partyJourney.status === 'passed-automated', 'Browser create/join/ready/flight/reload-resume/leave journey', report.partyJourney);
+  }
   report.status = report.errors.length ? 'failed' : 'passed-automated';
-} catch (error) { if (report.status !== 'blocked') report.status = browser ? 'failed' : 'blocked'; report.errors.push(error.message); }
+} catch (error) { if (activePage && !activePage.isClosed()) { try { await activePage.screenshot({ path: join(out, 'failure.png'), timeout: 10000 }); report.captures.push({ name: 'failure', path: 'failure.png' }); } catch {} } if (report.status !== 'blocked') report.status = browser ? 'failed' : 'blocked'; report.errors.push(error.message); }
 finally { await browser?.close(); report.finished = new Date().toISOString(); await writeFile(join(out, 'acceptance.json'), JSON.stringify(report, null, 2) + '\n'); console.log(JSON.stringify({ status: report.status, label, report: join(out, 'acceptance.json'), renderer: report.renderer, captures: report.captures.length, errors: report.errors })); }
 if (report.status !== 'passed-automated') process.exitCode = report.status === 'blocked' ? 2 : 1;

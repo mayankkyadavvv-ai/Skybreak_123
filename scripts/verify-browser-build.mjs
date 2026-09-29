@@ -15,7 +15,7 @@ try {
   const origin = `http://127.0.0.1:${service.server.address().port}`;
   console.log(`Checking built Skybreak at ${origin}`);
   const code = await new Promise((resolve, reject) => {
-    child = spawn(process.execPath, ['scripts/upgrade40-browser.mjs'], { cwd: root, env: { ...process.env, SKYBREAK_QA_URL: origin }, stdio: 'inherit' });
+    child = spawn(process.execPath, ['scripts/upgrade40-browser.mjs'], { cwd: root, env: { ...process.env, SKYBREAK_QA_URL: origin, SKYBREAK_QA_PARTY: '1' }, stdio: 'inherit' });
     child.once('error', reject);
     child.once('exit', (code, signal) => resolve(signal ? 1 : code));
   });

@@ -438,9 +438,14 @@ class Game {
     this.resetSessionCounters();
     this.player.stall = false;
     for (let i = 0; i < (this.openSkies ? 0 : this.mission.fighters); i++) {
-      const j = new Jet("enemy");
+      const j = new Jet("enemy", false, this.mission.duel ? { modelId: 'su57', liveryId: 'desert' } : undefined);
       j.position.set((i % 3 - 1) * 850, 1650 + i % 2 * 250, this.player.position.z - 3600 - Math.floor(i / 3) * 1700 - i * 250);
       j.quaternion.setFromAxisAngle(new T.Vector3(0, 1, 0), i % 2 ? 0.4 : 2.7);
+      if (this.mission.duel) {
+        j.position.set(0, 1650, this.player.position.z - 3500);
+        j.quaternion.setFromAxisAngle(new T.Vector3(0, 1, 0), Math.PI);
+        j.speed = 240; j.velocity.set(0, 0, 240); j.name = j.callsign = 'Ace Bandit Viper';
+      }
       this.enemies.push(j);
       this.scene.add(j.model);
     }
@@ -462,6 +467,7 @@ class Game {
       this.player.setGear(false);
       this.handleEncounterEvents(this.openSkies.start());
     }
+    if (this.mission.duel) this.player.setGear(false);
     startOperationRuntime(this,options);
     const launchOptions = { training: this.training };
     if (this.openSkies) Object.assign(launchOptions, { seed: this.openSkies.seed, encounterDifficulty: this.openSkies.difficulty });

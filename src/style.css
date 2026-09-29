@@ -1480,7 +1480,7 @@
 }
 
 .radio {
-  bottom: 22px !important;
+  bottom: 22px;
   color: #d8edf0 !important;
   background: rgba(8, 14, 24, 0.85) !important;
   border: 1px solid rgba(0, 240, 255, 0.25) !important;

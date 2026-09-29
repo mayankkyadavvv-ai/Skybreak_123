@@ -1,9 +1,8 @@
 import { readStored } from "../game/Storage.js";
 import { isHeld, bindingLabel } from "../game/InputActions.js";
 // MultiplayerUI: Manages all multiplayer UI screens, modals, in-game overlays, and spectator HUD
-import * as T from "three";
 import { JET_MODELS } from "../game/JetConfigs.js";
-import { Jet } from "../game/Jet.js";
+import { FREE_FLIGHT, SOLO_DUEL } from '../game/Missions.js';
 import { parseInvite, inviteURL, inviteQR, PARTY_MODES, ROOM_CODE } from '../multiplayer/Invites.js';
 import { activitySummary } from './ActivityDisplay.js';
 
@@ -388,73 +387,12 @@ export class MultiplayerUI {
   async createRoom(options) { return this.requestRoom('create_room', { options }); }
 
   launchInstantDuel(mode = "1v1") {
+    this.pendingRoomCleanup?.();
+    this.queueCleanup?.();
     this.ui.closePanel();
-    this.game.audio?.init?.();
-
-    // Clear single player objects
-    for (const j of [...this.game.enemies, ...this.game.allies]) {
-      this.game.scene.remove(j.model);
-    }
-    this.game.enemies = [];
-    this.game.allies = [];
-    this.game.weapons.clear();
-    this.game.effects.clear();
-    this.game.resetSessionCounters();
-
-    const isFree = mode === "free_flight";
-
-    // Setup 1v1 Duel Mission
-    this.game.mission = {
-      id: "duel",
-      name: isFree ? "FREE FLIGHT SQUADRON" : "1 VS 1 ACE COMBAT DUEL",
-      objective: isFree ? "Cruise the skies freely. No enemies or boundaries." : "Destroy the hostile Ace Fighter.",
-      freeFlight: isFree,
-      fighters: isFree ? 0 : 1,
-      bombers: 0,
-      allies: 0
-    };
-
-    // Reset player position and loadout
-    this.game.player.position.set(0, 1600, 3200);
-    this.game.player.quaternion.identity();
-    this.game.player.velocity.set(0, 0, -240);
-    this.game.player.speed = 240;
-    this.game.player.throttle = 0.6;
-    this.game.player.hp = this.game.player.stats?.maxHp || 100;
-    this.game.player.maxHp = this.game.player.hp;
-    this.game.player.alive = true;
-    this.game.player.isLanded = false;
-    this.game.player.gearDown = false;
-    this.game.player.model.visible = true;
-    this.game.lastPlayerPos.copy(this.game.player.position);
-    this.game.cannonLeft = this.game.player.stats?.cannon || 1200;
-    this.game.missilesLeft = this.game.player.stats?.missiles || 6;
-    this.game.flaresLeft = this.game.player.stats?.flares || 20;
-
-    // Spawn Hostile Ace Fighter
-    if (!isFree) {
-      const enemy = new Jet("enemy", false, {
-        modelId: "su57",
-        liveryId: "desert"
-      });
-      // Spawn 3.5km in front, closing head-on
-      enemy.position.set(0, 1650, -2500);
-      enemy.quaternion.setFromAxisAngle(new T.Vector3(0, 1, 0), Math.PI);
-      enemy.velocity.set(0, 0, 240);
-      enemy.speed = 240;
-      enemy.hp = 100;
-      enemy.alive = true;
-      enemy.name = "Ace Bandit Viper";
-      this.game.enemies.push(enemy);
-      this.game.scene.add(enemy.model);
-      this.game.target = enemy;
-    }
-
-    this.game.state = "playing";
-    this.game.ui.inGame();
-    this.game.cam.mode = "chase";
-    this.game.cam.reset(this.game.player);
-    this.ui.message(isFree ? "FREE FLIGHT · SKIES ARE CLEAR ✈️" : "⚔️ 1V1 ACE DUEL · ENGAGE HOSTILE!", 4.0);
+    // A shortcut uses the same teardown, damage reset, input clearing and
+    // restart identity as every other solo launch.
+    return this.game.start(mode === 'free_flight' ? FREE_FLIGHT.id : SOLO_DUEL.id);
   }
 
   async joinRoomByCode(roomCode) {

@@ -26,8 +26,9 @@ export function createCockpit() {
   const black=new T.MeshStandardMaterial({color:0x080e13,roughness:.88});
   const frame=new T.MeshStandardMaterial({color:0x45515b,roughness:.52,metalness:.58});
   const add=(geo,mat,x,y,z)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);group.add(m);return m;};
-  add(new T.BoxGeometry(1.22,.44,.24),dark,0,.76,-5.18);
-  add(new T.BoxGeometry(1.34,.1,.55),black,0,1.02,-5.11);
+  add(new T.BoxGeometry(1.30,.44,.18),dark,0,.84,-5.42);
+  // Keep the coaming behind the display face, clear of the seated sightline.
+  add(new T.BoxGeometry(1.38,.07,.30),black,0,1.105,-5.47).name='instrument_coaming';
   for(const side of [-1,1]){
     add(new T.BoxGeometry(.19,.27,2.6),dark,side*.63,.57,-3.8);
     add(new T.BoxGeometry(.055,.065,3.2),frame,side*.68,1.05,-4);
@@ -43,11 +44,12 @@ export function createCockpit() {
   try{canvas=typeof document!=='undefined'?document.createElement('canvas'):null;if(canvas){canvas.width=768;canvas.height=256;ctx=canvas.getContext('2d');}}catch{}
   if(ctx){texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;texture.minFilter=T.LinearFilter;texture.generateMipmaps=false;}
   const screenMaterial=new T.MeshBasicMaterial({color:texture?0xffffff:0x376e65,map:texture,toneMapped:false});
-  add(new T.PlaneGeometry(1.13,.36),screenMaterial,0,.79,-5.05);
+  add(new T.PlaneGeometry(1.20,.36),screenMaterial,0,.84,-5.32).name='instrument_screen';
   const pose={eye:new T.Vector3(0,1.36,-3.95),near:.04,fov:70};
-  let nextUpdate=0,state=null;
+  let nextUpdate=0,lastUpdate=-Infinity,state=null;
   function update(jet,extra={},now=0) {
-    if(now<nextUpdate && state)return state;nextUpdate=now+.1;
+    // Sortie elapsed time resets on Restart; never retain the previous flight's MFD.
+    if(now>=lastUpdate && now<nextUpdate && state)return state;lastUpdate=now;nextUpdate=now+.1;
     state=readFlightInstruments(jet,extra);group.userData.instruments=state;
     if(!ctx)return state;
     ctx.fillStyle='#061117';ctx.fillRect(0,0,768,256);

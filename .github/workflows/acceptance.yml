@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      long_run:
+        description: Collect ten-minute browser and eight-client network samples
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -42,7 +47,7 @@ jobs:
       - name: Eight-client capacity and reconnect soak
         run: npm run verify:network
         env:
-          SKYBREAK_SOAK_SECONDS: 600
+          SKYBREAK_SOAK_SECONDS: ${{ github.event_name == 'workflow_dispatch' && inputs.long_run && '600' || '65' }}
           SKYBREAK_SOAK_OUTPUT: qa-artifacts/ci/network.json
       - name: Build continuous match-worker image
         run: docker build -f Dockerfile.match -t skybreak-match:acceptance .
@@ -71,10 +76,10 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npx --no-install playwright install --with-deps chromium
       - run: npm run build
-      - name: Real browser layouts, controls and ten-minute rendered sample
+      - name: Real browser layouts, controls, party journey and rendered sample
         run: npm run verify:browser-build
         env:
-          SKYBREAK_QA_SECONDS: 600
+          SKYBREAK_QA_SECONDS: ${{ github.event_name == 'workflow_dispatch' && inputs.long_run && '600' || '65' }}
           SKYBREAK_QA_PRESET: low
           SKYBREAK_QA_LABEL: ci
           SKYBREAK_QA_OUTPUT: qa-artifacts/browser
