@@ -67,6 +67,7 @@ try {
       const panels = [...document.querySelectorAll('.hud-weapons,.hud-bottom-left,#radio,.audio-subtitle,.battle-coach,.threat-awareness,.battle-wing,#toast')].filter(visible);
       const hits = [];
       for (const panel of panels) for (const target of targets) { const a = panel.getBoundingClientRect(), b = target.getBoundingClientRect(); if (Math.min(a.right,b.right)-Math.max(a.left,b.left)>1 && Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1) hits.push({ panel: panel.id || panel.className, target: target.id || target.dataset.touch || target.className }); }
+      for (let i = 0; i < targets.length; i++) for (const other of targets.slice(i + 1)) { const target = targets[i], a = target.getBoundingClientRect(), b = other.getBoundingClientRect(); if (Math.min(a.right,b.right)-Math.max(a.left,b.left)>1 && Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1) hits.push({ target: target.id || target.dataset.touch || target.className, otherTarget: other.id || other.dataset.touch || other.className }); }
       return hits;
     });
     check(touchOverlaps.length === 0, 'Default HUD panels leave touch targets unobscured', { viewport: [width,height], overlaps: touchOverlaps });

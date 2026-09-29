@@ -55,11 +55,24 @@ export async function browserPartyJourney(browser, origin, out) {
     await guest.reload({ waitUntil: 'domcontentloaded' });
     await guest.waitForFunction(() => window.game?.state === 'menu', null, { timeout: 60000 });
     await guest.locator('[data-action="multiplayer"]').first().click({ noWaitAfter: true });
-    await guest.waitForFunction(id => window.game.multiplayer.active && window.game.multiplayer.localId === id && !window.game.multiplayer.network.pendingResume, identity);
-    check(await guest.evaluate(epoch => window.game.multiplayer.matchEpoch === epoch, epoch), 'Reload resumes the same aircraft identity and match, without a new party');
-    await guest.keyboard.press('Escape'); await guest.locator('[data-action="menu"]').click({ noWaitAfter: true });
-    await guest.waitForFunction(() => !window.game.multiplayer.active && window.game.state === 'menu');
-    check(true, 'Guest can leave through the pilot menu');
+    await guest.waitForFunction(({ id, epoch }) => {
+      const mp = window.game.multiplayer;
+      return mp.localId === id && mp.network.sessionReady && !mp.network.pendingResume &&
+        (mp.active && mp.matchEpoch === epoch || window.game.state === 'result' && mp.lastResult?.epoch === epoch);
+    }, { id: identity, epoch });
+    report.resumeOutcome = await guest.evaluate(() => window.game.multiplayer.active ? 'same in-flight match' : 'same match authoritative debrief');
+    check(true, 'Reload resumes the same identity and match or its completed debrief, without a new party');
+    if (report.resumeOutcome.includes('debrief')) {
+      await host.waitForFunction(epoch => window.game.multiplayer.lastResult?.epoch === epoch, epoch);
+      const result = page => page.evaluate(() => { const r = window.game.multiplayer.lastResult; return { epoch: r.epoch, winner: r.winner, scores: r.teamScores, pilots: r.scoreboard.map(p => ({ id: p.id, kills: p.kills, deaths: p.deaths, score: p.score })).sort((a,b) => a.id.localeCompare(b.id)) }; });
+      check(JSON.stringify(await result(host)) === JSON.stringify(await result(guest)), 'Both browsers agree on the completed result after reload');
+    }
+    // A live co-op can end while the browser is reloading or the pilot menu is open.
+    // The correct recovery is then its debrief, never resurrecting a completed match.
+    if (await guest.evaluate(() => window.game.multiplayer.active)) await guest.keyboard.press('Escape');
+    await guest.locator('#mp-post-leave-btn:visible,[data-action="menu"]:visible').first().click({ noWaitAfter: true });
+    await guest.waitForFunction(() => !window.game.multiplayer.active && !window.game.multiplayer.roomCode && window.game.state === 'menu');
+    check(true, 'Guest can leave through the actual pilot menu or debrief');
     report.status = report.errors.length ? 'failed' : 'passed-automated';
   } catch (error) {
     report.errors.push(error.message); report.status = 'failed';
