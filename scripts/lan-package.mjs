@@ -5,10 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { PROTOCOL_VERSION, RELEASE_VERSION } from '../src/shared/Protocol.js';
+import { verifyBuild } from './build-manifest.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = resolve(process.env.SKYBREAK_LAN_OUTPUT || join(root, 'qa-artifacts/skybreak-lan-release'));
 if (!await stat(join(root, 'dist/index.html')).catch(() => null)) throw Error('Run npm run build first. The LAN package uses the already-tested production build.');
+// Validate before modifying an existing package: stale game/new server mixes are invalid.
+const testedBuild = await verifyBuild({ root });
 const previous = await readdir(output).catch(() => []);
 if (previous.length) {
   const priorManifest = JSON.parse(await readFile(join(output, 'package-manifest.json'), 'utf8').catch(() => '{}'));
@@ -40,8 +43,8 @@ await writeFile(join(output, 'START_SKYBREAK_LAN.sh'), '#!/bin/sh\ncd "$(dirname
 await cp(join(root, 'LAN_PLAY_GUIDE.md'), join(output, 'README.md'));
 await cp(join(root, 'PLAYING_GUIDE_HINGLISH.md'), join(output, 'PLAYING_GUIDE_HINGLISH.md'));
 await cp(join(root, 'CONTROLS_GUIDE.md'), join(output, 'CONTROLS_GUIDE.md'));
-const sourceManifest = await readFile(join(root, 'evidence/upgrade40/source-manifest.json')).catch(() => null);
-if (sourceManifest) await writeFile(join(output, 'source-manifest.json'), sourceManifest);
+const sourceManifest = await readFile(join(root, 'dist/build-manifest.json'));
+await writeFile(join(output, 'source-manifest.json'), sourceManifest);
 const packages = new Set(['three']);
 for (const file of Object.keys(bundle.metafile.inputs)) {
   const match = file.replaceAll('\\', '/').match(/node_modules\/((?:@[^/]+\/)?[^/]+)/);
@@ -65,7 +68,7 @@ async function inventory(folder) {
 await inventory(output);
 let revision = 'unavailable';
 try { revision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(); } catch {}
-const manifest = { name: 'Skybreak LAN', version: RELEASE_VERSION, protocol: PROTOCOL_VERSION, builtAt: new Date().toISOString(), sourceRevision: revision, sourceManifestSha256: sourceManifest ? createHash('sha256').update(sourceManifest).digest('hex') : null, revisionNote: 'Source revision identifies local HEAD; source-manifest and package file hashes identify the actual packaged working build.', minimumNodeMajor: 22, assetsOffline: true, internetRequiredAfterSetup: false, operatingSystem: 'Windows/macOS/Linux with Node.js', files };
+const manifest = { name: 'Skybreak LAN', version: RELEASE_VERSION, protocol: PROTOCOL_VERSION, builtAt: new Date().toISOString(), sourceRevision: revision, sourceDigest: testedBuild.sourceDigest, assetsDigest: testedBuild.assetsDigest, sourceManifestSha256: createHash('sha256').update(sourceManifest).digest('hex'), revisionNote: 'Source revision identifies local HEAD; source-manifest identifies the actual packaged working build. Source and asset hashes were checked before bundling the matching server.', minimumNodeMajor: 22, assetsOffline: true, internetRequiredAfterSetup: false, operatingSystem: 'Windows/macOS/Linux with Node.js', files };
 await writeFile(join(output, 'package-manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 
 // Uncompressed ZIP avoids a platform-specific zip executable or post-setup dependency download.

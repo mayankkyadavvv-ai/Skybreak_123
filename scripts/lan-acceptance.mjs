@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { once } from 'node:events';
 import WebSocket from 'ws';
 import { PROTOCOL_VERSION } from '../src/shared/Protocol.js';
+import { inventory, inventoryDigest, sha256 } from './build-manifest.mjs';
 
 const folder = resolve(process.env.SKYBREAK_LAN_PACKAGE || 'qa-artifacts/skybreak-lan-release'), out = resolve(process.env.SKYBREAK_LAN_EVIDENCE || 'evidence/upgrade40/qa-lan.json');
 const report = { feature: 'F39', started: new Date().toISOString(), package: folder, status: 'running', kind: 'scripted local HTTP/WebSocket package acceptance', physicalDeviceCount: 1, twoDeviceLanVerified: false, internetDisconnected: false, assertions: [], errors: [], unverified: ['two physical devices on one trusted LAN with internet disconnected', 'Windows double-click launcher and Private-network firewall prompt', 'actual gameplay rendering, input feel and human match completion'] };
@@ -33,7 +34,13 @@ try {
   const manifest = JSON.parse(await readFile(join(folder, 'package-manifest.json'), 'utf8'));
   assert(manifest.protocol === PROTOCOL_VERSION, 'Packaged protocol matches the tested client/server protocol');
   for (const file of manifest.files) { const data = await readFile(join(folder, file.path)); assert(createHash('sha256').update(data).digest('hex') === file.sha256, `Package hash: ${file.path}`); }
-  report.manifest = { protocol: manifest.protocol, builtAt: manifest.builtAt, sourceRevision: manifest.sourceRevision, files: manifest.files.length };
+  const provenance = await readFile(join(folder, 'source-manifest.json'));
+  const build = JSON.parse(provenance);
+  assert(sha256(provenance) === manifest.sourceManifestSha256, 'Package identifies the current build manifest');
+  assert(provenance.equals(await readFile(join(folder, 'dist/build-manifest.json'))), 'Game and launcher refer to the same source manifest');
+  assert(inventoryDigest(build.source) === manifest.sourceDigest, 'Source inventory matches the packaged build identity');
+  assert(inventoryDigest(await inventory(join(folder, 'dist'), ['.'], new Set(['build-manifest.json']))) === manifest.assetsDigest, 'Every bundled game asset belongs to the identified build');
+  report.manifest = { protocol: manifest.protocol, builtAt: manifest.builtAt, sourceRevision: manifest.sourceRevision, sourceDigest: manifest.sourceDigest, assetsDigest: manifest.assetsDigest, files: manifest.files.length };
   const reservation = createServer(); await new Promise(resolveListen => reservation.listen(0, '127.0.0.1', resolveListen)); const port = reservation.address().port; await new Promise(resolveClose => reservation.close(resolveClose));
   const origin = `http://127.0.0.1:${port}`; report.origin = origin;
   child = spawn(process.execPath, ['skybreak-lan.cjs'], { cwd: folder, env: { ...process.env, SKYBREAK_LAN_PORT: String(port) }, stdio: ['ignore', 'pipe', 'pipe'] });

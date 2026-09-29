@@ -1,0 +1,89 @@
+name: Skybreak acceptance
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skybreak-acceptance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulation-and-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm ci --no-audit --no-fund
+      - run: mkdir -p qa-artifacts/ci
+      - name: Unit and integration checks
+        run: npm test 2>&1 | tee qa-artifacts/ci/tests.log
+      - name: Build and static validation
+        run: npm run build 2>&1 | tee qa-artifacts/ci/build.log
+      - run: npm run audit:secrets
+      - name: Package current game and server
+        run: npm run package:lan
+      - name: Exercise extracted-package HTTP and two local sockets
+        run: npm run verify:lan
+        env:
+          SKYBREAK_LAN_EVIDENCE: qa-artifacts/ci/lan.json
+      - name: Eight-client capacity and reconnect soak
+        run: npm run verify:network
+        env:
+          SKYBREAK_SOAK_SECONDS: 600
+          SKYBREAK_SOAK_OUTPUT: qa-artifacts/ci/network.json
+      - name: Build continuous match-worker image
+        run: docker build -f Dockerfile.match -t skybreak-match:acceptance .
+      - name: Retain reports and runnable LAN package
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: skybreak-package-${{ github.sha }}
+          path: |
+            qa-artifacts/ci
+            qa-artifacts/skybreak-lan-release.zip
+            dist/build-manifest.json
+          retention-days: 14
+
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm ci --no-audit --no-fund
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: npm run build
+      - name: Real browser layouts, controls and ten-minute rendered sample
+        run: npm run verify:browser-build
+        env:
+          SKYBREAK_QA_SECONDS: 600
+          SKYBREAK_QA_PRESET: low
+          SKYBREAK_QA_LABEL: ci
+          SKYBREAK_QA_OUTPUT: qa-artifacts/browser
+      - name: Retain screenshots and browser report, including failures
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: skybreak-browser-${{ github.sha }}
+          path: |
+            qa-artifacts/browser
+            dist/build-manifest.json
+          retention-days: 14

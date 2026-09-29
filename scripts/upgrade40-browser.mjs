@@ -37,6 +37,7 @@ try {
     page.on('requestfailed', request => report.errors.push(`Request failed: ${request.url()} ${request.failure()?.errorText}`));
     const capture = async name => { const file = `${name}-${width}x${height}.png`; await page.screenshot({ path: join(out, file) }); const actual = await page.evaluate(() => ({ state: window.game?.state, timeOfDay: window.game?.atmosphere?.timeOfDay, weather: window.game?.atmosphere?.weather, camera: window.game?.cam?.mode })); report.captures.push({ viewport: [width, height], name, path: file, actual }); };
     const start = Date.now(); const response = await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 45000 }); check(response?.ok(), 'Game page serves successfully', { width, status: response?.status() });
+    if (!report.build) { const buildResponse = await page.request.get(origin.replace(/\/$/, '') + '/build-manifest.json'); if (buildResponse.ok()) { const build = await buildResponse.json(); report.build = { sourceRevision: build.sourceRevision, sourceDigest: build.sourceDigest, assetsDigest: build.assetsDigest }; } }
     await page.waitForFunction(() => window.game?.state === 'menu', null, { timeout: 45000 });
     report.renderer = await page.evaluate(() => { const gl = window.game.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); return { userAgent: navigator.userAgent, renderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), vendor: ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR), webglVersion: gl.getParameter(gl.VERSION), devicePixelRatio, contextLost: gl.isContextLost() }; });
     report.renderer.software = /swiftshader|llvmpipe|softpipe|software|lavapipe/i.test(report.renderer.renderer || '');
@@ -65,6 +66,18 @@ try {
     await page.keyboard.down('w'); await page.waitForTimeout(350); await page.keyboard.up('w');
     const throttleHold = await page.evaluate(() => window.game.player.throttle); await page.waitForTimeout(300); const throttleRelease = await page.evaluate(() => window.game.player.throttle);
     check(throttleHold > throttleStart && Math.abs(throttleHold - throttleRelease) < 0.015, 'Throttle increases and holds on release', { throttleStart, throttleHold, throttleRelease });
+    // Use the actual input listener, lock accumulation and weapon system.
+    await page.evaluate(() => window.game.prepareTrainingLesson('targeting'));
+    await page.waitForFunction(() => window.game.lock >= 1.4, null, { timeout: 30000 });
+    const missileStart = await page.evaluate(() => ({ ammo: window.game.missilesLeft, shots: window.game.stats.missiles }));
+    await page.keyboard.down('e'); await page.keyboard.down('e'); await page.keyboard.up('e');
+    const missileEnd = await page.evaluate(() => ({ ammo: window.game.missilesLeft, shots: window.game.stats.missiles }));
+    check(missileEnd.ammo === missileStart.ammo - 1 && missileEnd.shots === missileStart.shots + 1, 'E fires exactly one locked missile, including repeat keydown', { missileStart, missileEnd });
+    await page.keyboard.press('Escape');
+    const pausedAmmo = await page.evaluate(() => window.game.missilesLeft);
+    await page.keyboard.press('e');
+    check(await page.evaluate(() => window.game.missilesLeft) === pausedAmmo, 'E cannot fire through a pause menu');
+    await page.evaluate(() => { window.game.menu(); window.game.start(3); });
     for (const mode of ['chase', 'cockpit', 'cinematic']) { await page.evaluate(mode => { window.game.cam.mode = mode; }, mode); await page.waitForTimeout(300); await capture(mode); }
     if (width === viewports[0][0] && height === viewports[0][1]) {
       for (const [time, weather] of [['midday', 'clear'], ['sunset', 'clear'], ['midday', 'cloudy']]) {

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 4173",
-    "build": "node scripts/build-public.mjs && vite build && node scripts/validate-site.mjs",
+    "build": "node scripts/build-public.mjs && vite build && node scripts/validate-site.mjs && node scripts/record-build.mjs",
     "preview": "node scripts/preview.mjs",
     "server": "node server/index.js",
     "test": "node --test tests/*.test.js",
@@ -17,6 +17,7 @@
     "package:lan": "node scripts/lan-package.mjs",
     "verify:lan": "node scripts/lan-acceptance.mjs",
     "verify:upgrade40": "node scripts/upgrade40-browser.mjs",
+    "verify:browser-build": "node scripts/verify-browser-build.mjs",
     "verify:network": "node scripts/upgrade40-network-soak.mjs"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "linkedom": "0.18.12",
+    "playwright": "1.62.1",
     "vercel": "^59.23.2",
     "vite": "6.1.0"
   }
