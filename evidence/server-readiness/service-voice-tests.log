@@ -1,0 +1,21 @@
+✔ production worker refuses missing, wildcard, insecure and path-bearing origin configuration before listening (4.621691ms)
+✔ worker normalizes exact origins and uses the measured one-room/eight-client production defaults (1.399856ms)
+✔ partial, weak or malformed TURN configuration fails without exposing the secret (1.611369ms)
+✔ endpoint smoke rejects credential-bearing URLs and insecure non-local endpoints (0.84878ms)
+✔ production health is redacted and a different browser origin is rejected (186.207369ms)
+✔ real endpoint smoke verifies readiness, input, resume and cleanup without a relay (3174.6723ms)
+✔ TURN smoke verifies expiring party credentials but never claims relay media or saves credentials (3137.760139ms)
+✔ failed required-relay gate cleans its private room; wrong revision opens no socket (16.916229ms)
+✔ endpoint smoke leaves an existing connected pilot untouched and opens no QA sockets (7.389429ms)
+✔ voice renews before relay expiry, updates existing peers and clears timers on leave (3.488822ms)
+✔ missing, expired and unsent relay renewals stop the microphone and peer connections (0.979319ms)
+✔ new authorized roster removes stale voice peers; server membership reset closes the microphone (0.516081ms)
+✔ lobby team and mode changes explicitly revoke existing voice membership (2.20339ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7010.448538

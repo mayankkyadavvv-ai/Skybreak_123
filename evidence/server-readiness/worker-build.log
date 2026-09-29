@@ -13,15 +13,15 @@ computing gzip size...
 dist/index.html                       3.22 kB │ gzip:   1.23 kB
 dist/assets/index-DBjPbuTu.css      100.48 kB │ gzip:  21.28 kB
 dist/assets/browser-CQfvP_Zi.js      25.82 kB │ gzip:  10.14 kB
-dist/assets/GLTFLoader-BVZoTrus.js   43.91 kB │ gzip:  12.93 kB
-dist/assets/Atlas-CnNjymSb.js       248.72 kB │ gzip:  93.34 kB
+dist/assets/GLTFLoader-D4BsUlrU.js   43.91 kB │ gzip:  12.93 kB
+dist/assets/Atlas-C0o7-jYx.js       248.72 kB │ gzip:  93.34 kB
 dist/assets/three-DU3I6XFl.js       568.03 kB │ gzip: 145.43 kB
-dist/assets/index-4WKTdnOk.js       593.95 kB │ gzip: 191.70 kB
+dist/assets/index-_LHD-Ppy.js       592.58 kB │ gzip: 191.36 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.84s
+✓ built in 7.47s
 Static validation passed: 7 pages, local targets/fragments, IDs, metadata and 1200×630 social image. Browser accessibility/layout still needs verification.
-Build recorded: 154 public inputs, 26 assets; source 19938fdfd099a10a0dbe5bde8aafe78f174857853a9fecfb491079e26887ff9d
+Build recorded: 154 public inputs, 26 assets; source e14a22154104fb997f15d17473464031d4828220132c9ab3f911c2ef0976f879

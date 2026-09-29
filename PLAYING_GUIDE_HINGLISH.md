@@ -84,7 +84,7 @@ Compatible **protocol 2 secure match server** configured hona zaroori hai. Stati
 3. Co-op mein 2–4 humans same authoritative mission play karte hain; available squad slots mein AI fill hota hai. Damage/objectives sabke liye server decide karta hai.
 4. Air Superiority mein marked zone ke altitude band mein raho. Opposing team present ho to contested; secured zone points deta hai. Spawn shield attack karne par hat jata hai. Online airframes stock/equal budget use karte hain.
 5. Y quick comms aur target/help pings use karo; teammate ping click karke acknowledge kar sakta hai.
-6. Voice optional: **VOICE → Enable microphone**, permission allow, P hold karke bolo. Mute/deafen/per-pilot volume available hain. Missing TURN par cross-network voice guaranteed nahi hai. Leaving party tracks/connections stop karta hai.
+6. Voice optional: **VOICE → Enable microphone**, permission allow, P hold karke bolo. Mute/deafen/per-pilot volume available hain. Missing TURN par cross-network voice guaranteed nahi hai. Leaving party tracks/connections stop karta hai. Relay credentials expiry se pehle automatically renew hote hain; renewal fail ho toh microphone band hota hai aur retry message aata hai. Lobby mein team ya mode badalne par voice off hoti hai—new squad ke liye Enable microphone dobara dabao.
 7. Disconnect par 45-second reservation hai; aircraft world mein live rehta hai aur damage le sakta hai. Resume same player state laata hai. Worker restart ya grace expiry par purani match recover nahi hoti.
 8. Debrief → Party & Vote ya host Rematch. Same party invite reuse hota hai.
 

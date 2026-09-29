@@ -75,7 +75,7 @@ export async function verifyMatchEndpoint({ endpoint, origin, expectedRevision =
       const relay = voice.iceServers?.find(s=>s.credential);
       check(!!relay && typeof relay.username === 'string' && typeof relay.credential === 'string' && relay.credential.length > 20 && voice.expiresAt > Date.now() && voice.expiresAt <= Date.now()+610000, 'Party member receives short-lived TURN credentials');
       // Credentials are used only in memory, never saved in the report.
-    } else check(!requireRelay, 'TURN is required but the worker has no relay configuration');
+    } else check(voice.relayAvailable === false && !requireRelay, requireRelay ? 'TURN is required but the worker has no relay configuration' : 'Worker explicitly reports relay unavailable; media remains unverified');
     host.send({type:'voice_leave'});
     host.send({type:'loaded'});guest.send({type:'loaded'});guest.send({type:'set_ready',ready:true});
     await host.receive('lobby_update',m=>m.players.length===2&&m.players.every(p=>p.loaded&&p.ready));host.send({type:'start_match'});

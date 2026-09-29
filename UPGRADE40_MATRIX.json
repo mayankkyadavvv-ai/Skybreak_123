@@ -1361,12 +1361,13 @@
         "evidence/upgrade40/candidate/tests.log",
         "evidence/pending-completion/ci-tests.log",
         "tests/service-deployment.test.js",
-        "evidence/server-readiness/README.md"
+        "evidence/server-readiness/README.md",
+        "tests/voice-lifecycle.test.js"
       ],
       "blockers": [
         "TURN resource/secret not provisioned; real microphone/output changes and relay-required cross-network voice are blocked"
       ],
-      "delta": "Team-authorized expiring target/location pings; opt-in WebRTC PTT/mute/deafen/per-user gain and short-lived TURN credentials",
+      "delta": "Team-authorized expiring target/location pings; opt-in WebRTC PTT/mute/deafen/per-user gain and short-lived TURN credentials; expiring-credential renewal, fail-closed expiry and explicit voice revocation on team/mode changes",
       "acceptance_scope": "Automated checks cover logic/integration only. TURN resource/secret not provisioned; real microphone/output changes and relay-required cross-network voice are blocked",
       "version": "2.0.0-rc.1 / protocol 2",
       "commit": "Review branch feature/skybreak-40-upgrade; server preparation revision recorded in evidence/server-readiness/README.md; deployment/human gates still pending"

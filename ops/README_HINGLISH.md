@@ -66,7 +66,7 @@ GitHub CI same script ko actual production Docker container par loopback se chal
 
 ## 5. Voice relay setup aur real test
 
-Current server coturn REST shared-secret mode ke liye HMAC-SHA1 credentials issue karta hai. Party membership ke baad credential lifetime 10 minutes hai. TURN provider/server par matching shared secret, real relay hostname, public relay ports aur valid TLS configuration operator ko provide karni hogi. Permanent secret kabhi browser ko nahi bheja jaata.
+Current server coturn REST shared-secret mode ke liye HMAC-SHA1 credentials issue karta hai. Party membership ke baad credential lifetime 10 minutes hai. Client expiry se ek minute pehle renew karta hai aur existing peer configuration/ICE update karta hai; renewal na aaye toh mic/peers close hote hain. Team/mode switch par existing voice membership revoke hoti hai aur pilot ko dobara opt in karna hota hai. TURN provider/server par matching shared secret, real relay hostname, public relay ports aur valid TLS configuration operator ko provide karni hogi. Permanent secret kabhi browser ko nahi bheja jaata.
 
 Worker secret storage mein configure karo:
 

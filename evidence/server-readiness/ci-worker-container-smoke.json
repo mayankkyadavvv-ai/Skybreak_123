@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-09-29T07:22:52.580Z",
+  "status": "passed-automated",
+  "checks": [
+    "Readiness returns HTTP 200",
+    "Worker version and protocol match this client",
+    "Deployed worker reports the expected source revision",
+    "Worker is idle before the private QA session",
+    "Socket welcome confirms protocol",
+    "Socket welcome confirms protocol",
+    "Create/join returns the same two pilots",
+    "TURN is required but the worker has no relay configuration",
+    "Ready/start shares one authoritative epoch",
+    "Authoritative snapshots acknowledge a real flight input",
+    "Socket welcome confirms protocol",
+    "Disconnect/resume preserves identity and epoch and rotates the private token",
+    "Resume does not duplicate a pilot",
+    "QA room, clients and reservations are cleaned up"
+  ],
+  "errors": [],
+  "voiceRelayMediaVerified": false,
+  "humanPlayers": 0,
+  "endpoint": "ws://127.0.0.1:8082/ws",
+  "frontendOrigin": "https://skybreak-iota.vercel.app",
+  "secureTransport": false,
+  "deployment": {
+    "revision": "d0615e5fea5b39c2777e3dc84ce245145eb0de47",
+    "production": true,
+    "restrictedOrigins": true,
+    "relayConfigured": false
+  },
+  "reconnectMs": 10000,
+  "relayConfigured": false,
+  "finishedAt": "2026-09-29T07:23:05.690Z"
+}

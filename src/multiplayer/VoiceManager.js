@@ -1,11 +1,12 @@
 /** Opt-in, room-authorized WebRTC voice. No microphones open before enable(). */
 export class VoiceManager {
-  constructor(network, { mediaDevices = globalThis.navigator?.mediaDevices, PeerConnection = globalThis.RTCPeerConnection, createAudio } = {}) {
+  constructor(network, { mediaDevices = globalThis.navigator?.mediaDevices, PeerConnection = globalThis.RTCPeerConnection, createAudio, now = Date.now, setTimer = (fn, ms) => globalThis.setTimeout(fn, ms), clearTimer = id => globalThis.clearTimeout(id) } = {}) {
     this.network = network; this.mediaDevices = mediaDevices; this.PeerConnection = PeerConnection;
     this.createAudio = createAudio || (() => { const element = document.createElement('audio'); element.autoplay = true; element.setAttribute('playsinline', ''); element.hidden = true; document.body.appendChild(element); return element; });
     this.stream = null; this.enabled = false; this.muted = false; this.deafened = false; this.talking = false;
     this.relayAvailable = false; this.iceServers = []; this.peers = new Map(); this.volumes = new Map();
     this.status = 'OFF'; this.error = ''; this.generation = 0; this.allowedPeers = new Set();
+    this.now = now; this.setTimer = setTimer; this.clearTimer = clearTimer; this.relayRefreshTimer = null; this.relayExpiryTimer = null;
     this.unsubscribers = [
       network.on('voice_config', msg => this.configure(msg)),
       network.on('voice_signal', msg => this.signal(msg)),
@@ -38,10 +39,25 @@ export class VoiceManager {
   async devices() { try { return (await this.mediaDevices?.enumerateDevices?.() || []).filter(d => d.kind === 'audioinput'); } catch { return []; } }
   configure(msg) {
     if (!this.enabled) return;
+    this.clearRelayTimers();
     this.relayAvailable = msg.relayAvailable === true; this.iceServers = Array.isArray(msg.iceServers) ? msg.iceServers : [];
+    if (this.relayAvailable) {
+      const ttl = Number(msg.expiresAt) - this.now();
+      if (!Number.isFinite(ttl) || ttl <= 60_000 || ttl > 660_000) { this.disable('Voice relay credentials have invalid expiry. Check your device clock, then enable voice again.'); return; }
+      this.relayRefreshTimer = this.setTimer(() => {
+        this.relayRefreshTimer = null;
+        if (this.enabled && !this.network.send('voice_join')) this.disable('Voice credential renewal failed. Rejoin voice after reconnecting.');
+      }, ttl - 60_000);
+      this.relayExpiryTimer = this.setTimer(() => this.disable('Voice relay credentials expired before renewal. Enable voice again to retry.'), ttl);
+      this.relayRefreshTimer?.unref?.(); this.relayExpiryTimer?.unref?.();
+    }
     this.status = this.relayAvailable ? 'READY · HOLD TO TALK' : 'DIRECT VOICE · RELAY UNAVAILABLE';
     this.error = this.relayAvailable ? '' : 'TURN relay is not provisioned. Cross-network voice is not verified and may fail; team pings remain available.';
     this.allowedPeers = new Set((msg.peers || []).map(p => typeof p === 'string' ? p : p.id));
+    for (const [id, peer] of [...this.peers]) {
+      if (!this.allowedPeers.has(id)) this.removePeer(id);
+      else { try { peer.pc.setConfiguration({ ...peer.pc.getConfiguration(), iceServers: this.iceServers }); peer.pc.restartIce?.(); } catch { this.removePeer(id); this.allowedPeers.add(id); } }
+    }
     for (const id of this.allowedPeers) this.connectPeer(id);
     this.notify();
   }
@@ -93,9 +109,11 @@ export class VoiceManager {
   setDeafened(value) { this.deafened = !!value; for (const peer of this.peers.values()) if (peer.audio) peer.audio.muted = this.deafened; this.notify(); }
   setVolume(id, value) { const volume = Math.max(0, Math.min(1, Number(value) || 0)); this.volumes.set(id, volume); const audio = this.peers.get(id)?.audio; if (audio) audio.volume = volume; }
   async resumeAudio() { for (const peer of this.peers.values()) { try { await peer.audio?.play?.(); } catch {} } }
+  clearRelayTimers() { if (this.relayRefreshTimer !== null) this.clearTimer(this.relayRefreshTimer); if (this.relayExpiryTimer !== null) this.clearTimer(this.relayExpiryTimer); this.relayRefreshTimer = this.relayExpiryTimer = null; }
   removePeer(id) { this.allowedPeers.delete(id); const peer = this.peers.get(id); if (!peer) return; peer.pc.ontrack = peer.pc.onicecandidate = peer.pc.onnegotiationneeded = peer.pc.onconnectionstatechange = null; peer.pc.close(); if (peer.audio) { peer.audio.pause?.(); peer.audio.srcObject = null; peer.audio.remove?.(); } this.peers.delete(id); this.notify(); }
   disable(reason = '') {
     ++this.generation; if (this.enabled) this.network.send('voice_leave');
+    this.clearRelayTimers(); this.relayAvailable = false; this.iceServers = [];
     this.enabled = false; this.talking = false;
     for (const track of this.stream?.getTracks() || []) { track.onended = null; track.stop(); } this.stream = null;
     for (const id of [...this.peers.keys()]) this.removePeer(id);

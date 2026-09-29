@@ -49,3 +49,5 @@ No persistent local dev or match server is required: packaged and CI verificatio
 ## Public-worker preparation follow-up
 
 Production config validation, redacted revision/config health, Compose/Caddy gateway and `npm run verify:server` now cover the concrete host-preparation gap. **226/226 local tests and 58 fresh packaged-LAN checks pass**; frontend asset hashes are unchanged from the previous browser-verified runtime. See `evidence/server-readiness/README.md` for current source identity and CI result, and `ops/README_HINGLISH.md` for exact deployment commands. Public WSS/DNS/TURN access and physical human/device gates remain blocked; no production promotion or paid provisioning.
+
+Voice lifecycle follow-up: **230 tests pass**, build and 58 current LAN checks pass. Credentials renew before expiry, failure closes mic/peers, and team/mode changes revoke the old voice membership. Guide updated. Latest source/build identity and separate CI results are in `evidence/server-readiness/README.md`; real relay/human/device acceptance is still required.

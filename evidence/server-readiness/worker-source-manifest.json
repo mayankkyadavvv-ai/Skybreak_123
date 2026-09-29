@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "builtAt": "2026-09-29T07:30:05.558Z",
-  "sourceRevision": "0a2565c5e308fa7fd13be4203a21a9ac81767ca6",
+  "builtAt": "2026-09-29T07:16:23.958Z",
+  "sourceRevision": "a54e4602cc36cf23755927d720c9fd5913161ba2",
   "revisionNote": "HEAD at build time; sourceDigest identifies the actual public working inputs, including uncommitted changes. Asset hashes apply only to this build.",
-  "sourceDigest": "19938fdfd099a10a0dbe5bde8aafe78f174857853a9fecfb491079e26887ff9d",
-  "assetsDigest": "c1a5eb4f00b80b546892db6b8b784e60606204d41bd30a2c6d134f1d384eda22",
+  "sourceDigest": "e14a22154104fb997f15d17473464031d4828220132c9ab3f911c2ef0976f879",
+  "assetsDigest": "2e1661bdd8dce9fe563c02107c1b7b260abbe5691347cc6eae0baeae52301650",
   "source": [
     {
       "path": "CONTROLS_GUIDE.md",
@@ -23,8 +23,8 @@
     },
     {
       "path": "PLAYING_GUIDE_HINGLISH.md",
-      "bytes": 11260,
-      "sha256": "cb7b7203cc0b7c92f10c34a67e3144cdc7d0d8de9125e546c69cef71bb1cf738"
+      "bytes": 11015,
+      "sha256": "d7322f4f4d7c9c5307161ba5b647d0be7b3d51ad559e6d49af821b6b2b3595aa"
     },
     {
       "path": "START_SKYBREAK_LAN.cmd",
@@ -253,8 +253,8 @@
     },
     {
       "path": "scripts/verify-match-endpoint.mjs",
-      "bytes": 10860,
-      "sha256": "85548c5ddea5249dca6c298ea05be18a83916bcb39eadb4bd55654da2bdabe4d"
+      "bytes": 10737,
+      "sha256": "f8f4652d0601f9cdac08bb2f348165e8e3527bd9a24afe21d3acd5e913a86cba"
     },
     {
       "path": "server/GameServer.js",
@@ -273,8 +273,8 @@
     },
     {
       "path": "server/Room.js",
-      "bytes": 11844,
-      "sha256": "a39adb120ebc8fa68b8a1ecf768dec668da466b4b75b851f0aa5e37603013552"
+      "bytes": 11367,
+      "sha256": "5c3796447d73576879b686d23f77c2bbe7c874b26979144c37dde85c992cb498"
     },
     {
       "path": "server/RoomManager.js",
@@ -593,8 +593,8 @@
     },
     {
       "path": "src/multiplayer/VoiceManager.js",
-      "bytes": 10954,
-      "sha256": "a5c49188f896dfe5b526db31b3624ac943c2931cd9a106e5bbc471d10fd954d3"
+      "bytes": 9280,
+      "sha256": "cdfc8c07d1aaf0894765e672f4f9021488681f99afa40641ec749cf6e3772ca5"
     },
     {
       "path": "src/multiplayer/WeaponNetworkManager.js",
@@ -794,14 +794,14 @@
       "sha256": "96eb7fb270dcbe46d9953cfca4b03487dddc749ffb15406a4c52faea1604dd10"
     },
     {
-      "path": "assets/Atlas-CnNjymSb.js",
+      "path": "assets/Atlas-C0o7-jYx.js",
       "bytes": 248727,
-      "sha256": "86c708c4a3fc83171b0e2b97f92616c9f1e6ec5ef3af5a1def712230d8a89dc4"
+      "sha256": "90aae6b4a6f8074edc453fcc8017dd8fe694343f39d633b41e4cf02cef8ffdf1"
     },
     {
-      "path": "assets/GLTFLoader-BVZoTrus.js",
+      "path": "assets/GLTFLoader-D4BsUlrU.js",
       "bytes": 43909,
-      "sha256": "70c40f25b4d323736a25d12de44943a7550395adedb0b7aba16fab08a0e2ee70"
+      "sha256": "0a9c10c4797d9263b9fbd8570bf1af007f125eeccb623c07ab99de9ef4c2edd6"
     },
     {
       "path": "assets/browser-CQfvP_Zi.js",
@@ -809,14 +809,14 @@
       "sha256": "2a00974057ce42653e208019a1a6a6d45e759ccc06ec93e3d6855ad0887d74ad"
     },
     {
-      "path": "assets/index-4WKTdnOk.js",
-      "bytes": 594960,
-      "sha256": "439c766b83486ad6c12623671762527419b097d67c371d1284ef57a70403471a"
-    },
-    {
       "path": "assets/index-DBjPbuTu.css",
       "bytes": 100475,
       "sha256": "93f06054bd1e9bf5fa339289bd8726abdb74891e6decc5b632ec75135fe483b2"
+    },
+    {
+      "path": "assets/index-_LHD-Ppy.js",
+      "bytes": 593588,
+      "sha256": "ba69cc585e929b26d6b009a94f1d9c49e568d652e937951d875cdf220cdb1ef8"
     },
     {
       "path": "assets/three-DU3I6XFl.js",
@@ -871,7 +871,7 @@
     {
       "path": "index.html",
       "bytes": 3232,
-      "sha256": "a646da1bd41573adb51946f527e9ee70c31b769726c9fcc955c7158b94cfbd1b"
+      "sha256": "c1af0b490a60e4c138035565fd35614e367c024895b3e89039bdfe54f1dd0713"
     },
     {
       "path": "privacy.html",
