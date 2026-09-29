@@ -18,6 +18,8 @@ import { FlightSchool } from '../src/game/FlightSchool.js';
 import { openSkiesFlightSettings } from '../src/game/FlightAssists.js';
 import { battleGuide } from '../src/ui/OpenSkiesUI.js';
 import { LocalCoop } from '../src/game/LocalCoop.js';
+import { multiplayerMission } from '../src/game/Missions.js';
+import { onlineObjectiveSummary } from '../src/ui/HUDState.js';
 import { MultiplayerUI } from '../src/ui/MultiplayerUI.js';
 
 const control = (...keys) => ({ keys: new Set(keys), heldActions: new Set(), mouse: { x: 0, y: 0 }, axes: {}, look: { x: 0, y: 0 }, levelTimer: 0,
@@ -280,4 +282,21 @@ test('Open Skies cooperative prediction and local second seat receive the same g
   mp.prediction = { state: {}, predict(command) { sent = command; return true; }, applyToJet() {} };
   mp.predictLocalFlight(1 / 60);
   assert.equal(sent.pitch, solo.pitchSensitivity); assert.equal(sent.roll, solo.rollSensitivity); assert.equal(sent.assisted, true);
+});
+
+
+test('online mission HUD has complete room metadata and uses the authoritative objective', t => {
+  const g = harness(t), { mp } = online(g, { mode: 'open_skies_coop', map: 'aegis' });
+  assert.equal(g.mission.name, 'Open Skies Co-op');
+  assert.equal(g.mission.code, 'ONLINE CO-OP');
+  assert.equal(g.mission.region, 'AEGIS STRAIT');
+  assert.ok(g.mission.objective.length > 10);
+  mp.missionState = { phaseIndex: 2, totalPhases: 3, enemiesRemaining: 4 };
+  assert.equal(onlineObjectiveSummary(mp), 'PHASE 2/3 · 4 HOSTILES');
+  for (const mode of ['1v1','2v2','3v3','4v4','free_flight','air_superiority','open_skies_coop',undefined]) {
+    const info = multiplayerMission({ mode, map: 'frontier' });
+    for (const key of ['name','code','region','objective']) assert.equal(typeof info[key], 'string');
+    assert.equal(info.freeFlight, mode === 'free_flight');
+    assert.doesNotMatch(onlineObjectiveSummary({ matchOptions: { mode } }), /undefined|0 \/ 0/);
+  }
 });

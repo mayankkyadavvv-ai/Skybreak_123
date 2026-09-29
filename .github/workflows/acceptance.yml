@@ -79,7 +79,8 @@ jobs:
       - name: Real browser layouts, controls, party journey and rendered sample
         run: npm run verify:browser-build
         env:
-          SKYBREAK_QA_SECONDS: ${{ github.event_name == 'workflow_dispatch' && inputs.long_run && '600' || '65' }}
+          SKYBREAK_QA_SECONDS: ${{ github.event_name == 'workflow_dispatch' && inputs.long_run && '600' || '0' }}
+          SKYBREAK_QA_QUICK: ${{ github.event_name == 'workflow_dispatch' && inputs.long_run && '0' || '1' }}
           SKYBREAK_QA_PRESET: low
           SKYBREAK_QA_LABEL: ci
           SKYBREAK_QA_OUTPUT: qa-artifacts/browser

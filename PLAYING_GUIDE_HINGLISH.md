@@ -41,7 +41,7 @@ Is update mein purane settings aur saved profiles ek baar **E missile / D right-
 
 ## Controls ko apne hisaab se set karo
 
-Settings → Controls ka live preview pitch/roll response dikhata hai. Controller ko neutral rakh kar **Measure controller drift** dabao; movement ke samples reject hote hain. Apne keyboard/mouse/controller settings ka named profile Save/Load karo. Touch layout mein controls drag, size aur left/right handed layout badal sakte ho; Cancel draft discard karta hai, Reset safe placement deta hai.
+Settings → Controls ka live preview pitch/roll response dikhata hai. Controller ko neutral rakh kar **Measure controller drift** dabao; movement ke samples reject hote hain. Apne keyboard/mouse/controller settings ka named profile Save/Load karo. Touch layout mein controls drag, size aur left/right handed layout badal sakte ho. **Save** actual flight buttons ko move karta hai; overlap wale buttons paas ki khaali jagah mein fit hote hain. Cancel purana layout rakhta hai. **Reset → Save** responsive default placement wapas laata hai. Screen rotate karne par saved controls safe edges ke andar fit hote hain.
 
 Mouse ke liye Virtual stick ya optional **Point to fly** choose karo. Pointer ki taraf aircraft normal turn limits ke andar mudta hai. Free look steering se alag hai. Camera sensitivity aur reduced motion alag settings hain. Auto-cruise optional hai; landing aur direct throttle input ko priority milti hai. Recovery aur auto-cruise online bhi normal server flight limits follow karte hain.
 
@@ -72,6 +72,8 @@ Four operation templates available hain: **escort** mein transport bachao; **int
 - **Landing:** marked runway par gear down, gentle descent aur roughly 35–115 m/s approach. Centreline, sink rate aur heading score decide karte hain. Ground par spawn karna valid landing nahi hai.
 
 Activities panel results dikhata hai; same activity dobara start karna rematch hai. Activity cancel ke baad ordinary Free Flight continue hota hai. Activity results combat XP nahi dete.
+
+**Offline practice shortcut:** Play with Friends → **Ace Duel vs AI** ya **Solo Free Flight** bina online server ke chalta hai. Ace Duel mein ek hostile ace milta hai; Free Flight mein enemies nahi hain. Restart isi selected mode ko dobara shuru karta hai.
 
 ## Doston ke saath online
 

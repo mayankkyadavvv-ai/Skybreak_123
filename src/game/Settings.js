@@ -17,8 +17,9 @@ export function normalizeTouchLayout(raw = {}) {
   const layout = {handedness:raw?.handedness==='left'?'left':'right',scale:Math.max(.8,Math.min(1.4,Number(raw?.scale)||1)),positions:{}};
   for(const [id,fallback] of Object.entries(TOUCH_POSITIONS)) {
     const p=raw?.positions?.[id];
-    layout.positions[id]={x:Number.isFinite(p?.x)?Math.max(.06,Math.min(.94,p.x)):fallback.x,y:Number.isFinite(p?.y)?Math.max(.08,Math.min(.92,p.y)):fallback.y};
+    layout.positions[id]={x:Math.max(.06,Math.min(.94,Number.isFinite(p?.x)?p.x:fallback.x)),y:Math.max(.08,Math.min(.92,Number.isFinite(p?.y)?p.y:fallback.y))};
   }
+  layout.customized=raw?.customized===true || Object.entries(layout.positions).some(([id,p])=>Math.abs(p.x-Math.max(.06,Math.min(.94,TOUCH_POSITIONS[id].x)))>.001 || Math.abs(p.y-Math.max(.08,Math.min(.92,TOUCH_POSITIONS[id].y)))>.001);
   return layout;
 }
 export const CONTROL_PROFILE_FIELDS=Object.freeze(['controlsVersion','device','flightMode','openSkiesEasyControls','sensitivity','pitchSensitivity','rollSensitivity','keyboardInvert','mouseInvert','gamepadInvert','mouseDeadzone','mouseCurve','mouseMode','mouseLock','mouseRecenter','gamepadDeadzone','gamepadIndex','touchCameraSensitivity','keyBindings','touchLayout']);

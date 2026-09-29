@@ -6,7 +6,8 @@ import { heading, clamp } from "../game/math.js";
 import { BASE, terrainHeight } from "../game/World.js";
 import { ACTIONS, bindingLabel, bindingError, formatKey, chordFromEvent, actionForCode } from "../game/InputActions.js";
 import { normalizeSettings } from "../game/Settings.js";
-import { hudContext, primaryWarning } from "./HUDState.js";
+import { applyTouchLayout } from './TouchLayout.js';
+import { hudContext, primaryWarning, onlineObjectiveSummary } from "./HUDState.js";
 import { settingsMarkup } from "./SettingsUI.js";
 import { beginnerGuide, flightHints } from "./BeginnerGuide.js";
 import { PREVIEW_LABELS, normalizeAudioSettings } from "../game/SoundDesign.js";
@@ -191,7 +192,7 @@ class UI {
         <div class="hud-session">
           <div id="hud-net-badge" class="hud-net-badge" hidden>
             <span class="dot online"></span>
-            <span id="hud-net-text">ONLINE · 30Hz</span>
+            <span id="hud-net-text">ONLINE · CONNECTED</span>
           </div>
           <span id="mission-time">00:00</span>
           <span id="fps"></span>
@@ -378,6 +379,7 @@ class UI {
     this.hudEl.classList.toggle('high-contrast',!!this.settings.highContrast);
     this.hudEl.classList.toggle('reduced-motion',!!this.settings.reducedMotion);
     this.hudEl.dataset.detail=this.settings.hudDetail || 'full';
+    this.applyTouchLayout();
     if (!audioOnly) this.game?.applySettings();
     this.game?.audio.syncMix?.();
   }
@@ -935,9 +937,10 @@ class UI {
     this.root.querySelector(".hud-weapons").hidden = free;
     this.dom["practice-help"].hidden = !free;
     this.dom["hud-score"].hidden = free;
-    this.dom["objective-fill"].parentElement.hidden = free;
+    this.dom["objective-fill"].parentElement.hidden = free || !!this.game.multiplayer?.active;
     this.root.querySelectorAll('[data-touch="fire"], [data-touch="missile"], [data-touch="flare"]').forEach((b) => (b.hidden = free));
     this.updateFlightHelp();
+    this.applyTouchLayout?.();
     document.getElementById("world")?.focus?.();
   }
 
@@ -1282,7 +1285,12 @@ class UI {
     );
   }
 
+  applyTouchLayout() {
+    applyTouchLayout(this.root, this.settings.touchLayout, globalThis.innerWidth || 1366, globalThis.innerHeight || 768);
+  }
+
   resize() {
+    this.applyTouchLayout?.();
     const dpr=Math.min(globalThis.devicePixelRatio || 1,2);
     this.canvas.width=Math.round(innerWidth*dpr);this.canvas.height=Math.round(innerHeight*dpr);
     this.canvas.style.width=innerWidth+"px";this.canvas.style.height=innerHeight+"px";
@@ -1345,7 +1353,7 @@ class UI {
     const remaining = g.enemies.filter((e) => e.alive).length,
       total = g.enemies.length;
     const battle = g.openSkies?.snapshot();
-    this.text("objective-count", battle ? `${battle.defeated} / ${battle.total} TOTAL · ${battle.remaining} IN WAVE` : g.mission.freeFlight ? "NO ENEMIES · NO TIME LIMIT" : `${total - remaining} / ${total} HOSTILES DOWN`);
+    this.text("objective-count", g.multiplayer?.active ? onlineObjectiveSummary(g.multiplayer) : battle ? `${battle.defeated} / ${battle.total} TOTAL · ${battle.remaining} IN WAVE` : g.mission.freeFlight ? "NO ENEMIES · NO TIME LIMIT" : `${total - remaining} / ${total} HOSTILES DOWN`);
     this.dom["objective-fill"].style.width = `${battle ? battle.defeated / battle.total * 100 : total ? ((total - remaining) / total) * 100 : 0}%`;
     if (battle) {
       this.text('mission-objective', battle.state === 'recovery' ? `Next phase in ${battle.recovery}s · regroup` : battle.objective);
@@ -1410,7 +1418,7 @@ class UI {
       if (g.multiplayer?.active) {
         this.dom["hud-net-badge"].hidden = false;
         const ping = g.multiplayer.network?.ping;
-        this.text("hud-net-text", `ONLINE · ${Number.isFinite(ping)?Math.round(ping)+"ms":"measuring ping"} · 30Hz TICK`);
+        this.text("hud-net-text", `ONLINE · ${Number.isFinite(ping)?Math.round(ping)+"ms":"measuring ping"}`);
       } else {
         this.dom["hud-net-badge"].hidden = true;
       }

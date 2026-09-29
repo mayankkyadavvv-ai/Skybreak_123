@@ -15,6 +15,7 @@ import { VoiceManager } from './VoiceManager.js';
 import { terrainHeight, RUNWAYS } from '../shared/WorldGeometry.js';
 import { FIXED_DT } from '../shared/Protocol.js';
 import { clearMissionExtensions } from '../game/MissionIntegration.js';
+import { multiplayerMission } from '../game/Missions.js';
 
 export class MultiplayerManager {
   constructor(game) {
@@ -190,11 +191,7 @@ export class MultiplayerManager {
     this.weapons.clear();
 
     // Configure single player game loop to host multiplayer
-    this.game.mission = {
-      id: "multiplayer",
-      name: `MULTIPLAYER ${msg.options?.mode?.toUpperCase() || "BATTLE"}`,
-      freeFlight: msg.options?.mode === "free_flight"
-    };
+    this.game.mission = multiplayerMission(msg.options);
 
     // Remove single player AI
     for (const j of [...this.game.enemies, ...this.game.allies]) {

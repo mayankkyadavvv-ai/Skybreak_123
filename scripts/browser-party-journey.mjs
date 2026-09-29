@@ -31,6 +31,10 @@ export async function browserPartyJourney(browser, origin, out) {
     await guest.locator('#mp-toggle-ready-btn').click({ noWaitAfter: true });
     await host.locator('#mp-host-start-btn').click({ noWaitAfter: true });
     await Promise.all(pages.map(page => page.waitForFunction(() => window.game.multiplayer.active && window.game.multiplayer.snapshotTick > 30 && window.game.state === 'playing')));
+    check(await guest.evaluate(() => {
+      const card = document.querySelector('.hud-mission');
+      return !!card && !/undefined|0 \/ 0 HOSTILES/.test(card.textContent) && card.textContent.includes('Open Skies Co-op');
+    }), 'Online mission card contains real room metadata and no solo 0/0 objective');
     const identity = await guest.evaluate(() => window.game.multiplayer.localId);
     const epoch = await host.evaluate(() => window.game.multiplayer.matchEpoch);
     check(await guest.evaluate(epoch => window.game.multiplayer.matchEpoch === epoch, epoch), 'Both rendered clients share the authoritative match epoch');

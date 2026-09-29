@@ -11,10 +11,11 @@ const label = (process.env.SKYBREAK_QA_LABEL || 'candidate').replace(/[^a-z0-9_-
 const out = resolve(process.env.SKYBREAK_QA_OUTPUT || `qa-artifacts/upgrade40/${label}`);
 const sampleSeconds = Math.max(0, Math.min(900, Number(process.env.SKYBREAK_QA_SECONDS || 600)));
 const viewports = process.env.SKYBREAK_QA_VIEWPORTS ? JSON.parse(process.env.SKYBREAK_QA_VIEWPORTS) : [[1366, 768], [1920, 1080], [1024, 600], [390, 844], [844, 390]];
+const quick = process.env.SKYBREAK_QA_QUICK === '1';
 const preset = process.env.SKYBREAK_QA_PRESET || 'medium', seed = 4422;
 await mkdir(out, { recursive: true });
 let revision = 'unavailable'; try { revision = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(); } catch {}
-const report = { label, origin, started: new Date().toISOString(), status: 'running', revision, environment: { os: `${os.platform()} ${os.release()}`, cpu: os.cpus()[0]?.model, logicalCPUs: os.cpus().length, memoryGiB: Math.round(os.totalmem() / 1024 ** 3), node: process.version }, configuration: { preset, seed, dpr: 1, sampleSeconds, warmUpSeconds: 5, emulatedMobile: true }, console: [], errors: [], checks: [], layouts: [], captures: [], samples: [], restarts: [], unverified: ['human screenshot review and visual-readability judgement', 'physical laptop/mobile GPU performance', 'physical controller and touchscreen feel', 'audible audio and microphone capture', 'two-network human co-op/PvP session', 'two physical LAN devices with internet disconnected', 'two humans using actual split-screen controllers'] };
+const report = { label, origin, started: new Date().toISOString(), status: 'running', revision, environment: { os: `${os.platform()} ${os.release()}`, cpu: os.cpus()[0]?.model, logicalCPUs: os.cpus().length, memoryGiB: Math.round(os.totalmem() / 1024 ** 3), node: process.version }, configuration: { preset, seed, dpr: 1, quick, sampleSeconds, warmUpSeconds: 5, emulatedMobile: true }, console: [], errors: [], checks: [], layouts: [], captures: [], samples: [], restarts: [], unverified: ['human screenshot review and visual-readability judgement', 'physical laptop/mobile GPU performance', 'physical controller and touchscreen feel', 'audible audio and microphone capture', 'two-network human co-op/PvP session', 'two physical LAN devices with internet disconnected', 'two humans using actual split-screen controllers'] };
 let browser, activePage;
 function check(condition, label, detail) { report.checks.push({ label, passed: !!condition, detail }); if (!condition) report.errors.push(label); }
 const percentile = (values, quantile) => { if (!values.length) return null; const sorted = [...values].sort((a, b) => a - b); return sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * quantile))]; };
@@ -37,7 +38,7 @@ try {
     page.on('pageerror', error => report.errors.push(`${width}x${height}: ${error.message}`));
     page.on('console', message => { if (['error', 'warning'].includes(message.type())) { const item = { viewport: `${width}x${height}`, type: message.type(), text: message.text().slice(0, 3000) }; if (report.console.length < 200) report.console.push(item); if (message.type() === 'error') report.errors.push(item.text); } });
     page.on('requestfailed', request => report.errors.push(`Request failed: ${request.url()} ${request.failure()?.errorText}`));
-    const capture = async name => { const file = `${name}-${width}x${height}.png`; await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))); await page.screenshot({ path: join(out, file) }); const actual = await page.evaluate(() => ({ state: window.game?.state, timeOfDay: window.game?.atmosphere?.timeOfDay, weather: window.game?.atmosphere?.weather, camera: window.game?.cam?.mode })); report.captures.push({ viewport: [width, height], name, path: file, actual }); };
+    const capture = async name => { const file = `${name}-${width}x${height}.png`; await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))); await page.screenshot({ path: join(out, file) }); const actual = await page.evaluate(() => ({ state: window.game?.state, timeOfDay: window.game?.atmosphere?.timeOfDay, weather: window.game?.atmosphere?.weather, camera: window.game?.cam?.mode })); report.captures.push({ viewport: [width, height], name, path: file, actual }); await writeFile(join(out, 'acceptance-progress.json'), JSON.stringify(report, null, 2) + '\n'); };
     const start = Date.now(); const response = await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 45000 }); check(response?.ok(), 'Game page serves successfully', { width, status: response?.status() });
     if (!report.build) { const buildResponse = await page.request.get(origin.replace(/\/$/, '') + '/build-manifest.json'); if (buildResponse.ok()) { const build = await buildResponse.json(); report.build = { sourceRevision: build.sourceRevision, sourceDigest: build.sourceDigest, assetsDigest: build.assetsDigest }; } }
     await page.waitForFunction(() => window.game?.state === 'menu', null, { timeout: 45000 });
@@ -60,9 +61,19 @@ try {
       return { visible: true, clipped: [...panel.querySelectorAll('.weapon>span,.weapon>strong,.flare-line')].filter(el => el.getClientRects().length).filter(el => { const r = el.getBoundingClientRect(); return r.left < box.left - 1 || r.right > box.right + 1 || el.scrollWidth > el.clientWidth + 1; }).map(el => el.textContent.trim()) };
     });
     check(!weaponBounds.clipped.length, 'Visible weapon values stay inside their panel', { viewport: [width, height], ...weaponBounds });
+    const touchOverlaps = await page.evaluate(() => {
+      const visible = element => element.getClientRects().length && getComputedStyle(element).display !== 'none';
+      const targets = [...document.querySelectorAll('#touch-stick,.touch-throttle,.touch-actions button')].filter(visible);
+      const panels = [...document.querySelectorAll('.hud-weapons,.hud-bottom-left,#radio,.audio-subtitle,.battle-coach,.threat-awareness,.battle-wing,#toast')].filter(visible);
+      const hits = [];
+      for (const panel of panels) for (const target of targets) { const a = panel.getBoundingClientRect(), b = target.getBoundingClientRect(); if (Math.min(a.right,b.right)-Math.max(a.left,b.left)>1 && Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1) hits.push({ panel: panel.id || panel.className, target: target.id || target.dataset.touch || target.className }); }
+      return hits;
+    });
+    check(touchOverlaps.length === 0, 'Default HUD panels leave touch targets unobscured', { viewport: [width,height], overlaps: touchOverlaps });
     const orders = page.locator('[data-action="squadron"]').first();
     if (await orders.count()) { await orders.click({ noWaitAfter: true }); await capture('orders'); const regroup = page.locator('[data-order="regroup"]').first(); if (await regroup.count()) await regroup.click({ noWaitAfter: true }); }
     await page.evaluate(() => { window.game.menu(); window.game.start(3); }); await page.waitForTimeout(250);
+    if (!quick || (width === viewports[0][0] && height === viewports[0][1])) {
     const pitchStart = await page.evaluate(() => window.game.player.forward.y);
     await page.keyboard.down('ArrowUp');
     try { await page.waitForFunction(start => window.game.player.forward.y > start + .003, pitchStart); } finally { await page.keyboard.up('ArrowUp'); }
@@ -105,12 +116,14 @@ try {
       await page.keyboard.press('Escape'); await page.locator('[data-action="restart"]').click({ noWaitAfter: true });
       check(await page.evaluate(() => window.game.mission.freeFlight && !window.game.openSkies && !window.game.operation && window.game.enemies.length === 0), 'Friends Free Flight and Restart cannot restore the previous battle');
     }
+    }
     for (const mode of ['chase', 'cockpit', 'cinematic']) { await page.evaluate(mode => { window.game.cam.mode = mode; }, mode); await page.waitForTimeout(300); await capture(mode); }
     if (width === viewports[0][0] && height === viewports[0][1]) {
       for (const [time, weather] of [['midday', 'clear'], ['sunset', 'clear'], ['midday', 'cloudy']]) {
         await page.evaluate(({ time, weather }) => { const g = window.game; g.resetPracticePosition(); g.cam.mode = 'chase'; g.atmosphere.setTimeOfDay(time); g.atmosphere.setWeather(weather); }, { time, weather });
         await page.waitForTimeout(400); await capture(`lighting-${time}-${weather}`);
       }
+      if (!quick) {
       report.restartResources = [];
       for (let cycle = 0; cycle < 10; cycle++) { await page.evaluate(seed => { const g = window.game; g.menu(); g.start(2, { seed }); }, seed); await page.waitForTimeout(200); report.restartResources.push({ cycle: cycle + 1, snapshot: await page.evaluate(() => window.game.getPerformanceSnapshot()) }); }
       await page.evaluate(seed => { window.game.menu(); window.game.start(2, { seed }); }, seed); await page.waitForTimeout(5000);
@@ -124,6 +137,23 @@ try {
       const frameTimes = await page.evaluate(() => { window.__qaRunning = false; return window.__qaFrameTimes; });
       report.frameTime = { samples: frameTimes.length, p50ms: percentile(frameTimes, 0.5), p95ms: percentile(frameTimes, 0.95), p99ms: percentile(frameTimes, 0.99), longestMs: frameTimes.length ? Math.max(...frameTimes) : null, note: 'Real requestAnimationFrame intervals; automated battle restarts are listed separately. This is not a human-completed sortie.' };
       await capture('post-sample');
+      }
+    }
+    if (width === 390 && height === 844) {
+      await page.evaluate(() => { window.game.menu(); window.game.ui.showSettings('controls'); });
+      await page.locator('[data-action="touch-layout"]').click({ noWaitAfter: true });
+      await page.locator('[data-layout-control="missile"]').focus();
+      await page.keyboard.press('ArrowLeft');
+      await page.locator('#touch-save').click({ noWaitAfter: true });
+      await page.evaluate(() => { window.game.menu(); window.game.start(3); });
+      const moved = await page.evaluate(() => ({ custom: document.getElementById('touch-controls').dataset.customLayout, left: document.querySelector('[data-touch="missile"]').style.left }));
+      check(moved.custom === 'true' && !!moved.left, 'Touch editor Save changes the actual flight buttons', moved);
+      await capture('custom-touch');
+      await page.evaluate(() => { window.game.menu(); window.game.ui.showSettings('controls'); });
+      await page.locator('[data-action="touch-layout"]').click({ noWaitAfter: true });
+      await page.locator('#touch-reset').click({ noWaitAfter: true });
+      await page.locator('#touch-save').click({ noWaitAfter: true });
+      check(await page.evaluate(() => document.getElementById('touch-controls').dataset.customLayout === 'false'), 'Touch editor Reset and Save restore responsive controls');
     }
     await context.close(); activePage = null;
   }

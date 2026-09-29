@@ -55,3 +55,37 @@ button,a,input,select,summary{touch-action:manipulation}button:focus-visible,a:f
 @media(max-width:700px){
   .hud .hud-weapons{width:140px;grid-template-columns:minmax(0,1fr);padding:10px!important}
 }
+/* Keep captions above the radar and comms above the weapon inventory. */
+.hud .audio-subtitle{bottom:220px}
+.hud .radio{bottom:270px}
+.hud .mp-comms-tools{bottom:225px}
+@media(min-width:901px) and (min-height:601px){
+  .hud[data-camera=cockpit] .audio-subtitle{bottom:32%}
+  .hud[data-camera=cockpit] .radio{bottom:40%}
+}
+@media(max-width:700px) and (min-height:521px){
+  .hud .hud-bottom-left,.hud.open-skies .hud-bottom-left{bottom:450px;padding:8px!important}
+  .hud .hud-bottom-left .pilot-label,.hud .hud-bottom-left .flight-telemetry{display:none}
+  .hud .health-row{flex-direction:column;gap:2px;letter-spacing:.5px}
+  .hud .health-row b{font-size:11px;letter-spacing:0;white-space:nowrap}
+  .hud .hud-weapons,.hud.open-skies .hud-weapons{left:10px;right:auto;bottom:320px!important}
+  .hud .radio,.hud.open-skies .radio,.hud .audio-subtitle{top:72px;bottom:auto;left:10px;right:10px;width:auto;transform:none;max-height:52px;font-size:10px}
+  .hud .compact-telemetry,.hud.open-skies .compact-telemetry{top:132px}
+  .hud .threat-awareness{top:165px;max-height:115px}
+  .hud .mp-comms-tools{bottom:430px;right:10px;max-width:43vw}
+  #toast{top:auto!important;bottom:12px;left:10px;transform:none;max-width:200px;font-size:10px;padding:8px}
+}
+@media(max-height:520px){
+  .hud .audio-subtitle{bottom:10px}
+  .hud .mp-comms-tools{bottom:150px;max-width:30vw}
+}
+#touch-controls[data-custom-layout=true] .touch-actions{position:static;display:contents}
+@media(max-width:700px) and (min-height:521px){
+  .hud .hud-bottom-left{display:block}
+}
+@media(pointer:coarse) and (max-height:520px){
+  #touch-controls:not([data-custom-layout=true]) #touch-stick{position:absolute;left:24px;bottom:18px}
+  #touch-controls:not([data-custom-layout=true]) .touch-actions{bottom:18px}
+  .hud .audio-subtitle{top:74px;bottom:auto;width:40vw}
+  #toast{top:auto!important;bottom:10px;left:205px;transform:none;max-width:230px;font-size:10px;padding:7px}
+}

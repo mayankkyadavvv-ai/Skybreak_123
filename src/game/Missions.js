@@ -34,6 +34,14 @@ const FLIGHT_MODES = [FREE_FLIGHT, ...MISSIONS, ...OPERATION_MISSIONS, SOLO_DUEL
 function getMission(id) {
   return FLIGHT_MODES.find((mission) => mission.id === id) || FREE_FLIGHT;
 }
+function multiplayerMission(options = {}) {
+  const names = { '1v1': 'Duel', '2v2': 'Team Battle 2v2', '3v3': 'Team Battle 3v3', '4v4': 'Team Battle 4v4', open_skies_coop: 'Open Skies Co-op', air_superiority: 'Air Superiority', free_flight: 'Squadron Free Flight' };
+  const free = options.mode === 'free_flight', coop = options.mode === 'open_skies_coop';
+  return { id: 'multiplayer', name: names[options.mode] || 'Squadron Battle', code: coop ? 'ONLINE CO-OP' : 'ONLINE SQUADRON',
+    region: options.map === 'frontier' ? 'FRONTIER' : 'AEGIS STRAIT', freeFlight: free,
+    objective: free ? 'Fly together or start a shared activity' : coop ? 'Protect your squadron and complete the shared objective' : options.mode === 'air_superiority' ? 'Capture and hold the marked airspace' : 'Defeat the opposing squadron',
+  };
+}
 function missionStatus(enemies, player, base) {
   if (!player.alive) return "failed";
   if (enemies.some((e) => e.bomber && e.alive && e.position.distanceTo(base) < 850)) return "base-lost";
@@ -47,5 +55,6 @@ export {
   FLIGHT_MODES,
   OPERATION_MISSIONS,
   getMission,
+  multiplayerMission,
   missionStatus
 };

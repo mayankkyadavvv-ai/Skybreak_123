@@ -1,4 +1,12 @@
 import { bindingLabel } from '../game/InputActions.js';
+export function onlineObjectiveSummary(multiplayer) {
+  const mission = multiplayer.missionState;
+  if (mission) {
+    const phase = Number.isFinite(mission.phaseIndex) && Number.isFinite(mission.totalPhases) ? `PHASE ${mission.phaseIndex}/${mission.totalPhases}` : 'SHARED OBJECTIVE';
+    return phase + (Number.isFinite(mission.enemiesRemaining) ? ` · ${mission.enemiesRemaining} HOSTILES` : '');
+  }
+  return multiplayer.matchOptions?.mode === 'free_flight' ? 'FLY WITH YOUR SQUADRON' : multiplayer.matchOptions?.mode === 'air_superiority' ? 'CAPTURE & HOLD THE ZONE' : 'SHARED MATCH · TEAM SCORE';
+}
 export function hudContext(game, ground, nearest) {
   const p=game.player;
   return p.isLanded ? 'ground' : nearest?.distance<12000 && p.position.y-ground<550 ? 'approach' : game.mission?.freeFlight ? 'cruise' : 'combat';
