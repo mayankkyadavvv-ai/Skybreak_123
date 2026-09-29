@@ -4,7 +4,7 @@
     {
       "id": "F01",
       "title": "Consistent lighting and colour direction.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope graphics",
+      "owner": "integrated by root; original specialist scope graphics",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Tune sky, sun, ambient/environment lighting, water, terrain, aircraft materials, exposure and bloom as a coherent scene. Establish a restrained Skybreak palette and representative midday, sunset and cloudy conditions. Preserve daylight combat readability and working settings restoration. Use the appropriate colour spaces and tone-mapping pipeline for the installed renderer version.\n\nAcceptance: Review matched screenshots in all three conditions, with bright sky, terrain and ocean behind the jet. Aircraft silhouettes, reticle, warnings and target markers remain distinguishable. Switching presets or entering/leaving a mission does not leave stale exposure or weather state. Retain a documented before/after visual comparison.",
@@ -21,7 +21,10 @@
         "tests/rendering-upgrade.test.js",
         "tests/simulation.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/browser-c59.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Matched midday/sunset/cloudy screenshots and readability review"
@@ -29,12 +32,12 @@
       "delta": "Unified exposure/environment palette and mission/hangar restoration",
       "acceptance_scope": "Automated checks cover logic/integration only. Matched midday/sunset/cloudy screenshots and readability review",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F02",
       "title": "A flagship aircraft with convincing detail and efficient distance models.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope graphics",
+      "owner": "integrated by root; original specialist scope graphics",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Select one existing aircraft as the visual benchmark. Improve its silhouette, canopy, intakes, engine nozzle, landing gear, panel treatment, markings and paint/metal separation. Refine the current procedural model or use a properly licensed locally bundled model. Provide appropriate distance representations and texture budgets. Preserve attachment anchors, weapons, gear animation, collision scale and existing aircraft selection.\n\nAcceptance: Hangar close-ups and gameplay views both look consistent. Weapons/effects originate from correct attachment points. At least eight visible aircraft are benchmarked. Asset loading errors have a working fallback. Record asset origin/licence and resource sizes. Repeated aircraft changes do not leak models, materials or textures.",
@@ -52,7 +55,8 @@
         "tests/rendering-upgrade.test.js",
         "evidence/upgrade40/candidate/tests.log",
         "evidence/upgrade40/qa-model-inventory.json",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Eight visible-aircraft GPU benchmark, visual anchor review and rendered change-cycle resource counts"
@@ -60,12 +64,12 @@
       "delta": "X-17 trim, separated materials, batched mid/far LOD and anchor preservation",
       "acceptance_scope": "Automated checks cover logic/integration only. Eight visible-aircraft GPU benchmark, visual anchor review and rendered change-cycle resource counts",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F03",
       "title": "A visible and functional cockpit.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope graphics",
+      "owner": "integrated by root; original specialist scope graphics",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Separate exterior and cockpit visibility/layers so the cockpit is actually rendered. Provide canopy frame, dashboard, readable attitude, heading, speed, altitude and weapon/target information. Bind instruments to the same simulation state used by flight/HUD. Define sensible field of view, near clipping and free-look limits, with a lighter cockpit option if needed.\n\nAcceptance: Transition among chase, cockpit and cinematic views in flight and while landed. No unwanted exterior clipping, missing interior, double HUD, black panel or false instrument reading. Test critical views at common desktop sizes. The working cockpit remains available after respawn, restart and aircraft change.",
@@ -83,7 +87,13 @@
       "evidence": [
         "tests/upgrade40-simulation.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "tests/cockpit-regressions.test.js",
+        "evidence/pending-completion/browser-c59.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Desktop cockpit readability, clipping, camera transitions and respawn render checks"
@@ -91,12 +101,12 @@
       "delta": "Visible cockpit layer, real flight instruments, weapon/target readout, bounded eye/FOV",
       "acceptance_scope": "Automated checks cover logic/integration only. Desktop cockpit readability, clipping, camera transitions and respawn render checks",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F04",
       "title": "Aegis Strait terrain, coastline and navigation landmarks.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope graphics",
+      "owner": "integrated by root; original specialist scope graphics",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Improve shoreline foam, shallows, cliff/shore material transitions and terrain detail around the existing coastal battlefield. Add a small set of meaningful landmarks such as lighthouse, harbour and bridge. Integrate their collision/occlusion behaviour deliberately. Use shared terrain data, bounded placement and distance-aware rendering.\n\nAcceptance: Fly the coastline at low altitude and inspect approach routes from several directions. Landmarks appear where map/briefing information says they are. Rendered terrain and collision agree; no floating objects, impossible bridge passages or invisible obstacles. Verify landmark LOD and streaming transitions.",
@@ -117,7 +127,8 @@
         "tests/upgrade40-simulation.test.js",
         "tests/upgrade40-authority.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Low-altitude rendered coastline/landmark collision alignment and LOD transitions"
@@ -125,12 +136,12 @@
       "delta": "Shallows/foam/detail maps, harbour/lighthouse/bridge, shared solids and bridge opening",
       "acceptance_scope": "Automated checks cover logic/integration only. Low-altitude rendered coastline/landmark collision alignment and LOD transitions",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F05",
       "title": "Clouds with depth, atmospheric transitions and consistent visibility.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope graphics",
+      "owner": "integrated by root; original specialist scope graphics",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Improve layered cloud banks, soft edges, altitude haze, light response and lightweight cloud shadows. Use a viable low-cost representation on Low/Medium and advanced rendering only where measured budgets permit. Keep gameplay cloud density/visibility volumes independent of cosmetic detail. Define entry/exit transitions and interaction with existing weather settings.\n\nAcceptance: Fly above, through and below clouds. Check popping, sorting, silhouettes, horizon continuity and transition stability. Compare Low and High at identical positions; sensor/visibility outcomes must remain equivalent. Measure GPU cost before enabling more expensive effects by default.",
@@ -150,7 +161,8 @@
       "evidence": [
         "tests/upgrade40-simulation.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Above/through/below cloud images and actual GPU costs on Low/High"
@@ -158,12 +170,12 @@
       "delta": "Layered banks, shared analytic volumes, cloud shadows and altitude transitions",
       "acceptance_scope": "Automated checks cover logic/integration only. Above/through/below cloud images and actual GPU costs on Low/High",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F06",
       "title": "Distinct combat VFX and tinted jet contrails.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope graphics",
+      "owner": "integrated by root; original specialist scope graphics",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Give cannon tracers, missile exhaust, missile trails, flares, damage smoke and explosions distinct forms and timing. Use subtle blue-grey/teal-tinted jet contrails instead of pure-white default contrails, with clear separation from missile trails. Drive afterburner/nozzle intensity from actual throttle/boost. Keep reduced-motion and effect-intensity settings respected, with pooled finite-lifetime effects.\n\nAcceptance: In a busy fight, identify incoming missiles, friendly aircraft trails and flares without relying only on colour. Test daylight/cloud backdrops and Low quality. Repeated firing, explosions and restarts must not cause unbounded particles, references or frame spikes.",
@@ -183,7 +195,8 @@
         "tests/simulation.test.js",
         "tests/open-skies.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Busy-fight visual distinction, Low quality and rendered repeated-effect stress"
@@ -191,12 +204,12 @@
       "delta": "Separate trail/flare forms, teal contrails, throttle/boost glow and reduced-motion limits",
       "acceptance_scope": "Automated checks cover logic/integration only. Busy-fight visual distinction, Low quality and rendered repeated-effect stress",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F07",
       "title": "Airbases that feel active and support landing.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope graphics",
+      "owner": "integrated by root; original specialist scope graphics",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Improve runway/taxiway markings, approach lights, signs, windsock, parked aircraft and limited service-vehicle activity. Keep runway approach/landing cues readable. Background vehicle paths must not accidentally block core takeoff/landing unless intentional gameplay explicitly handles it. Use instancing, distance updates and lightweight animation where appropriate.\n\nAcceptance: Complete takeoff, circuit, approach, landing and taxi in daylight and low light. Windsock matches represented wind if wind affects gameplay. Collision and visible vehicle behaviour agree. Benchmark a populated base and confirm distant activity is inexpensive.",
@@ -214,7 +227,8 @@
         "tests/landing.test.js",
         "tests/approach.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Human takeoff/circuit/landing/taxi in daylight/low light and populated-base GPU benchmark"
@@ -222,12 +236,12 @@
       "delta": "Expanded markings/lights/signs, parked aircraft and bounded service motion",
       "acceptance_scope": "Automated checks cover logic/integration only. Human takeoff/circuit/landing/taxi in daylight/low light and populated-base GPU benchmark",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F08",
       "title": "Adaptive graphics and disciplined resource management.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope graphics",
+      "owner": "integrated by root; original specialist scope graphics",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Add an optional adaptive-quality mode above existing presets. Use measured sustained frame-time trends and hysteresis to adjust internal render resolution, cosmetic particle limits, shadows and cloud detail gradually. Keep HUD sharp and simulation/sensors invariant. Budget texture/model loading, prewarm necessary assets and dispose/refcount shared resources correctly.\n\nAcceptance: Measure a representative ten-to-fifteen-minute sortie and repeated restarts. Report median/p95/p99 frame times, memory/resource counts, load time and quality changes. Target a useful 60 FPS laptop experience and 30 FPS mobile experience on documented hardware; report actual results. Avoid frequent quality oscillation, surprise settings overwrites and changing gameplay advantage.",
@@ -250,7 +264,9 @@
         "tests/upgrade40-simulation.test.js",
         "tests/rendering-upgrade.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/browser-c59.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "10–15 minute rendered sortie FPS/memory; 10 rendered start/restart/exit cycles on documented devices"
@@ -258,12 +274,12 @@
       "delta": "Optional hysteretic resolution/particle/cloud/shadow adaptation; bounded pools and explicit teardown",
       "acceptance_scope": "Automated checks cover logic/integration only. 10–15 minute rendered sortie FPS/memory; 10 rendered start/restart/exit cycles on documented devices",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F09",
       "title": "A clear play flow, especially with friends.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope ui_experience",
+      "owner": "integrated by root; original specialist scope ui_experience",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Restructure entry around Continue, Solo, Play with Friends and Training, while keeping Hangar/Settings easy to reach. Play with Friends must lead directly to create/join/invite choices. Remember valid last-used preferences. Show actual loading, server and connection states with recovery actions.\n\nAcceptance: A new user can start solo or create/join a private party without searching through unrelated menus. Back/cancel works throughout. A failed connection is explained accurately. Mode cards, descriptions and buttons correspond to real playable modes.",
@@ -281,7 +297,12 @@
         "tests/ui.test.js",
         "tests/integration.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/browser-c59.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Fresh-player browser navigation and external friend invite journey"
@@ -289,12 +310,12 @@
       "delta": "Continue/Solo/Friends/Training paths, explicit connection/loading/recovery UI",
       "acceptance_scope": "Automated checks cover logic/integration only. Fresh-player browser navigation and external friend invite journey",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F10",
       "title": "Contextual, responsive HUD.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope ui_experience",
+      "owner": "integrated by root; original specialist scope ui_experience",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Provide Compact and Full HUD with clear safe layout zones. Promote relevant information for flight, combat, landing, squad orders and spectator states. Keep the central aiming area usable. Resolve conflicts between wingman cards, radio, warnings, telemetry, weapons and touch controls. Preserve HUD scaling, opacity, high contrast and reduced motion.\n\nAcceptance: Inspect 1366x768, 1920x1080, a smaller desktop viewport, 390x844 and 844x390 or equivalent supported mobile sizes. Exercise long callsigns, dense warnings, orders, chat and co-op. Essential information must not overlap or leave the screen. Support keyboard focus and usable touch targets.",
@@ -314,7 +335,12 @@
         "tests/ui.test.js",
         "tests/upgrade40-simulation.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/browser-c59.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Five viewport dense-layout, long callsign, keyboard focus and touch review"
@@ -322,12 +348,12 @@
       "delta": "Compact/Full contextual HUD, safe areas, warning priorities and independent seat HUDs",
       "acceptance_scope": "Automated checks cover logic/integration only. Five viewport dense-layout, long callsign, keyboard focus and touch review",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F11",
       "title": "Threat-awareness display that communicates direction and urgency.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope ui_experience",
+      "owner": "integrated by root; original specialist scope ui_experience",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Integrate radar, directional warnings, relative altitude and target status. Distinguish a detected contact, hostile tracking/lock and launched missile using different icon/text/sound states. Clearly identify friends, enemies and unknowns using shape as well as colour. Display only information allowed by actual sensor rules.\n\nAcceptance: Controlled scenarios from front, rear, above and below produce correct cues and prioritization. Destroyed or stale contacts disappear appropriately. Test colour-independent comprehension. Never show a harmless decorative warning or conceal a real threat because another panel is open.",
@@ -348,7 +374,8 @@
         "tests/upgrade40-authority.test.js",
         "tests/upgrade40-simulation.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Rendered front/rear/above/below cues and colour-independent comprehension"
@@ -356,12 +383,12 @@
       "delta": "Directional shape/text cues, actual tracking/lock/missile states and server-filtered contacts",
       "acceptance_scope": "Automated checks cover logic/integration only. Rendered front/rear/above/below cues and colour-independent comprehension",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F12",
       "title": "Meaningful aircraft and loadout comparison.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope ui_experience",
+      "owner": "integrated by root; original specialist scope ui_experience",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Improve hangar material/livery preview under consistent lighting. Show understandable aircraft strengths and loadout stat differences, including trade-offs. Explain locked options and cosmetic-only choices. Use actual aircraft/loadout configuration as the source of displayed numbers and enforce multiplayer budgets on the server.\n\nAcceptance: Preview, equip, launch, respawn and rejoin preserve the intended valid configuration. Displayed stat changes agree with gameplay configuration. Invalid or unavailable selections have a clear recovery path. New visual equipment does not silently alter hitboxes or competitive strength.",
@@ -384,7 +411,11 @@
         "tests/jets.test.js",
         "tests/upgrade40-authority.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Rendered hangar comparisons and equip/respawn/rejoin journey"
@@ -392,12 +423,12 @@
       "delta": "Actual config stat deltas, locked/cosmetic messaging, neutral hangar preview, online equal stock budget",
       "acceptance_scope": "Automated checks cover logic/integration only. Rendered hangar comparisons and equip/respawn/rejoin journey",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F13",
       "title": "Interactive flight school.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope ui_experience",
+      "owner": "integrated by root; original specialist scope ui_experience",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Extend help into short playable lessons for climb, turn, throttle, targeting/lock, flare timing and landing. Use ghost paths/demonstrations where useful and evaluate actual player actions. Offer repeat, skip, reset and return to game. Instructions read current bindings and active device. Track completion without blocking experienced players.\n\nAcceptance: A first-time player can complete the lessons and then fly a basic mission. Rebound keys work, wrong actions give useful feedback, and resets clean up lesson entities/timers. Test keyboard and at least one controller/touch path where hardware permits.",
@@ -417,7 +448,10 @@
         "tests/upgrade40-simulation.test.js",
         "tests/ui.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "First-time human lesson completion and one physical controller/touch route"
@@ -425,12 +459,12 @@
       "delta": "Playable climb/turn/throttle/lock/flare/landing lessons with actual progress, repeat/skip/reset",
       "acceptance_scope": "Automated checks cover logic/integration only. First-time human lesson completion and one physical controller/touch route",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F14",
       "title": "Informative audio, radio and accessibility feedback.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope ui_experience",
+      "owner": "integrated by root; original specialist scope ui_experience",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Refine engine-load audio, flybys, spatial threat cues and radio acknowledgement. Define audio priority/ducking so urgent warnings remain audible. Provide independent music/effects/radio levels, subtitles and equivalent visual cues. Respect browser audio activation and reduced-effects preferences. Avoid repeated or duplicate radio messages.\n\nAcceptance: Test a dense combat mix, muted audio and device output changes. Urgent warnings remain understandable. Mission transitions/restarts stop old audio loops. Sound direction, timing and subtitle content correspond to actual game events.",
@@ -449,7 +483,8 @@
         "tests/audio.test.js",
         "tests/ui.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Audible dense mix, spatial cues, output-device change and muted-feedback review"
@@ -457,12 +492,12 @@
       "delta": "Load/threat/radio priorities, ducking, independent radio gain, subtitles and loop cleanup",
       "acceptance_scope": "Automated checks cover logic/integration only. Audible dense mix, spatial cues, output-device change and muted-feedback review",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F15",
       "title": "Useful debrief, recorded replay and shareable highlights.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope ui_experience",
+      "owner": "integrated by root; original specialist scope ui_experience",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Extend existing medals with a sortie timeline, damage/wingman-loss events, best moments and an actionable improvement. Record bounded state/event data sufficient for an actual replay; do not claim seed-only determinism. Provide playback controls, a short highlight and screenshot export; video export may use supported browser APIs with an honest compatibility fallback. Keep playback separate from live gameplay and rewards.\n\nAcceptance: Compare replay events against the recorded sortie. Seeking/replaying cannot award XP or change live match state. Playback preserves aircraft/event identity. Respect competitive information limits; do not expose hidden enemy information through live spectator/replay tools. Exported artifacts open successfully.",
@@ -483,7 +518,8 @@
         "tests/upgrade40-simulation.test.js",
         "tests/ui.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Browser JSON/PNG export opening and actual sortie/replay visual comparison; video intentionally unavailable"
@@ -491,12 +527,12 @@
       "delta": "Bounded state/event recording, timeline/advice, tactical seek/play/speed/highlight, JSON and PNG export/import",
       "acceptance_scope": "Automated checks cover logic/integration only. Browser JSON/PNG export opening and actual sortie/replay visual comparison; video intentionally unavailable",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F16",
       "title": "Responsive beginner flight with correct pitch direction.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope root",
+      "owner": "integrated by root; original specialist scope root",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Tune the existing Assisted mode across low, cruise and high speeds, with bounded angular response, sensible settling and clear stall/landing behaviour. Keep manual flight intentional and separate. Validate default Arrow Up nose-up and Arrow Down nose-down across all relevant migrations and modes. Avoid double-smoothing or camera motion masquerading as aircraft response.\n\nAcceptance: Check the first simulation response to taps, held input, reversal, release, throttle-only and boost/fire-only input. Compare equivalent flight at 30/60/144 render FPS. Verify no unintended rotation while stationary/taxiing. Perform a beginner flight and record control-feel issues that require real playtesting.",
@@ -517,7 +553,12 @@
         "tests/flight_stage1.test.js",
         "tests/upgrade40-simulation.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/browser-c59.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Beginner control-feel playtest on real hardware"
@@ -525,12 +566,12 @@
       "delta": "Positive pitch = nose up in shared/offline flight; default arrows retained and full first-tick/30/60/144 checks",
       "acceptance_scope": "Automated checks cover logic/integration only. Beginner control-feel playtest on real hardware",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F17",
       "title": "Calibration and saved control profiles with live preview.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope root",
+      "owner": "integrated by root; original specialist scope root",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Add a live aircraft/input preview to sensitivity, curve and deadzone settings. Support measured controller drift calibration, axis/button inspection, binding-conflict detection, safe defaults and named device profiles. Preserve valid custom bindings and per-device inversion choices with explicit display.\n\nAcceptance: Changes are understandable before launching a mission. Cancel/reset behaves predictably. Reconnect or change devices without corrupting profiles or reversing keyboard defaults. Tutorial/help labels reflect the active bindings immediately.",
@@ -551,7 +592,11 @@
         "tests/upgrade40-simulation.test.js",
         "tests/ui.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/browser-c59.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Physical controller calibration/reconnect and cancel/reset browser journey"
@@ -559,12 +604,12 @@
       "delta": "Live preview, raw axes/buttons, measured drift calibration and named device profiles",
       "acceptance_scope": "Automated checks cover logic/integration only. Physical controller calibration/reconnect and cancel/reset browser journey",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F18",
       "title": "Optional mouse point-to-fly.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope root",
+      "owner": "integrated by root; original specialist scope root",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Add a separately selectable mouse point-to-fly mode alongside the existing virtual-stick approach. Convert cursor intention into bounded aircraft commands using the normal flight model. Indicate aim/command position and provide recenter/free-look behaviour. Keep keyboard default available and transitions explicit.\n\nAcceptance: No orientation teleporting, unlimited turn rates or surprise oscillation. Switching modes preserves aircraft state and clears obsolete input. Menu focus, pointer-lock changes and window exit do not produce stuck steering or accidental shots. Test comparable turn limits against other input methods.",
@@ -585,7 +630,8 @@
         "tests/upgrade40-simulation.test.js",
         "tests/ui.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Real pointer-lock/focus transitions and comparable turn-feel test"
@@ -593,12 +639,12 @@
       "delta": "Optional world-point intention through bounded flight commands, free look/recenter, safe mode transitions",
       "acceptance_scope": "Automated checks cover logic/integration only. Real pointer-lock/focus transitions and comparable turn-feel test",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F19",
       "title": "Customizable touch and controller ergonomics.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope root",
+      "owner": "integrated by root; original specialist scope root",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Provide adjustable touch positions/sizes, left-handed layout, camera sensitivity and reliable multi-touch. Improve controller routing, reconnect recovery and device ownership. Keep steering, throttle, firing and defensive actions usable simultaneously. Save profiles and offer a recoverable layout reset.\n\nAcceptance: Test steer+fire+flare combinations, touch cancellation, screen rotation, gamepad unplug/replug and focus loss. Released inputs must clear. Buttons stay in reachable safe areas and cannot be dragged permanently off-screen. Actual device limitations must be documented honestly.",
@@ -619,7 +665,14 @@
         "tests/ui.test.js",
         "tests/upgrade40-simulation.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "tests/touch-layout.test.js",
+        "evidence/pending-completion/touch-layout-tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Physical multitouch/rotation/gamepad unplug-replug with real browser policies"
@@ -627,12 +680,12 @@
       "delta": "Safe touch layout editor, handedness/scale/look sensitivity, held-input quarantine and separate device ownership",
       "acceptance_scope": "Automated checks cover logic/integration only. Physical multitouch/rotation/gamepad unplug-replug with real browser policies",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F20",
       "title": "Terrain-aware recovery and assisted cruise.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope root",
+      "owner": "integrated by root; original specialist scope root",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Improve the existing recovery action using nearby terrain, altitude, speed and feasible climb/turn limits. Provide explicit assistance status and immediate manual override. Integrate assisted cruise without unexpected throttle changes or interference with landing. Assistance must use actual flight forces/commands.\n\nAcceptance: Recover from banked, descending and low-altitude situations without teleporting or commanding a level path into a mountain. Test cases where recovery is physically impossible and provide a clear warning. Manual input reliably returns control. Multiplayer rules explicitly determine permitted assistance.",
@@ -654,7 +707,8 @@
         "tests/upgrade40-simulation.test.js",
         "tests/controls-upgrade.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Human low-terrain recovery and assistance transitions in a real shared sortie"
@@ -662,12 +716,12 @@
       "delta": "Terrain sampling, feasible bounded recovery/manual override, impossible-recovery warning and optional cruise online/offline",
       "acceptance_scope": "Automated checks cover logic/integration only. Human low-terrain recovery and assistance transitions in a real shared sortie",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F21",
       "title": "Target-aware chase camera.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope root",
+      "owner": "integrated by root; original specialist scope root",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Add an optional target-look/track function with bounded camera rotation, damping and predictable return to neutral. Keep aircraft orientation understandable. Respect free look, landing view, reduced motion and cockpit mode. Decouple camera tracking from steering and weapon lock.\n\nAcceptance: Fly past and around targets, destroy/switch targets and respawn while tracking. Avoid sudden flips, terrain clipping or hidden aircraft orientation. Camera assistance must not grant steering/target-lock advantages. Verify comfort with motion effects disabled.",
@@ -686,7 +740,8 @@
         "tests/rendering-upgrade.test.js",
         "tests/controls-upgrade.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Pass-target/respawn/clipping/comfort review with motion effects disabled"
@@ -694,12 +749,12 @@
       "delta": "Optional bounded selected-target chase tracking, free-look/landing/cockpit precedence",
       "acceptance_scope": "Automated checks cover logic/integration only. Pass-target/respawn/clipping/comfort review with motion effects disabled",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F22",
       "title": "Intentional targeting and safe combat input.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope root",
+      "owner": "integrated by root; original specialist scope root",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Improve target selection using deliberate cycling and optional nearest-threat/centre-of-view selection. Preserve target identity until a deliberate switch or defined invalidation. Give clear lock/range/cooldown feedback. Enforce one activation per missile press, continuous cannon semantics and contextual menu/input consumption.\n\nAcceptance: Switching devices, closing orders/chat, restoring focus and reconnecting cannot trigger accidental firing. Target selection does not jump unpredictably. Client visual firing and authoritative ammunition/events reconcile without duplicate projectiles or rewards. Help text matches actual behaviour.",
@@ -723,7 +778,9 @@
         "tests/multiplayer-socket.test.js",
         "tests/upgrade40-authority.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Real device-switch/online feedback and focus gameplay verification"
@@ -731,12 +788,12 @@
       "delta": "Stable target priority selection, server lock/cooldowns, contextual menu consumption, release-before-refire",
       "acceptance_scope": "Automated checks cover logic/integration only. Real device-switch/online feedback and focus gameplay verification",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F23",
       "title": "Several complete combat mission templates.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope missions",
+      "owner": "integrated by root; original specialist scope missions",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Add playable escort, bomber interception, airbase defence and strike-support templates alongside the existing Open Skies sortie. Each needs briefing, objectives, spawn/route rules, success/failure states, recovery/retry and sensible squad roles. Reuse shared mission primitives rather than cloning entire game loops.\n\nAcceptance: Complete and fail each template through actual objectives. Missing/dead/disconnected targets cannot soft-lock progression. Each template requires meaningfully different decisions. Check single-player and cooperative eligibility explicitly, with server control for enabled co-op missions.",
@@ -757,7 +814,8 @@
       "evidence": [
         "tests/upgrade40-simulation.test.js",
         "tests/upgrade40-authority.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Human completion/failure of each mission and real co-op template playtest"
@@ -765,12 +823,12 @@
       "delta": "Four shared operation templates with routes, protected objectives, terminal states/retry and co-op eligibility",
       "acceptance_scope": "Automated checks cover logic/integration only. Human completion/failure of each mission and real co-op template playtest",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F24",
       "title": "A connected three-sector campaign.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope missions",
+      "owner": "integrated by root; original specialist scope missions",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Implement a small campaign with at least three meaningful sectors. Capturing/protecting a sector changes a later route, repair opportunity, enemy reinforcement or mission availability. Save a versioned campaign state, present consequences on a map and provide continue/new-campaign/reset controls. Define party ownership and authoritative campaign progression when used in co-op.\n\nAcceptance: Finish a sector, leave, return and observe the same valid progress and next-mission consequences. Test failure and alternate outcomes. Simultaneous co-op completion cannot apply progress twice. Preserve existing profiles and handle corrupted/older save data safely.",
@@ -787,7 +845,8 @@
       "evidence": [
         "tests/upgrade40-simulation.test.js",
         "tests/ui.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "End-to-end human sector completion/save-return/alternate outcome; co-op campaign is not enabled"
@@ -795,12 +854,12 @@
       "delta": "Versioned three-sector solo campaign, persistent consequences, new/reset, owner/once-only result handling",
       "acceptance_scope": "Automated checks cover logic/integration only. End-to-end human sector completion/save-return/alternate outcome; co-op campaign is not enabled",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F25",
       "title": "A bounded battle pacing director.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope missions",
+      "owner": "integrated by root; original specialist scope missions",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Extend fixed waves with configurable pacing based on encounter intensity, distances, squad condition and objective progress. Bound active enemies, travel time and recovery gaps. Telegraph reinforcements and avoid unavoidable immediate attacks. Store seed/config/version for reproducibility. Keep competitive comparisons in fixed-rule playlists or clearly labelled adaptive categories.\n\nAcceptance: Observe complete Easy and harder sorties. Verify the mission neither stalls with unreachable enemies nor stacks unmanageable attacks. Use recorded timing and player feedback to tune it. The director must not silently cheat aircraft physics or invalidate objective counts.",
@@ -817,7 +876,8 @@
       ],
       "evidence": [
         "tests/upgrade40-simulation.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Complete Easy/harder human sorties and pacing feedback; fixed standard playlist remains separate"
@@ -825,12 +885,12 @@
       "delta": "Seeded bounded operation director, active caps, telegraphing, travel recall and health-aware gaps",
       "acceptance_scope": "Automated checks cover logic/integration only. Complete Easy/harder human sorties and pacing feedback; fixed standard playlist remains separate",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F26",
       "title": "Wingmen with useful tactical roles.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope missions",
+      "owner": "integrated by root; original specialist scope missions",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Extend Cover/Attack/Regroup with coordinated pairs, escort protection and damaged-teammate cover. Add target reservations, separation, feasible routes, order acknowledgements and understandable status. Preserve existing command bindings/context and support replacing eligible AI slots with human squad members.\n\nAcceptance: Demonstrate each order changes behaviour. Wingmen do not endlessly circle, collide, attack invalid targets or ignore terrain/sensor limits. Order state survives appropriate phase transitions and clears on restart. Human players receive requests/pings instead of being remotely controlled by AI commands.",
@@ -850,7 +910,8 @@
       "evidence": [
         "tests/open-skies.test.js",
         "tests/upgrade40-authority.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Rendered order/terrain/flight-path demonstration in full solo and co-op missions"
@@ -858,12 +919,12 @@
       "delta": "Target reservations, paired attack, transport/damaged-teammate cover, separation and authoritative co-op orders",
       "acceptance_scope": "Automated checks cover logic/integration only. Rendered order/terrain/flight-path demonstration in full solo and co-op missions",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F27",
       "title": "Shared terrain and visibility rules.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope missions",
+      "owner": "integrated by root; original specialist scope missions",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Define separate visual, infrared and radar detection rules. Implement terrain line-of-sight/sensor occlusion where applicable and analytic cloud visibility behaviour. AI and players use the same rules, with remembered/lost contacts handled explicitly. Keep cosmetic cloud/terrain quality independent of authoritative detection.\n\nAcceptance: Run controlled clear-view, mountain-blocked and cloud-entry scenarios for both AI and players. Test acquiring, losing and reacquiring contact and lock. A Low-quality player must not receive extra authoritative visibility. Use bounded spatial queries and verify their performance.",
@@ -885,7 +946,8 @@
       "evidence": [
         "tests/upgrade40-simulation.test.js",
         "tests/upgrade40-authority.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Rendered cloud/terrain acquire-loss-reacquire scenarios on real devices; logic is tested"
@@ -893,12 +955,12 @@
       "delta": "Separate visual/IR/radar, bounded terrain/structure/cloud occlusion, frozen lost-contact memory and hidden-state network filtering",
       "acceptance_scope": "Automated checks cover logic/integration only. Rendered cloud/terrain acquire-loss-reacquire scenarios on real devices; logic is tested",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F28",
       "title": "Functional damage and a meaningful repair loop.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope missions",
+      "owner": "integrated by root; original specialist scope missions",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Add a manageable set of engine, wing/control and sensor damage states with corresponding handling changes, smoke/instrument feedback and clear player explanation. Integrate existing landing/rearm/repair into restoring specific systems. Tune Easy to retain recoverability where reasonable; make effects server-owned in multiplayer.\n\nAcceptance: Damage the specific systems, observe the correct effect and repair them through the real base interaction. Prevent remote/airborne forged repairs and repeated repair/reward exploits. Damage, respawn and replay state remain consistent across clients and mode transitions.",
@@ -920,7 +982,8 @@
         "tests/upgrade40-simulation.test.js",
         "tests/upgrade40-authority.test.js",
         "tests/integration.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Human damaged handling/real base repair and cross-client respawn/replay journey"
@@ -928,12 +991,12 @@
       "delta": "Engine/wing/sensor effects and HUD, validated runway repair with cooldown, authoritative damage and snapshot/replay state",
       "acceptance_scope": "Automated checks cover logic/integration only. Human damaged handling/real base repair and cross-client respawn/replay journey",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F29",
       "title": "Shared non-combat activities.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope missions",
+      "owner": "integrated by root; original specialist scope missions",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Add formation challenges, checkpoint races and landing-accuracy competitions to Free Flight as optional activities. Define shared starts, validated progress, finish conditions, understandable scoring and replay/rematch. Preserve ordinary relaxed Free Flight. Keep activity results distinct from combat progression where needed.\n\nAcceptance: At least two friends can join and complete each activity. Enforce checkpoint order, landing validity and simultaneous finish handling. Disconnect/cancel does not leave an activity stuck. Results on all participants agree, with no duplicate rewards.",
@@ -955,7 +1018,8 @@
         "tests/upgrade40-simulation.test.js",
         "tests/upgrade40-authority.test.js",
         "tests/ui.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Two actual friends complete each activity with matching results; network authority validated locally"
@@ -963,12 +1027,12 @@
       "delta": "Race/formation/landing activities, shared starts, actual aircraft progress, ranks/ties/cancel/rematch and no combat XP",
       "acceptance_scope": "Automated checks cover logic/integration only. Two actual friends complete each activity with matching results; network authority validated locally",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F30",
       "title": "Mission generator with shareable validated presets.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope missions",
+      "owner": "integrated by root; original specialist scope missions",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Provide a usable generator for mission template, location, difficulty, weather and bounded enemy budget. Serialize mission schema/version, seed and necessary configuration into a shareable preset/link or file. Validate imports on both client and server. Bound route/spawn search, entity counts and request sizes.\n\nAcceptance: Open the same preset/version on separate devices and obtain the same mission setup and objectives. Reject malformed, unsupported or excessive settings with useful errors. Generated missions have feasible spawns/routes and can complete. Custom scores must be distinguishable from standardized records.",
@@ -988,7 +1052,8 @@
       "evidence": [
         "tests/upgrade40-simulation.test.js",
         "tests/upgrade40-authority.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Same preset played on separate physical devices and completion of generated sorties"
@@ -996,12 +1061,12 @@
       "delta": "Versioned template/location/weather/seed/budget presets, client/server validation, deterministic feasible routes and separate custom records",
       "acceptance_scope": "Automated checks cover logic/integration only. Same preset played on separate physical devices and completion of generated sorties",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F31",
       "title": "A deployed, monitored multiplayer match service.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope server_authority + multiplayer_client",
+      "owner": "integrated by root; original specialist scope server_authority + multiplayer_client",
       "status": "blocked",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Productionize the existing WebSocket backend with secure endpoint configuration, health/readiness, client/server protocol compatibility, room lifecycle limits, connection/message rate limits and recoverable error reporting. Use a measured hosting design for continuous simulation. Start with one owner/worker per room; define routing if scaling. Support four-person co-op and retain the existing supported competitive capacity up to eight players.\n\nAcceptance: Run an external four-player session across at least two real networks, plus an eight-client capacity/soak scenario. Record connection success, server tick performance, bandwidth, room cleanup and errors. Frontend and backend release versions must be compatible. Never infer multiplayer health from the static website loading.",
@@ -1023,7 +1088,12 @@
         "tests/multiplayer-socket.test.js",
         "tests/integration.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-network-soak.json"
+        "evidence/upgrade40/qa-network-soak.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/network.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/ci-network.json"
       ],
       "blockers": [
         "Authorized continuous WSS worker not provisioned; four humans/two real networks not tested"
@@ -1031,12 +1101,12 @@
       "delta": "Protocol-2 continuous worker, health/readiness, rate/room limits, CPU/tick/bandwidth telemetry and deployment recipe",
       "acceptance_scope": "Automated checks cover logic/integration only. Authorized continuous WSS worker not provisioned; four humans/two real networks not tested",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F32",
       "title": "Authoritative movement, weapons and mission state.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope server_authority + multiplayer_client",
+      "owner": "integrated by root; original specialist scope server_authority + multiplayer_client",
       "status": "verified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Replace trust in client final movement telemetry with sequenced intentions processed through shared, testable simulation. Server authority covers movement bounds, collision-relevant state, cooldowns, ammunition, lock acquisition, repairs, objectives and rewards. Preserve immediate local response through prediction. Extract pure simulation/state from rendering and browser globals. Define deterministic seeds and versioned protocol messages.\n\nAcceptance: Test legitimate fast manoeuvres and attempts to submit teleporting positions, impossible turns, repeated fire/repair, invalid targets and forged damage/rewards. The server rejects invalid actions without destabilizing honest clients. Local predicted state can be reconciled from a full authoritative state, including velocity and angular/system state.",
@@ -1057,18 +1127,23 @@
         "tests/integration.test.js",
         "tests/multiplayer.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-network-soak.json"
+        "evidence/upgrade40/qa-network-soak.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/network.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/ci-network.json"
       ],
       "blockers": [],
       "delta": "Sequenced intents, full-state simulation/prediction, authority over movement/collision/ammo/lock/repair/objectives/rewards",
       "acceptance_scope": "Automated authority acceptance passed; external release interaction is a separate F31 gate",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F33",
       "title": "Complete prediction, reconciliation and network interpolation.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope server_authority + multiplayer_client",
+      "owner": "integrated by root; original specialist scope server_authority + multiplayer_client",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Wire actual input sequence acknowledgements, server time/ticks, unacknowledged-input replay, adaptive remote interpolation and bounded extrapolation. Add conservative, bounded lag compensation where appropriate. Handle stale epochs after reconnect, backpressure and excessive outbound queues. Choose simulation and snapshot rates from evidence; keep rendering independent. Account for WebSocket/TCP stalls rather than assuming UDP-style message loss semantics.\n\nAcceptance: Test 50/100/180 ms latency, jitter, brief interruption and network-level loss/TCP stalls. Measure correction frequency/distance, responsiveness and hit consistency. Verify respawn transitions and full-state reconciliation. Comments, unused prediction buffers or smooth remote sprites alone do not satisfy this feature.",
@@ -1087,7 +1162,9 @@
         "tests/upgrade40-network.test.js",
         "tests/upgrade40-authority.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-network-soak.json"
+        "evidence/upgrade40/qa-network-soak.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/ci-network.json"
       ],
       "blockers": [
         "Actual network-level loss and rendered hit/latency feel not tested; application-delay 50/100/180 ms tests and soak passed"
@@ -1095,12 +1172,12 @@
       "delta": "Actual ack/epoch replay, full-state rollback, adaptive Hermite interpolation, bounded history/lag compensation and TCP queues",
       "acceptance_scope": "Automated checks cover logic/integration only. Actual network-level loss and rendered hit/latency feel not tested; application-delay 50/100/180 ms tests and soak passed",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F34",
       "title": "Invite links and a persistent friends party.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope server_authority + multiplayer_client",
+      "owner": "integrated by root; original specialist scope server_authority + multiplayer_client",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Extend existing room codes with copyable invite links/QR, guest callsigns, a clear roster and party continuity across matches. Add mode/map voting, readiness/loading state and proper cancel/back flow. Handle full, expired, incompatible or locked rooms. Validate guest names and room access; preserve host-only actions where appropriate.\n\nAcceptance: A friend opens an invite on another device, identifies themselves, joins the correct party and enters the same mission. After a match, everyone can vote/rematch without another invite. Late clicks or roster changes during countdown do not strand players or start an invalid team configuration.",
@@ -1120,7 +1197,12 @@
         "tests/upgrade40-network.test.js",
         "tests/upgrade40-authority.test.js",
         "tests/multiplayer-socket.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/browser-c59.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Friend opens invite on second device; actual party continuity across externally hosted matches"
@@ -1128,12 +1210,12 @@
       "delta": "Invite links/QR, callsigns, party/vote/rematch continuity, loaded/ready gating and countdown cancellation",
       "acceptance_scope": "Automated checks cover logic/integration only. Friend opens invite on second device; actual party continuity across externally hosted matches",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F35",
       "title": "Resume the same match after disconnection.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope server_authority + multiplayer_client",
+      "owner": "integrated by root; original specialist scope server_authority + multiplayer_client",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Use unguessable short-lived resume credentials, a defined reservation/grace period and server-owned player identity. Restore the same seat, score, aircraft, loadout and current match state. Define the aircraft's behaviour while disconnected and ensure PvP disconnection provides no invulnerability or reset advantage. Preserve/reassign lobby leadership and make expiry understandable.\n\nAcceptance: Interrupt connectivity for ten seconds, recover and resume the same valid player without duplicate entities or rewards. Test grace expiry, stolen/invalid token attempts, repeated reconnect and lobby leader departure. Test returning during a phase transition, while damaged and after death. A “connection restored; start a new match” message is not completion.",
@@ -1155,7 +1237,10 @@
         "tests/upgrade40-authority.test.js",
         "tests/multiplayer-socket.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-network-soak.json"
+        "evidence/upgrade40/qa-network-soak.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json",
+        "evidence/pending-completion/ci-network.json"
       ],
       "blockers": [
         "Ten-second scripted socket interruption passed; external phase/death/host-departure human sessions pending"
@@ -1163,12 +1248,12 @@
       "delta": "Private rotated resume credential, 45s reservation, same damaged player/score, host election and explicit expiry",
       "acceptance_scope": "Automated checks cover logic/integration only. Ten-second scripted socket interruption passed; external phase/death/host-departure human sessions pending",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F36",
       "title": "Genuine two-to-four-player Open Skies co-op.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope server_authority + multiplayer_client",
+      "owner": "integrated by root; original specialist scope server_authority + multiplayer_client",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Move cooperative encounter state, AI decisions, damage, phases, objectives and rewards under one server authority. Replace appropriate squad slots with human players and use AI for eligible empty slots. Scale objectives/enemy budgets within declared limits. Include synchronized briefing, orders/pings, mission progress, shared debrief and rematch. A player's menu must not pause the shared simulation.\n\nAcceptance: Two, three and four players complete a real mission with matching world state and outcomes. Test late joining/resuming, empty AI slots, wingman loss, leader departure, player death and simultaneous final kills. Rewards are applied once. Mission state and AI are not separately simulated into contradictory outcomes by each browser.",
@@ -1191,7 +1276,9 @@
       "evidence": [
         "tests/upgrade40-simulation.test.js",
         "tests/upgrade40-authority.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/browser.json"
       ],
       "blockers": [
         "Two/three/four actual humans must complete missions; two-network host/late-join/death scenarios pending"
@@ -1199,12 +1286,12 @@
       "delta": "One authoritative 2–4-player encounter, AI-filled slots, shared phases/objectives/results/reward ledger and rematch",
       "acceptance_scope": "Automated checks cover logic/integration only. Two/three/four actual humans must complete missions; two-network host/late-join/death scenarios pending",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F37",
       "title": "Objective-based competitive Air Superiority.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope server_authority + multiplayer_client",
+      "owner": "integrated by root; original specialist scope server_authority + multiplayer_client",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Add one complete zone-control mode to the existing competitive modes. Define contested/captured state, scoring intervals, match duration, tie-break and visible objective feedback. Enforce balanced aircraft/loadout rules. Improve spawn selection using enemy proximity/line of sight and existing protection rules; remove protection when attacking as intended.\n\nAcceptance: Play balanced team matches and edge cases with uneven/disconnected teams. Objective control meaningfully affects victory. All clients agree on scores/results. Test spawn-camping scenarios, protected-target scoring and malicious zone/progression claims. Preserve existing duel/team modes.",
@@ -1225,7 +1312,13 @@
         "tests/multiplayer.test.js",
         "tests/upgrade40-network.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-network-soak.json"
+        "evidence/upgrade40/qa-network-soak.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/network.json",
+        "evidence/pending-completion/browser-c59.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/ci-network.json"
       ],
       "blockers": [
         "Balanced real team match, malicious-zone review in actual deployment and spawn-camp playtest"
@@ -1233,12 +1326,12 @@
       "delta": "Zone control with altitude/capture/contest/scoring/tie rules, fair airframes and safer spawns",
       "acceptance_scope": "Automated checks cover logic/integration only. Balanced real team match, malicious-zone review in actual deployment and spawn-camp playtest",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F38",
       "title": "Meaningful team pings and optional voice.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope server_authority + multiplayer_client",
+      "owner": "integrated by root; original specialist scope server_authority + multiplayer_client",
       "status": "blocked",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Extend quick comms with validated target/location pings, team visibility, expiry, acknowledgement and anti-spam behaviour. Add opt-in voice with push-to-talk, mute/deafen, per-user volume, microphone state and appropriate echo/noise handling. Implement authenticated signalling and STUN/TURN support or a permitted managed equivalent; use short-lived server-issued relay credentials. Reuse party membership for channel authorization.\n\nAcceptance: Pings refer to the correct live object/location and remain useful without voice. Test voice across different networks, microphone denial, device changes, muting, leaving and reconnecting. Leaving a room tears down its audio tracks and peer connections. Verify a relay-required path. If required relay provisioning is unavailable, voice remains explicitly blocked and cannot be counted as fully delivered.",
@@ -1259,7 +1352,8 @@
         "tests/upgrade40-network.test.js",
         "tests/upgrade40-authority.test.js",
         "tests/security.test.js",
-        "evidence/upgrade40/candidate/tests.log"
+        "evidence/upgrade40/candidate/tests.log",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "TURN resource/secret not provisioned; real microphone/output changes and relay-required cross-network voice are blocked"
@@ -1267,12 +1361,12 @@
       "delta": "Team-authorized expiring target/location pings; opt-in WebRTC PTT/mute/deafen/per-user gain and short-lived TURN credentials",
       "acceptance_scope": "Automated checks cover logic/integration only. TURN resource/secret not provisioned; real microphone/output changes and relay-required cross-network voice are blocked",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F39",
       "title": "Packaged same-Wi-Fi/LAN play.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope verification_lan",
+      "owner": "integrated by root; original specialist scope verification_lan",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Provide a straightforward Windows-friendly local launcher plus documented developer commands. Serve the built game and compatible multiplayer backend locally, advertise an actual LAN address/QR, bundle needed offline assets and provide connection diagnostics. Use correct bind addresses and endpoint selection. Clearly distinguish localhost from an address another device can reach. Respect secure-context requirements for optional browser capabilities.\n\nAcceptance: After initial package setup, disable internet and join a real match from two separate devices on a permitted local network. Verify all essential assets load locally, state stays synchronized and closing the launcher stops the service cleanly. Explain needed firewall/network steps without requiring public port forwarding or disabled security. Do not count two localhost tabs as the two-device LAN test.",
@@ -1293,7 +1387,12 @@
         "tests/lan.test.js",
         "tests/upgrade40-network.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-lan.json"
+        "evidence/upgrade40/qa-lan.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/lan.json",
+        "evidence/pending-completion/ci-tests.log",
+        "evidence/pending-completion/ci-lan.json"
       ],
       "blockers": [
         "Two physical LAN devices with internet disconnected and Windows launcher/firewall test pending; Node 22+ initially required"
@@ -1301,12 +1400,12 @@
       "delta": "Standalone bundled game/server/QR, Windows launcher, actual adapter links, hash manifest and diagnostics",
       "acceptance_scope": "Automated checks cover logic/integration only. Two physical LAN devices with internet disconnected and Windows launcher/firewall test pending; Node 22+ initially required",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     },
     {
       "id": "F40",
       "title": "Playable two-player split-screen on one computer.",
-      "owner": "integrated by root; original specialist scope integrated by root; original specialist scope root",
+      "owner": "integrated by root; original specialist scope root",
       "status": "implemented/unverified",
       "upstream_base": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
       "requested": "Build: Implement independent local player/seat state, input ownership, cameras, HUDs and per-player menus over the shared world. Support keyboard plus controller and two controllers. Start with complete Free Flight and Open Skies co-op. Use suitable viewport/scissor rendering or another measured approach, sensible lower-cost effects and correct shared-resource ownership. Eliminate assumptions that all gameplay must address one global player or one set of HUD IDs.\n\nAcceptance: Two humans can independently steer, aim, fire, use defensive actions and read their own objectives/HUD. Test controller unplug/replug, focus changes, resizing, one player dying, restart and entering/leaving local co-op. One player's menu/action must not accidentally control the other. Benchmark actual split-screen rendering and document supported hardware/input requirements.",
@@ -1330,7 +1429,10 @@
         "tests/upgrade40-simulation.test.js",
         "tests/ui.test.js",
         "evidence/upgrade40/candidate/tests.log",
-        "evidence/upgrade40/qa-candidate-browser/acceptance.json"
+        "evidence/upgrade40/qa-candidate-browser/acceptance.json",
+        "evidence/pending-completion/tests.log",
+        "evidence/pending-completion/README.md",
+        "evidence/pending-completion/ci-tests.log"
       ],
       "blockers": [
         "Two physical humans/controllers, resize/focus/unplug/respawn and actual split-screen FPS pending"
@@ -1338,12 +1440,12 @@
       "delta": "Two independent human seats, keyboard+pad / two pads, cameras/HUD/menus, Free Flight/Open Skies and shared-resource scissor rendering",
       "acceptance_scope": "Automated checks cover logic/integration only. Two physical humans/controllers, resize/focus/unplug/respawn and actual split-screen FPS pending",
       "version": "2.0.0-rc.1 / protocol 2",
-      "commit": "Source file SHA-256 manifest: evidence/upgrade40/source-manifest.json; review branch feature/skybreak-40-upgrade"
+      "commit": "Review branch feature/skybreak-40-upgrade; runtime 2dac955028de20fd9245e8c31b5d982e59ab16d4; exact working build: evidence/pending-completion/source-manifest.json"
     }
   ],
   "version": "2.0.0-rc.1",
   "protocol": 2,
-  "updated": "2026-09-28",
+  "updated": "2026-09-29",
   "release_status": "not_released",
   "status_legend": {
     "verified": "Feature-specific automated acceptance supported in the named environment; does not imply production release.",

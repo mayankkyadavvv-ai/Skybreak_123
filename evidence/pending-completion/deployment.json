@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-09-29T06:24:47.527319+00:00",
+  "deployment": "dpl_L47MV5cC5DCtjrAPsbhhTYzkBH58",
+  "project": "skybreak",
+  "target": "preview",
+  "status": "READY",
+  "commit": "2dac955028de20fd9245e8c31b5d982e59ab16d4",
+  "url": "https://skybreak-d6sz7jh10-mayankkyadavvv-3062.vercel.app",
+  "buildSeconds": 47.921,
+  "authenticatedFetch": {
+    "/": 200,
+    "/build-manifest.json": 302
+  },
+  "note": "Authenticated root HTTP 200 for this READY preview. Manifest fetch met existing SSO protection. Browser acceptance runs on the matching built local service, not this protected Vercel endpoint; public match/voice service is not configured. Protection remains enabled. Earlier c59 source comparison retained in deployment-c59.json. Temporary share credentials are deliberately not recorded.",
+  "productionPromoted": false
+}

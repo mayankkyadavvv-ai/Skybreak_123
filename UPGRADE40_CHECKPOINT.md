@@ -1,4 +1,4 @@
-# Upgrade 40 checkpoint — 2026-09-28
+# Upgrade 40 checkpoint — updated 2026-09-29
 
 Candidate: **2.0.0-rc.1**, multiplayer protocol **2**. Upstream baseline: `ae1fedbb9ae2a790832e0415029f2044ae77562d`. Working/review branch: `feature/skybreak-40-upgrade` in `mayankkyadavvv-ai/Skybreak_123`.
 
@@ -15,7 +15,7 @@ The supplied specification is retained verbatim in `spec/UPGRADE40.md`; its SHA-
 
 ## Remaining concrete gates
 
-1. Run the supplied browser acceptance harness on a permitted WebGL browser; inspect graphics/UI screenshots and complete actual beginner/device/split-screen sessions. Normal browser-install routes failed in this workspace; zero screenshots or GPU benchmark claims are made.
+1. Collect actual beginner/device/split-screen sessions. CI browser installation now works; screenshot inspection exposed and drove cockpit/HUD/touch corrections. Final runtime browser verification is recorded below. Software rendering does not establish hardware GPU performance.
 2. Provision/connect an authorized continuous protocol-2 WSS worker and short-lived TURN credentials through approved resources/spending scope. No new paid resource has been purchased. Deployment files and exact configuration are in `UPGRADE40_RELEASE.md`.
 3. Collect four-person/two-network co-op and relay-required voice evidence, plus two-physical-device offline LAN. Automated clients cannot replace these gates.
 4. Resolve findings, update the matrix, then promote the exact tested frontend/backend pair to the existing Vercel project and run the recorded release/rollback procedures.
@@ -31,3 +31,17 @@ The candidate is committed locally and is being published through the approved b
 ## Post-audit fixes — 2026-09-29 IST
 
 The earlier 192-test candidate evidence above is retained as historical evidence. The follow-up fixes all six reported code flaws, the newly exposed operation terminal-event routing bug, and updates Open Skies steering and default missile fire to E (Q/D yaw). Full suite: **206/206 pass**, including 14 new regression tests. See `FLAW_FIXES.md` and `evidence/flaw-fixes/`. These automated fixes do not satisfy the outstanding graphics/device, public WSS worker, TURN or production release gates.
+
+## Current continuation point — 29 September 2026
+
+Runtime remote commit: `2dac955028de20fd9245e8c31b5d982e59ab16d4`; local commit: `6f64e1496e8d47b861c1c531cdc91d63226aa35b`; identical tree: `206bef7ec19084a6ac7d9ab50ef768c81525467e`. Local history differs from the external repository. Preserve the current remote parent; never force-push the synthetic local history.
+
+Completed after the audit: fresh build/package provenance, locked browser tooling and GitHub acceptance CI, offline Friends sortie/restart lifecycle, cockpit time-reset and instrument occlusion, responsive weapons panel and duplicate radio subtitles; actual touch-layout Save/Reset, non-overlapping landscape controls and complete online mission metadata. **217 tests pass; build/static validation pass; 58 current packaged-LAN checks pass.** Evidence and exact source hashes are in `evidence/pending-completion/`.
+
+Initial CI run `36521031893` failed its browser Settings wait; c59 run `36525244904` passed the full browser path. c72 run `36528198051` exposed a harness expectation when a live match ended during reload. Failed reports are retained with original revisions. **Final runtime run `36530102137` passed both jobs: 217 tests, build/LAN/network/Docker, 51 browser checks plus eight party checks, 46 screenshots, zero browser errors.** Reload restored the same in-flight identity/epoch. CI and local source/assets digests agree exactly. Renderer is SwiftShader software, not hardware FPS acceptance. See `evidence/pending-completion/ci-summary.json` and `browser.json`.
+
+Final documentation/evidence handoff is a separate commit with `[skip actions]`, no build inputs or test/workflow changes. Preserve the successful runtime identity above; do not present the docs revision as a separate browser run.
+
+Preview for this runtime: `https://skybreak-d6sz7jh10-mayankkyadavvv-3062.vercel.app`, deployment `dpl_L47MV5cC5DCtjrAPsbhhTYzkBH58`, READY, authenticated root HTTP 200. Production remains the deployment listed above. Deployment protection is retained. PR #1 is draft; `UPGRADE40_RELEASE.md` lists the required promotion gates.
+
+No persistent local dev or match server is required: packaged and CI verification owns and closes its test services. Use `npm run build`, `npm run verify:browser-build` and the package guide to reproduce. Remaining IDs retain the matrix's honest states: F31/F38 require public services; all other unverified features need their listed hardware/human or scenario acceptance. Next steps require an authorized continuous WSS worker and short-lived TURN configuration, then the listed external human/device acceptance. No known automated failure remains in the final runtime run. Do not mark those external gates complete from CI screenshots or scripted clients.

@@ -15,7 +15,7 @@ Vercel Functions currently support WebSockets in beta, but connections have dura
 
 ## Prepared worker configuration
 
-`Dockerfile.match` is provided; its container build has not been run here. The Node entry point itself is exercised by the real-socket soak and LAN package checks.
+`Dockerfile.match` builds successfully in GitHub Actions run `36530102137` for runtime `2dac955028de20fd9245e8c31b5d982e59ab16d4`. The Node entry point is exercised by the real-socket soak and LAN package checks. This verifies packaging, not a public WSS deployment.
 
 ```sh
 docker build -f Dockerfile.match -t skybreak-match:2.0.0-rc.1 .

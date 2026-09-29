@@ -1,0 +1,1714 @@
+{
+  "label": "ci",
+  "origin": "http://127.0.0.1:36785",
+  "started": "2026-09-29T05:52:59.404Z",
+  "status": "failed",
+  "revision": "a361ed1adc397afa9f2beb72b838892072d46a3a",
+  "environment": {
+    "os": "linux 6.17.0-1022-azure",
+    "cpu": "AMD EPYC 7763 64-Core Processor",
+    "logicalCPUs": 4,
+    "memoryGiB": 16,
+    "node": "v24.21.0"
+  },
+  "configuration": {
+    "preset": "low",
+    "seed": 4422,
+    "dpr": 1,
+    "quick": true,
+    "sampleSeconds": 0,
+    "warmUpSeconds": 5,
+    "emulatedMobile": true
+  },
+  "console": [
+    {
+      "viewport": "1366x768",
+      "type": "warning",
+      "text": "[.WebGL-0xddc0013d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "viewport": "1366x768",
+      "type": "warning",
+      "text": "[.WebGL-0xddc0013d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "viewport": "1366x768",
+      "type": "warning",
+      "text": "[.WebGL-0xddc0013d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "viewport": "1366x768",
+      "type": "warning",
+      "text": "[.WebGL-0xddc0013d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ],
+  "errors": [
+    "Browser create/join/ready/flight/reload-resume/leave journey"
+  ],
+  "checks": [
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 1366,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "visible": true,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Default HUD panels leave touch targets unobscured",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "overlaps": []
+      }
+    },
+    {
+      "label": "Arrow Up raises nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "pitchStart": 0,
+        "pitchUp": 0.06358205163880365
+      }
+    },
+    {
+      "label": "Arrow Down lowers nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "pitchUp": 0.06358205163880365,
+        "pitchDown": 0.03794641829121439
+      }
+    },
+    {
+      "label": "Throttle increases and holds on release",
+      "passed": true,
+      "detail": {
+        "throttleStart": 0.58,
+        "throttleHold": 0.635,
+        "throttleRelease": 0.635
+      }
+    },
+    {
+      "label": "E fires exactly one locked missile, including repeat keydown",
+      "passed": true,
+      "detail": {
+        "missileStart": {
+          "ammo": 6,
+          "shots": 0
+        },
+        "missileEnd": {
+          "ammo": 5,
+          "shots": 1
+        }
+      }
+    },
+    {
+      "label": "E cannot fire through a pause menu",
+      "passed": true
+    },
+    {
+      "label": "Friends offline Ace Duel starts the selected mode",
+      "passed": true
+    },
+    {
+      "label": "Offline Ace Duel Restart retains one hostile",
+      "passed": true
+    },
+    {
+      "label": "Friends Free Flight and Restart cannot restore the previous battle",
+      "passed": true
+    },
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 1920,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "visible": true,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Default HUD panels leave touch targets unobscured",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "overlaps": []
+      }
+    },
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 1024,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "visible": true,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Default HUD panels leave touch targets unobscured",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "overlaps": []
+      }
+    },
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 390,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "visible": true,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Default HUD panels leave touch targets unobscured",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "overlaps": []
+      }
+    },
+    {
+      "label": "Touch editor Save changes the actual flight buttons",
+      "passed": true,
+      "detail": {
+        "custom": "true",
+        "left": "320px"
+      }
+    },
+    {
+      "label": "Touch editor Reset and Save restore responsive controls",
+      "passed": true
+    },
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 844,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "visible": false,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Default HUD panels leave touch targets unobscured",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "overlaps": []
+      }
+    },
+    {
+      "label": "Public page /about loads",
+      "passed": true
+    },
+    {
+      "label": "Public page /help loads",
+      "passed": true
+    },
+    {
+      "label": "Public page /privacy loads",
+      "passed": true
+    },
+    {
+      "label": "Public page /terms loads",
+      "passed": true
+    },
+    {
+      "label": "Public page /storage loads",
+      "passed": true
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "timeToMenuMs": 10238,
+        "documentOverflow": false,
+        "bodyTextLength": 883,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "timeToMenuMs": 10238,
+        "documentOverflow": false,
+        "bodyTextLength": 883,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 20,
+            "y": 210,
+            "width": 235,
+            "height": 275.5625
+          },
+          {
+            "selector": "#battle-coach",
+            "x": 1096,
+            "y": 265,
+            "width": 250,
+            "height": 176.5
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 1366,
+            "height": 768
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 33,
+            "y": 428.5625,
+            "width": 209,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "timeToMenuMs": 11950,
+        "documentOverflow": false,
+        "bodyTextLength": 883,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "timeToMenuMs": 11950,
+        "documentOverflow": false,
+        "bodyTextLength": 883,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 28,
+            "y": 210,
+            "width": 235,
+            "height": 275.5625
+          },
+          {
+            "selector": "#battle-coach",
+            "x": 1642,
+            "y": 280,
+            "width": 250,
+            "height": 176.5
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 1920,
+            "height": 1080
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 41,
+            "y": 428.5625,
+            "width": 209,
+            "height": 44
+          },
+          {
+            "selector": "#radio",
+            "x": 680,
+            "y": 759,
+            "width": 560,
+            "height": 51
+          }
+        ]
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "timeToMenuMs": 7728,
+        "documentOverflow": false,
+        "bodyTextLength": 875,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "timeToMenuMs": 7728,
+        "documentOverflow": false,
+        "bodyTextLength": 875,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 20,
+            "y": 210,
+            "width": 235,
+            "height": 210
+          },
+          {
+            "selector": "#battle-coach",
+            "x": 754,
+            "y": 265,
+            "width": 250,
+            "height": 160
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 1024,
+            "height": 600
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 33,
+            "y": 428.5625,
+            "width": 209,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "timeToMenuMs": 5915,
+        "documentOverflow": false,
+        "bodyTextLength": 663,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "timeToMenuMs": 5915,
+        "documentOverflow": false,
+        "bodyTextLength": 663,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 10,
+            "y": 140,
+            "width": 140,
+            "height": 147.140625
+          },
+          {
+            "selector": "#battle-coach",
+            "x": 212.3125,
+            "y": 290,
+            "width": 167.6875,
+            "height": 140
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 17,
+            "y": 236.140625,
+            "width": 126,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "timeToMenuMs": 6161,
+        "documentOverflow": false,
+        "bodyTextLength": 728,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "timeToMenuMs": 6161,
+        "documentOverflow": false,
+        "bodyTextLength": 728,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 10,
+            "y": 76,
+            "width": 165,
+            "height": 146
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 844,
+            "height": 390
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 19,
+            "y": 208.28125,
+            "width": 147,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "label": "Browser create/join/ready/flight/reload-resume/leave journey",
+      "passed": false,
+      "detail": {
+        "kind": "Two automated browser clients, one local service",
+        "checks": [
+          {
+            "label": "Create and join controls put both browsers in the same party",
+            "passed": true
+          },
+          {
+            "label": "Online mission card contains real room metadata and no solo 0/0 objective",
+            "passed": true
+          },
+          {
+            "label": "Both rendered clients share the authoritative match epoch",
+            "passed": true
+          },
+          {
+            "label": "Host receives the guest identity in the authoritative roster",
+            "passed": true
+          },
+          {
+            "label": "Arrow Up steers the predicted aircraft in the live shared match",
+            "passed": true
+          },
+          {
+            "label": "Active online pilot menu has no solo Restart action",
+            "passed": true
+          }
+        ],
+        "captures": [
+          "party-host.png",
+          "party-guest.png",
+          "party-failure-0.png",
+          "party-failure-1.png"
+        ],
+        "errors": [
+          "page.waitForFunction: Timeout 30000ms exceeded."
+        ],
+        "status": "failed"
+      }
+    }
+  ],
+  "layouts": [
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "timeToMenuMs": 10238,
+      "documentOverflow": false,
+      "bodyTextLength": 883,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 20,
+          "y": 210,
+          "width": 235,
+          "height": 275.5625
+        },
+        {
+          "selector": "#battle-coach",
+          "x": 1096,
+          "y": 265,
+          "width": 250,
+          "height": 176.5
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 1366,
+          "height": 768
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 33,
+          "y": 428.5625,
+          "width": 209,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "timeToMenuMs": 11950,
+      "documentOverflow": false,
+      "bodyTextLength": 883,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 28,
+          "y": 210,
+          "width": 235,
+          "height": 275.5625
+        },
+        {
+          "selector": "#battle-coach",
+          "x": 1642,
+          "y": 280,
+          "width": 250,
+          "height": 176.5
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 41,
+          "y": 428.5625,
+          "width": 209,
+          "height": 44
+        },
+        {
+          "selector": "#radio",
+          "x": 680,
+          "y": 759,
+          "width": 560,
+          "height": 51
+        }
+      ]
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "timeToMenuMs": 7728,
+      "documentOverflow": false,
+      "bodyTextLength": 875,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 20,
+          "y": 210,
+          "width": 235,
+          "height": 210
+        },
+        {
+          "selector": "#battle-coach",
+          "x": 754,
+          "y": 265,
+          "width": 250,
+          "height": 160
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 600
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 33,
+          "y": 428.5625,
+          "width": 209,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "timeToMenuMs": 5915,
+      "documentOverflow": false,
+      "bodyTextLength": 663,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 10,
+          "y": 140,
+          "width": 140,
+          "height": 147.140625
+        },
+        {
+          "selector": "#battle-coach",
+          "x": 212.3125,
+          "y": 290,
+          "width": 167.6875,
+          "height": 140
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 17,
+          "y": 236.140625,
+          "width": 126,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "timeToMenuMs": 6161,
+      "documentOverflow": false,
+      "bodyTextLength": 728,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 10,
+          "y": 76,
+          "width": 165,
+          "height": 146
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 844,
+          "height": 390
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 19,
+          "y": 208.28125,
+          "width": 147,
+          "height": 44
+        }
+      ]
+    }
+  ],
+  "captures": [
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "menu",
+      "path": "menu-1366x768.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "settings",
+      "path": "settings-1366x768.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "hangar",
+      "path": "hangar-1366x768.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "open-skies",
+      "path": "open-skies-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "orders",
+      "path": "orders-1366x768.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "chase",
+      "path": "chase-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "cockpit",
+      "path": "cockpit-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "cinematic",
+      "path": "cinematic-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "lighting-midday-clear",
+      "path": "lighting-midday-clear-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "lighting-sunset-clear",
+      "path": "lighting-sunset-clear-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "sunset",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "lighting-midday-cloudy",
+      "path": "lighting-midday-cloudy-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "cloudy",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "menu",
+      "path": "menu-1920x1080.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "settings",
+      "path": "settings-1920x1080.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "hangar",
+      "path": "hangar-1920x1080.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "open-skies",
+      "path": "open-skies-1920x1080.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "orders",
+      "path": "orders-1920x1080.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "chase",
+      "path": "chase-1920x1080.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "cockpit",
+      "path": "cockpit-1920x1080.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "cinematic",
+      "path": "cinematic-1920x1080.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "menu",
+      "path": "menu-1024x600.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "settings",
+      "path": "settings-1024x600.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "hangar",
+      "path": "hangar-1024x600.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "open-skies",
+      "path": "open-skies-1024x600.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "orders",
+      "path": "orders-1024x600.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "chase",
+      "path": "chase-1024x600.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "cockpit",
+      "path": "cockpit-1024x600.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "cinematic",
+      "path": "cinematic-1024x600.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "menu",
+      "path": "menu-390x844.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "settings",
+      "path": "settings-390x844.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "hangar",
+      "path": "hangar-390x844.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "open-skies",
+      "path": "open-skies-390x844.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "orders",
+      "path": "orders-390x844.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "chase",
+      "path": "chase-390x844.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "cockpit",
+      "path": "cockpit-390x844.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "cinematic",
+      "path": "cinematic-390x844.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "custom-touch",
+      "path": "custom-touch-390x844.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "menu",
+      "path": "menu-844x390.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "settings",
+      "path": "settings-844x390.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "hangar",
+      "path": "hangar-844x390.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "open-skies",
+      "path": "open-skies-844x390.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "orders",
+      "path": "orders-844x390.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "chase",
+      "path": "chase-844x390.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "cockpit",
+      "path": "cockpit-844x390.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "cinematic",
+      "path": "cinematic-844x390.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    }
+  ],
+  "samples": [],
+  "restarts": [],
+  "unverified": [
+    "human screenshot review and visual-readability judgement",
+    "physical laptop/mobile GPU performance",
+    "physical controller and touchscreen feel",
+    "audible audio and microphone capture",
+    "two-network human co-op/PvP session",
+    "two physical LAN devices with internet disconnected",
+    "two humans using actual split-screen controllers",
+    "Hardware-GPU benchmark: current WebGL renderer is software.",
+    "Hardware-GPU benchmark: current WebGL renderer is software.",
+    "Hardware-GPU benchmark: current WebGL renderer is software.",
+    "Hardware-GPU benchmark: current WebGL renderer is software.",
+    "Hardware-GPU benchmark: current WebGL renderer is software."
+  ],
+  "launchErrors": [],
+  "browserLaunch": {
+    "channel": "chrome"
+  },
+  "build": {
+    "sourceRevision": "a361ed1adc397afa9f2beb72b838892072d46a3a",
+    "sourceDigest": "8ba034e5be5f15d720e8c8101f2fc20005fd6cb07033a0c61da8d64432d7e9ba",
+    "assetsDigest": "618fbd5af4bd20eb00044f87c500bd365df83caee116c2ce5b36a83855c858b7"
+  },
+  "renderer": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "devicePixelRatio": 1,
+    "contextLost": false,
+    "software": true
+  },
+  "publicPages": [
+    {
+      "route": "/about",
+      "status": 200
+    },
+    {
+      "route": "/help",
+      "status": 200
+    },
+    {
+      "route": "/privacy",
+      "status": 200
+    },
+    {
+      "route": "/terms",
+      "status": 200
+    },
+    {
+      "route": "/storage",
+      "status": 200
+    }
+  ],
+  "partyJourney": {
+    "kind": "Two automated browser clients, one local service",
+    "checks": [
+      {
+        "label": "Create and join controls put both browsers in the same party",
+        "passed": true
+      },
+      {
+        "label": "Online mission card contains real room metadata and no solo 0/0 objective",
+        "passed": true
+      },
+      {
+        "label": "Both rendered clients share the authoritative match epoch",
+        "passed": true
+      },
+      {
+        "label": "Host receives the guest identity in the authoritative roster",
+        "passed": true
+      },
+      {
+        "label": "Arrow Up steers the predicted aircraft in the live shared match",
+        "passed": true
+      },
+      {
+        "label": "Active online pilot menu has no solo Restart action",
+        "passed": true
+      }
+    ],
+    "captures": [
+      "party-host.png",
+      "party-guest.png",
+      "party-failure-0.png",
+      "party-failure-1.png"
+    ],
+    "errors": [
+      "page.waitForFunction: Timeout 30000ms exceeded."
+    ],
+    "status": "failed"
+  },
+  "finished": "2026-09-29T06:07:14.455Z"
+}

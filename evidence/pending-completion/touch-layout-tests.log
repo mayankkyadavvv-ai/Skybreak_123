@@ -1,0 +1,10 @@
+✔ saved custom touch controls stay in the viewport and do not overlap after resize or scale (38.200524ms)
+✔ touch settings change actual controls, survive normalization and reset back to responsive defaults (20.556158ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 673.155726

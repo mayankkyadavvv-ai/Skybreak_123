@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-09-29T05:57:00Z",
+  "deployment": "dpl_4SL9ozaMSokyZw3jzZWazxEGjHsH",
+  "project": "skybreak",
+  "target": "preview",
+  "status": "READY",
+  "commit": "c72e92ce3da1c3c8d0487307544230cf78a2a71c",
+  "url": "https://skybreak-2ql06fn07-mayankkyadavvv-3062.vercel.app",
+  "buildSeconds": 47.987,
+  "authenticatedFetch": {
+    "/": 200
+  },
+  "note": "Authenticated root HTTP 200 for the READY preview. Browser acceptance is on the matching built local service, not this protected Vercel endpoint; public match/voice service is not configured. Protection remains enabled. Preceding c59 manifest comparison is retained in deployment-c59.json.",
+  "productionPromoted": false
+}

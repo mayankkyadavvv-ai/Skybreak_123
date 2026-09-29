@@ -13,13 +13,13 @@ Baseline known before this assignment: upstream `ae1fedbb9ae2a790832e0415029f204
 Install normal open-source tools once on a permitted machine:
 
 ```sh
-npm install --no-save playwright agent-browser
-npx playwright install chromium
+npm ci
+npx --no-install playwright install chromium
 npm run build
-npm run preview
+npm run verify:browser-build
 ```
 
-After a server starts, use the browser skill's initial verification:
+The wrapper starts the actual built frontend plus local match service and closes both after testing. It also exercises two independent browser sessions through Friends, room creation/join, readiness, flight, reload/resume and leave. For separate interactive inspection after `npm run preview`, the browser skill can use:
 
 ```sh
 npx agent-browser open http://localhost:4173
@@ -106,3 +106,15 @@ During the upgrade, the workspace initially had Playwright libraries but no Chro
 ## Post-audit fixes — 2026-09-29 IST
 
 The earlier 192-test candidate evidence above is retained as historical evidence. The follow-up fixes all six reported code flaws, the newly exposed operation terminal-event routing bug, and updates Open Skies steering and default missile fire to E (Q/D yaw). Full suite: **206/206 pass**, including 14 new regression tests. See `FLAW_FIXES.md` and `evidence/flaw-fixes/`. These automated fixes do not satisfy the outstanding graphics/device, public WSS worker, TURN or production release gates.
+
+## Follow-up evidence — 29 September 2026
+
+Current local suite: **217/217 pass**, zero skipped. Fresh LAN package: **58 checks pass**. Full logs and source/build identity: `evidence/pending-completion/`. The older unavailable-browser record above is historical: GitHub Actions now installs Chromium through its normal secure installer. Local browser installation remains restricted; CI browser evidence is labelled with its actual renderer and environment.
+
+The first CI run passed simulation/build/LAN/Docker and collected a ten-minute, eight-scripted-client network soak. Its browser job collected thirteen real screenshots and a ten-minute **SwiftShader software** frame sample before failing a Settings click's navigation wait. That failure is retained. It exposed cockpit coaming/readout and weapons overflow issues that were fixed in the next runtime candidate; no hardware FPS or human visual-acceptance claim follows from these screenshots.
+
+Normal PR CI checks five rendered layouts, the first viewport's keyboard/weapon/offline-restart flow, touch-layout Save/Reset, two-browser party/reconnect, and a 65-second network sample. It omits repeated per-viewport keyboard tests, resource loops and frame sampling. Use workflow dispatch `long_run=true` for 600-second samples; compare the run's commit/build digest, not a later branch label. Manual full equivalent: `SKYBREAK_QA_QUICK=0 SKYBREAK_QA_SECONDS=600 npm run verify:browser-build`. GitHub artifacts retain reports/screenshots and the runnable LAN ZIP for 14 days. Durable selected reports are committed to `evidence/pending-completion/`.
+
+`npm run build` now writes `dist/build-manifest.json`. Packaging checks current public source inputs and output hashes before bundling the matching server, and the LAN verifier checks the same provenance. Do not copy a historical evidence manifest over a newer build. If a previous package contains unmanaged files, choose a fresh output directory; do not delete unrelated files to bypass the guard.
+
+Final runtime `2dac955028de20fd9245e8c31b5d982e59ab16d4`, workflow `36530102137`: both jobs passed. `evidence/pending-completion/browser.json` has 51 top-level checks and eight party assertions, 44 scene/UI captures and two party captures, zero errors. Five layouts, actual saved touch placement/reset, ↑/↓/E, offline mode/restart, complete online mission labels and same-flight reload/leave passed. Chromium used SwiftShader software WebGL2; this quick run collected no hardware or timed FPS sample. Targeted screenshot review confirmed the cockpit and touch-layout corrections, while dense small-screen combat overlays and real-device feel remain review work. `ci-tests.log`, `ci-build.log`, `ci-lan.json`, `ci-network.json` retain the final independent CI results; local and CI source/assets hashes match. The following documentation/evidence commit changes no build input/test/workflow and skips a redundant Actions run; it is not relabelled as tested executable source.

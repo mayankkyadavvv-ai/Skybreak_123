@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-09-29T06:27:53.247958+00:00",
+  "runtimeHead": "2dac955028de20fd9245e8c31b5d982e59ab16d4",
+  "localRuntimeHead": "6f64e1496e8d47b861c1c531cdc91d63226aa35b",
+  "runtimeTree": "206bef7ec19084a6ac7d9ab50ef768c81525467e",
+  "checkoutMerge": "3d2be3df76b06a5c31eda6ea7a05085d1d91cf07",
+  "run": "https://github.com/mayankkyadavvv-ai/Skybreak_123/actions/runs/36530102137",
+  "runId": 36530102137,
+  "jobs": {
+    "browser": {
+      "id": 109281627637,
+      "conclusion": "success"
+    },
+    "simulation-and-package": {
+      "id": 109281627786,
+      "conclusion": "success"
+    }
+  },
+  "browser": {
+    "checks": 51,
+    "partyChecks": 8,
+    "mainCaptures": 44,
+    "partyCaptures": 2,
+    "resumeOutcome": "same in-flight match",
+    "softwareRenderer": true,
+    "quick": true,
+    "errors": []
+  },
+  "automatedTests": 217,
+  "packagedLanAssertions": 58,
+  "ciLocalSourceDigestMatch": true,
+  "ciLocalAssetsDigestMatch": true,
+  "sourceDigest": "bc2102a58b51a013d896392486d1330e20d690bddfdc92da57da61812882a985",
+  "assetsDigest": "2e1661bdd8dce9fe563c02107c1b7b260abbe5691347cc6eae0baeae52301650",
+  "artifacts": {
+    "browser": {
+      "id": 11016113586,
+      "url": "https://github.com/mayankkyadavvv-ai/Skybreak_123/actions/runs/36530102137/artifacts/11016113586",
+      "zipSha256": "5adf08ef9f5f7ee141c9f71a6daa735226df955c95b1b237cc5c8cd5830b0bd1"
+    },
+    "package": {
+      "id": 11016636146,
+      "url": "https://github.com/mayankkyadavvv-ai/Skybreak_123/actions/runs/36530102137/artifacts/11016636146",
+      "zipSha256": "2c41a0a93b74eddd15f8f5a6652d4d03df2c425e9f2d1b60761819a59de9b3ee"
+    }
+  },
+  "artifactExpires": "2026-10-13",
+  "scope": "Built game and local protocol-2 service in real Chromium on GitHub Linux, SwiftShader software GPU. Emulated mobile, no human players, no physical device or public WSS/TURN acceptance. All reports retain their original revisions."
+}
