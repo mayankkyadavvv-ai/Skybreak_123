@@ -34,6 +34,10 @@ class UI {
     this.toastTime = 0;
     this.selected = FREE_FLIGHT.id;
     this.modalType = null;
+    this.mobileOrientation = 'desktop';
+    this.pendingFlightAction = null;
+    this.orientationPaused = false;
+    this.orientationListenersAttached = false;
     this.borderAlertTimer = 0;
     this.borderAlertData = null;
     this.flightBreadcrumbs = [];
@@ -217,6 +221,14 @@ class UI {
       </div>
 
       <div id="modal-root"></div>
+      <div id="orientation-gate" class="orientation-gate" role="status" aria-live="polite" hidden>
+        <div class="orientation-card">
+          <div class="orientation-phone" aria-hidden="true"><i></i></div>
+          <h2>ROTATE YOUR PHONE</h2>
+          <p>Skybreak flight controls are designed for landscape mode.</p>
+          <span>↻ Turn your phone sideways to continue.</span>
+        </div>
+      </div>
       <div id="toast" role="status" hidden></div>
     `;
 
@@ -228,6 +240,7 @@ class UI {
     this.ctx = this.canvas.getContext("2d");
     this.dom = {};
     root.querySelectorAll("[id]").forEach((x) => (this.dom[x.id] = x));
+    this.orientationGate = root.querySelector('#orientation-gate');
 
     root.addEventListener("click", (e) => {
       const b = e.target.closest("button");
@@ -288,6 +301,15 @@ class UI {
     if (this.multiplayerUI) this.multiplayerUI.game = game;
     this.updateAircraftCaption();
     if(this.settings.lastSoloPlayed){this.selected=getMission(this.settings.lastMissionId).id;game.selectedMission=this.selected;this.updateMissionCards();}
+    if (!this.orientationListenersAttached) {
+      this.orientationListenersAttached = true;
+      this.orientationMedia = globalThis.matchMedia?.('(orientation: portrait)');
+      this.orientationMedia?.addEventListener?.('change', () => this.syncMobileOrientation());
+      window.addEventListener('resize', () => this.syncMobileOrientation());
+      window.addEventListener('orientationchange', () => this.syncMobileOrientation());
+      document.addEventListener('fullscreenchange', () => this.syncMobileOrientation());
+    }
+    this.syncMobileOrientation();
     this.modalKey=event=>{
       if(!this.modalType || this.cancelRebind)return;
       const action=actionForCode(chordFromEvent(event),this.settings);
@@ -442,12 +464,12 @@ class UI {
     }
     if (a === "play") {
       if (!this.settings.guideSeen) this.showPreflight();
-      else this.game.start(this.selected);
+      else this.startFlightFromUserGesture(() => this.game.start(this.selected));
     }
     if (a === "launch-flight") {
       this.settings.guideSeen = true;
       this.saveSettings();
-      this.game.start(this.selected);
+      this.startFlightFromUserGesture(() => this.game.start(this.selected));
     }
     if (a === "flight-help") {
       this.game.pause();
@@ -472,7 +494,7 @@ class UI {
     if (a === "sound-stop") this.stopSoundPreview();
     if (a === "close") this.closePanel();
     if (a === "pause") this.game.pause();
-    if (a === "resume") this.game.resume();
+    if (a === "resume") this.startFlightFromUserGesture(() => this.game.resume());
     if (a === "restart") this.game.restart();
     if (a === "menu") this.game.menu();
     if (a === "next") {
@@ -495,6 +517,66 @@ class UI {
         "Exit flight combat?",
         '<p>Your flight session has ended. You can close this tab or return to the main menu.</p><button class="primary" data-action="menu">Return to main menu</button>'
       );
+    }
+  }
+
+  isMobileFlightDevice() {
+    const width = globalThis.innerWidth || 0, height = globalThis.innerHeight || 0;
+    const compact = Math.min(width, height) <= 520 && Math.max(width, height) <= 1200;
+    const touch = !!globalThis.navigator?.maxTouchPoints || !!globalThis.matchMedia?.('(any-pointer: coarse)').matches;
+    const mobileUA = globalThis.navigator?.userAgentData?.mobile ?? /Android|iPhone|iPad|iPod|Mobile/i.test(globalThis.navigator?.userAgent || '');
+    return touch && (mobileUA || compact);
+  }
+
+  isPortrait() { return (globalThis.innerWidth || 0) < (globalThis.innerHeight || 0); }
+
+  requestLandscape() {
+    try {
+      const request = document.documentElement.requestFullscreen?.();
+      Promise.resolve(request).then(() => globalThis.screen?.orientation?.lock?.('landscape')).catch(() => {});
+    } catch {}
+  }
+
+  startFlightFromUserGesture(start) {
+    if (!this.isMobileFlightDevice() || !this.isPortrait()) { start(); return true; }
+    this.pendingFlightAction = start;
+    this.requestLandscape();
+    this.syncMobileOrientation();
+    return false;
+  }
+
+  syncMobileOrientation() {
+    const mobile = this.isMobileFlightDevice(), portrait = mobile && this.isPortrait();
+    if (!mobile) {
+      this.mobileOrientation = 'desktop';
+      this.orientationGate.hidden = true;
+      return;
+    }
+    if (portrait) {
+      this.mobileOrientation = 'mobile-portrait-blocked';
+      this.game?.input?.clear?.();
+      const activeFlight = this.game?.state === 'playing' || this.game?.state === 'intro';
+      if (activeFlight) {
+        this.orientationPaused = true;
+        this.game.pause?.();
+      }
+      this.orientationGate.hidden = !(this.pendingFlightAction || activeFlight || this.orientationPaused);
+      return;
+    }
+    this.mobileOrientation = 'mobile-landscape';
+    this.orientationGate.hidden = true;
+    this.game?.resize?.();
+    if (!this.game?.resize) this.resize();
+    if (this.pendingFlightAction) {
+      const action = this.pendingFlightAction;
+      this.pendingFlightAction = null;
+      action();
+    } else if (this.orientationPaused && this.game?.state === 'paused') {
+      this.orientationPaused = false;
+      this.modal.innerHTML = '';
+      this.modalType = null;
+      this.releaseModalFocus();
+      this.game.resume?.();
     }
   }
 
@@ -941,6 +1023,7 @@ class UI {
     this.root.querySelectorAll('[data-touch="fire"], [data-touch="missile"], [data-touch="flare"]').forEach((b) => (b.hidden = free));
     this.updateFlightHelp();
     this.applyTouchLayout?.();
+    this.syncMobileOrientation?.();
     document.getElementById("world")?.focus?.();
   }
 

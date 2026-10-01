@@ -10,7 +10,7 @@ const origin = process.env.SKYBREAK_QA_URL || 'http://localhost:4173';
 const label = (process.env.SKYBREAK_QA_LABEL || 'candidate').replace(/[^a-z0-9_-]/gi, '_');
 const out = resolve(process.env.SKYBREAK_QA_OUTPUT || `qa-artifacts/upgrade40/${label}`);
 const sampleSeconds = Math.max(0, Math.min(900, Number(process.env.SKYBREAK_QA_SECONDS || 600)));
-const viewports = process.env.SKYBREAK_QA_VIEWPORTS ? JSON.parse(process.env.SKYBREAK_QA_VIEWPORTS) : [[1366, 768], [1920, 1080], [1024, 600], [390, 844], [844, 390]];
+const viewports = process.env.SKYBREAK_QA_VIEWPORTS ? JSON.parse(process.env.SKYBREAK_QA_VIEWPORTS) : [[1366, 768], [1920, 1080], [1024, 600], [390, 844], [844, 390], [740, 360]];
 const quick = process.env.SKYBREAK_QA_QUICK === '1';
 const preset = process.env.SKYBREAK_QA_PRESET || 'medium', seed = 4422;
 await mkdir(out, { recursive: true });
@@ -42,6 +42,7 @@ try {
     const start = Date.now(); const response = await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 45000 }); check(response?.ok(), 'Game page serves successfully', { width, status: response?.status() });
     if (!report.build) { const buildResponse = await page.request.get(origin.replace(/\/$/, '') + '/build-manifest.json'); if (buildResponse.ok()) { const build = await buildResponse.json(); report.build = { sourceRevision: build.sourceRevision, sourceDigest: build.sourceDigest, assetsDigest: build.assetsDigest }; } }
     await page.waitForFunction(() => window.game?.state === 'menu', null, { timeout: 45000 });
+    if (width >= 1024) check(await page.evaluate(() => document.querySelector('#orientation-gate')?.hidden), 'Desktop viewport never shows the rotate-phone gate');
     report.renderer = await page.evaluate(() => { const gl = window.game.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); return { userAgent: navigator.userAgent, renderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), vendor: ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR), webglVersion: gl.getParameter(gl.VERSION), devicePixelRatio, contextLost: gl.isContextLost() }; });
     report.renderer.software = /swiftshader|llvmpipe|softpipe|software|lavapipe/i.test(report.renderer.renderer || '');
     check(!report.renderer.contextLost, 'Real WebGL context is active', report.renderer);
@@ -73,7 +74,8 @@ try {
     check(touchOverlaps.length === 0, 'Default HUD panels leave touch targets unobscured', { viewport: [width,height], overlaps: touchOverlaps });
     const orders = page.locator('[data-action="squadron"]').first();
     if (await orders.count()) { await orders.click({ noWaitAfter: true }); await capture('orders'); const regroup = page.locator('[data-order="regroup"]').first(); if (await regroup.count()) await regroup.click({ noWaitAfter: true }); }
-    await page.evaluate(() => { window.game.menu(); window.game.start(3); }); await page.waitForTimeout(250);
+    const orientationMobile = width === 390 && height === 844;
+    if (!orientationMobile) { await page.evaluate(() => { window.game.menu(); window.game.start(3); }); await page.waitForTimeout(250); }
     if (!quick || (width === viewports[0][0] && height === viewports[0][1])) {
     const pitchStart = await page.evaluate(() => window.game.player.forward.y);
     await page.keyboard.down('ArrowUp');
@@ -141,6 +143,19 @@ try {
       }
     }
     if (width === 390 && height === 844) {
+      check(await page.evaluate(() => window.game.state === 'menu' && document.querySelector('#orientation-gate')?.hidden), 'Portrait main menu remains usable without an orientation gate');
+      await page.evaluate(() => { const game = window.game; const start = game.start.bind(game); game.__qaStartCount = 0; game.start = (...args) => { game.__qaStartCount += 1; return start(...args); }; });
+      await page.locator('[data-action="play"]').click({ noWaitAfter: true });
+      const launch = page.locator('[data-action="launch-flight"]');
+      if (await launch.count()) await launch.click({ noWaitAfter: true });
+      await page.waitForFunction(() => !document.querySelector('#orientation-gate')?.hidden);
+      const blocked = await page.evaluate(() => ({ state: window.game.state, gateHidden: document.querySelector('#orientation-gate')?.hidden, input: { touchActive: window.game.input.touchActive, fire: window.game.input.fire, boost: window.game.input.boost, brake: window.game.input.touchBrake, mouse: { ...window.game.input.mouse } } }));
+      check(blocked.state !== 'playing' && !blocked.gateHidden, 'Portrait flight launch is blocked behind the rotate-phone gate', blocked);
+      check(!blocked.input.touchActive && !blocked.input.fire && !blocked.input.boost && !blocked.input.brake && blocked.input.mouse.x === 0 && blocked.input.mouse.y === 0, 'Portrait gate leaves touch flight input neutral', blocked.input);
+      await page.setViewportSize({ width: 844, height: 390 });
+      await page.waitForFunction(() => document.querySelector('#orientation-gate')?.hidden && window.game.state === 'playing');
+      const landscapeStartCount = await page.evaluate(() => ({ state: window.game.state, starts: window.game.__qaStartCount }));
+      check(landscapeStartCount.state === 'playing' && landscapeStartCount.starts === 1, 'Landscape return starts the pending flight exactly once', landscapeStartCount);
       await page.evaluate(() => { window.game.menu(); window.game.ui.showSettings('controls'); });
       await page.locator('[data-action="touch-layout"]').click({ noWaitAfter: true });
       await page.locator('[data-layout-control="missile"]').focus();
@@ -188,6 +203,22 @@ try {
       await touchSession.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       const missileEnd = await page.evaluate(() => ({ ammo: window.game.missilesLeft, shots: window.game.stats.missiles }));
       check(missileEnd.ammo === missileStart.ammo - 1 && missileEnd.shots === missileStart.shots + 1, 'Touch missile pointer events fire exactly one locked missile', { missileStart, missileEnd });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForFunction(() => !document.querySelector('#orientation-gate')?.hidden && window.game.state === 'paused');
+      const portraitFlight = await page.evaluate(() => ({ state: window.game.state, orientationPaused: window.game.ui.orientationPaused, input: { touchActive: window.game.input.touchActive, fire: window.game.input.fire, boost: window.game.input.boost, brake: window.game.input.touchBrake, mouse: { ...window.game.input.mouse } } }));
+      check(portraitFlight.orientationPaused && portraitFlight.state === 'paused', 'Portrait rotation pauses active flight safely', portraitFlight);
+      check(!portraitFlight.input.touchActive && !portraitFlight.input.fire && !portraitFlight.input.boost && !portraitFlight.input.brake && portraitFlight.input.mouse.x === 0 && portraitFlight.input.mouse.y === 0, 'Portrait rotation clears all held flight input', portraitFlight.input);
+      await page.setViewportSize({ width: 844, height: 390 });
+      await page.waitForFunction(() => document.querySelector('#orientation-gate')?.hidden && window.game.state === 'playing');
+      check(await page.evaluate(() => !window.game.ui.orientationPaused && window.game.state === 'playing'), 'Landscape return resumes only the orientation-paused flight');
+    }
+    if (width === 740 && height === 360) {
+      await page.evaluate(() => { window.game.menu(); window.game.start(3); });
+      const compactTouch = await page.evaluate(() => { const visible = e => e?.getClientRects().length && getComputedStyle(e).display !== 'none'; const ids = ['#touch-stick','.touch-throttle','[data-touch="fire"]','[data-touch="missile"]']; const boxes = ids.map(selector => { const e = document.querySelector(selector); if (!visible(e)) return { selector, visible: false }; const r = e.getBoundingClientRect(); return { selector, visible: true, x: r.x, y: r.y, right: r.right, bottom: r.bottom }; }); return { overflow: document.documentElement.scrollWidth > innerWidth + 1, boxes }; });
+      check(!compactTouch.overflow, 'Short landscape viewport has no horizontal overflow', compactTouch);
+      check(compactTouch.boxes.every(box => box.visible && box.x >= 0 && box.y >= 0 && box.right <= 740 && box.bottom <= 360), 'Short landscape touch controls stay inside the viewport', compactTouch);
+      const visibleBoxes = compactTouch.boxes.filter(box => box.visible);
+      check(visibleBoxes.length === new Set(visibleBoxes.map(box => `${box.x},${box.y},${box.right},${box.bottom}`)).size, 'Short landscape primary touch controls do not share the same bounds', compactTouch);
     }
     await context.close(); activePage = null;
   }
