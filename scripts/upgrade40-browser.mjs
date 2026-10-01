@@ -156,17 +156,16 @@ try {
       await page.locator('#touch-save').click({ noWaitAfter: true });
       check(await page.evaluate(() => document.getElementById('touch-controls').dataset.customLayout === 'false'), 'Touch editor Reset and Save restore responsive controls');
 
-      await page.evaluate(() => {
-        const stick = document.getElementById('touch-stick');
-        const rect = stick.getBoundingClientRect();
-        const pointer = (type, x, y) => stick.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 41, pointerType: 'touch', clientX: x, clientY: y }));
-        pointer('pointerdown', rect.left + rect.width / 2, rect.top + rect.height / 2);
-        pointer('pointermove', rect.left + rect.width * .8, rect.top + rect.height * .25);
-      });
+      const touchSession = await context.newCDPSession(page);
+      const touchPoint = (id, x, y, force = 1) => ({ id, x, y, radiusX: 1, radiusY: 1, force });
+      const stickBox = await page.locator('#touch-stick').boundingBox();
+      const stickCenter = { x: stickBox.x + stickBox.width / 2, y: stickBox.y + stickBox.height / 2 };
+      await touchSession.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [touchPoint(41, stickCenter.x, stickCenter.y)] });
+      await touchSession.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [touchPoint(41, stickBox.x + stickBox.width * .8, stickBox.y + stickBox.height * .25)] });
       await page.waitForTimeout(100);
       const stickHeld = await page.evaluate(() => ({ active: window.game.input.touchActive, mouse: { ...window.game.input.mouse } }));
       check(stickHeld.active && (Math.abs(stickHeld.mouse.x) > .1 || Math.abs(stickHeld.mouse.y) > .1), 'Touch stick pointer events steer the active flight input', stickHeld);
-      await page.evaluate(() => document.getElementById('touch-stick').dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 41, pointerType: 'touch' })));
+      await touchSession.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       const stickReleased = await page.evaluate(() => ({ active: window.game.input.touchActive, mouse: { ...window.game.input.mouse } }));
       check(!stickReleased.active && stickReleased.mouse.x === 0 && stickReleased.mouse.y === 0, 'Touch stick pointer release clears steering input', stickReleased);
 
@@ -174,8 +173,10 @@ try {
       await page.waitForFunction(() => window.game.lock >= 1.4, null, { timeout: 30000 });
       const touchMissile = page.locator('[data-touch="missile"]');
       const missileStart = await page.evaluate(() => ({ ammo: window.game.missilesLeft, shots: window.game.stats.missiles }));
-      await touchMissile.dispatchEvent('pointerdown', { pointerId: 42, pointerType: 'touch' });
-      await touchMissile.dispatchEvent('pointerup', { pointerId: 42, pointerType: 'touch' });
+      const missileBox = await touchMissile.boundingBox();
+      const missilePoint = { x: missileBox.x + missileBox.width / 2, y: missileBox.y + missileBox.height / 2 };
+      await touchSession.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [touchPoint(42, missilePoint.x, missilePoint.y)] });
+      await touchSession.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       const missileEnd = await page.evaluate(() => ({ ammo: window.game.missilesLeft, shots: window.game.stats.missiles }));
       check(missileEnd.ammo === missileStart.ammo - 1 && missileEnd.shots === missileStart.shots + 1, 'Touch missile pointer events fire exactly one locked missile', { missileStart, missileEnd });
     }
