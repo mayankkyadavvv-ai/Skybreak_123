@@ -160,7 +160,6 @@ try {
       const touchStick = page.locator('#touch-stick');
       const touchMissile = page.locator('[data-touch="missile"]');
       await touchStick.waitFor({ state: 'visible' });
-      await touchMissile.waitFor({ state: 'visible' });
       const visibleBox = async (locator, label) => {
         const box = await locator.boundingBox();
         if (!box) throw new Error(`${label} is visible but has no bounding box in flight state`);
@@ -181,6 +180,7 @@ try {
 
       await page.evaluate(() => window.game.prepareTrainingLesson('targeting'));
       await page.waitForFunction(() => window.game.lock >= 1.4, null, { timeout: 30000 });
+      await touchMissile.waitFor({ state: 'visible' });
       const missileStart = await page.evaluate(() => ({ ammo: window.game.missilesLeft, shots: window.game.stats.missiles }));
       const missileBox = await visibleBox(touchMissile, '[data-touch="missile"]');
       const missilePoint = { x: missileBox.x + missileBox.width / 2, y: missileBox.y + missileBox.height / 2 };
