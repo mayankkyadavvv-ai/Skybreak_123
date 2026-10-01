@@ -156,9 +156,19 @@ try {
       await page.locator('#touch-save').click({ noWaitAfter: true });
       check(await page.evaluate(() => document.getElementById('touch-controls').dataset.customLayout === 'false'), 'Touch editor Reset and Save restore responsive controls');
 
+      await page.evaluate(() => { window.game.menu(); window.game.start(3); });
+      const touchStick = page.locator('#touch-stick');
+      const touchMissile = page.locator('[data-touch="missile"]');
+      await touchStick.waitFor({ state: 'visible' });
+      await touchMissile.waitFor({ state: 'visible' });
+      const visibleBox = async (locator, label) => {
+        const box = await locator.boundingBox();
+        if (!box) throw new Error(`${label} is visible but has no bounding box in flight state`);
+        return box;
+      };
       const touchSession = await context.newCDPSession(page);
       const touchPoint = (id, x, y, force = 1) => ({ id, x, y, radiusX: 1, radiusY: 1, force });
-      const stickBox = await page.locator('#touch-stick').boundingBox();
+      const stickBox = await visibleBox(touchStick, '#touch-stick');
       const stickCenter = { x: stickBox.x + stickBox.width / 2, y: stickBox.y + stickBox.height / 2 };
       await touchSession.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [touchPoint(41, stickCenter.x, stickCenter.y)] });
       await touchSession.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [touchPoint(41, stickBox.x + stickBox.width * .8, stickBox.y + stickBox.height * .25)] });
@@ -171,9 +181,8 @@ try {
 
       await page.evaluate(() => window.game.prepareTrainingLesson('targeting'));
       await page.waitForFunction(() => window.game.lock >= 1.4, null, { timeout: 30000 });
-      const touchMissile = page.locator('[data-touch="missile"]');
       const missileStart = await page.evaluate(() => ({ ammo: window.game.missilesLeft, shots: window.game.stats.missiles }));
-      const missileBox = await touchMissile.boundingBox();
+      const missileBox = await visibleBox(touchMissile, '[data-touch="missile"]');
       const missilePoint = { x: missileBox.x + missileBox.width / 2, y: missileBox.y + missileBox.height / 2 };
       await touchSession.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [touchPoint(42, missilePoint.x, missilePoint.y)] });
       await touchSession.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
