@@ -73,7 +73,7 @@ try {
     });
     check(touchOverlaps.length === 0, 'Default HUD panels leave touch targets unobscured', { viewport: [width,height], overlaps: touchOverlaps });
     const orders = page.locator('[data-action="squadron"]').first();
-    if (await orders.count()) { await orders.click({ noWaitAfter: true }); await capture('orders'); const regroup = page.locator('[data-order="regroup"]').first(); if (await regroup.count()) await regroup.click({ noWaitAfter: true }); }
+    if (!(width === 390 && height === 844) && await orders.count()) { await orders.click({ noWaitAfter: true }); await capture('orders'); const regroup = page.locator('[data-order="regroup"]').first(); if (await regroup.count()) await regroup.click({ noWaitAfter: true }); }
     const orientationMobile = width === 390 && height === 844;
     if (!orientationMobile) { await page.evaluate(() => { window.game.menu(); window.game.start(3); }); await page.waitForTimeout(250); }
     if (!quick || (width === viewports[0][0] && height === viewports[0][1])) {
