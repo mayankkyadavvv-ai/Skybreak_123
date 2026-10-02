@@ -1,0 +1,13 @@
+✔ build inventory records the working source and exact output, excluding private files (57.49336ms)
+✔ LAN provenance rejects stale frontend or server source before packaging (88.306227ms)
+✔ build verification detects altered and extra built assets (38.979815ms)
+✔ build verification rejects absent or tampered evidence (31.49366ms)
+✔ public build inventory cannot follow a source symlink outside the project (31.279447ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 607.408172

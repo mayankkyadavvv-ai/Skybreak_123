@@ -1,0 +1,2618 @@
+{
+  "label": "ci",
+  "origin": "http://127.0.0.1:44481",
+  "started": "2026-09-29T05:15:14.250Z",
+  "status": "passed-automated",
+  "revision": "425e36a69f6fbaf0e5e30a7bb84c9aeb04526cd6",
+  "environment": {
+    "os": "linux 6.17.0-1022-azure",
+    "cpu": "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz",
+    "logicalCPUs": 4,
+    "memoryGiB": 16,
+    "node": "v24.21.0"
+  },
+  "configuration": {
+    "preset": "low",
+    "seed": 4422,
+    "dpr": 1,
+    "sampleSeconds": 65,
+    "warmUpSeconds": 5,
+    "emulatedMobile": true
+  },
+  "console": [
+    {
+      "viewport": "1366x768",
+      "type": "warning",
+      "text": "[.WebGL-0x34bc0013d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "viewport": "1366x768",
+      "type": "warning",
+      "text": "[.WebGL-0x34bc0013d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "viewport": "1366x768",
+      "type": "warning",
+      "text": "[.WebGL-0x34bc0013d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "viewport": "1366x768",
+      "type": "warning",
+      "text": "[.WebGL-0x34bc0013d000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ],
+  "errors": [],
+  "checks": [
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 1366,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "visible": true,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Arrow Up raises nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "pitchStart": 0,
+        "pitchUp": 0.06358205163880365
+      }
+    },
+    {
+      "label": "Arrow Down lowers nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "pitchUp": 0.06358205163880365,
+        "pitchDown": 0.03794641829121439
+      }
+    },
+    {
+      "label": "Throttle increases and holds on release",
+      "passed": true,
+      "detail": {
+        "throttleStart": 0.58,
+        "throttleHold": 0.635,
+        "throttleRelease": 0.635
+      }
+    },
+    {
+      "label": "E fires exactly one locked missile, including repeat keydown",
+      "passed": true,
+      "detail": {
+        "missileStart": {
+          "ammo": 6,
+          "shots": 0
+        },
+        "missileEnd": {
+          "ammo": 5,
+          "shots": 1
+        }
+      }
+    },
+    {
+      "label": "E cannot fire through a pause menu",
+      "passed": true
+    },
+    {
+      "label": "Friends offline Ace Duel starts the selected mode",
+      "passed": true
+    },
+    {
+      "label": "Offline Ace Duel Restart retains one hostile",
+      "passed": true
+    },
+    {
+      "label": "Friends Free Flight and Restart cannot restore the previous battle",
+      "passed": true
+    },
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 1920,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "visible": true,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Arrow Up raises nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "pitchStart": 0,
+        "pitchUp": 0.06358205163880365
+      }
+    },
+    {
+      "label": "Arrow Down lowers nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "pitchUp": 0.06358205163880365,
+        "pitchDown": 0.03794641829121439
+      }
+    },
+    {
+      "label": "Throttle increases and holds on release",
+      "passed": true,
+      "detail": {
+        "throttleStart": 0.58,
+        "throttleHold": 0.635,
+        "throttleRelease": 0.635
+      }
+    },
+    {
+      "label": "E fires exactly one locked missile, including repeat keydown",
+      "passed": true,
+      "detail": {
+        "missileStart": {
+          "ammo": 6,
+          "shots": 0
+        },
+        "missileEnd": {
+          "ammo": 5,
+          "shots": 1
+        }
+      }
+    },
+    {
+      "label": "E cannot fire through a pause menu",
+      "passed": true
+    },
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 1024,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "visible": true,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Arrow Up raises nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "pitchStart": 0,
+        "pitchUp": 0.06358205163880365
+      }
+    },
+    {
+      "label": "Arrow Down lowers nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "pitchUp": 0.06358205163880365,
+        "pitchDown": 0.03794641829121439
+      }
+    },
+    {
+      "label": "Throttle increases and holds on release",
+      "passed": true,
+      "detail": {
+        "throttleStart": 0.58,
+        "throttleHold": 0.635,
+        "throttleRelease": 0.635
+      }
+    },
+    {
+      "label": "E fires exactly one locked missile, including repeat keydown",
+      "passed": true,
+      "detail": {
+        "missileStart": {
+          "ammo": 6,
+          "shots": 0
+        },
+        "missileEnd": {
+          "ammo": 5,
+          "shots": 1
+        }
+      }
+    },
+    {
+      "label": "E cannot fire through a pause menu",
+      "passed": true
+    },
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 390,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "visible": true,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Arrow Up raises nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "pitchStart": 0,
+        "pitchUp": 0.06358205163880365
+      }
+    },
+    {
+      "label": "Arrow Down lowers nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "pitchUp": 0.06358205163880365,
+        "pitchDown": 0.03794641829121439
+      }
+    },
+    {
+      "label": "Throttle increases and holds on release",
+      "passed": true,
+      "detail": {
+        "throttleStart": 0.58,
+        "throttleHold": 0.635,
+        "throttleRelease": 0.635
+      }
+    },
+    {
+      "label": "E fires exactly one locked missile, including repeat keydown",
+      "passed": true,
+      "detail": {
+        "missileStart": {
+          "ammo": 6,
+          "shots": 0
+        },
+        "missileEnd": {
+          "ammo": 5,
+          "shots": 1
+        }
+      }
+    },
+    {
+      "label": "E cannot fire through a pause menu",
+      "passed": true
+    },
+    {
+      "label": "Game page serves successfully",
+      "passed": true,
+      "detail": {
+        "width": 844,
+        "status": 200
+      }
+    },
+    {
+      "label": "Real WebGL context is active",
+      "passed": true,
+      "detail": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "devicePixelRatio": 1,
+        "contextLost": false,
+        "software": true
+      }
+    },
+    {
+      "label": "Visible weapon values stay inside their panel",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "visible": false,
+        "clipped": []
+      }
+    },
+    {
+      "label": "Arrow Up raises nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "pitchStart": 0,
+        "pitchUp": 0.06358205163880365
+      }
+    },
+    {
+      "label": "Arrow Down lowers nose",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "pitchUp": 0.06358205163880365,
+        "pitchDown": 0.03794641829121439
+      }
+    },
+    {
+      "label": "Throttle increases and holds on release",
+      "passed": true,
+      "detail": {
+        "throttleStart": 0.58,
+        "throttleHold": 0.635,
+        "throttleRelease": 0.635
+      }
+    },
+    {
+      "label": "E fires exactly one locked missile, including repeat keydown",
+      "passed": true,
+      "detail": {
+        "missileStart": {
+          "ammo": 6,
+          "shots": 0
+        },
+        "missileEnd": {
+          "ammo": 5,
+          "shots": 1
+        }
+      }
+    },
+    {
+      "label": "E cannot fire through a pause menu",
+      "passed": true
+    },
+    {
+      "label": "Public page /about loads",
+      "passed": true
+    },
+    {
+      "label": "Public page /help loads",
+      "passed": true
+    },
+    {
+      "label": "Public page /privacy loads",
+      "passed": true
+    },
+    {
+      "label": "Public page /terms loads",
+      "passed": true
+    },
+    {
+      "label": "Public page /storage loads",
+      "passed": true
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "timeToMenuMs": 9772,
+        "documentOverflow": false,
+        "bodyTextLength": 883,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "timeToMenuMs": 9772,
+        "documentOverflow": false,
+        "bodyTextLength": 883,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1366,
+          768
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 20,
+            "y": 210,
+            "width": 235,
+            "height": 275.5625
+          },
+          {
+            "selector": "#battle-coach",
+            "x": 1096,
+            "y": 265,
+            "width": 250,
+            "height": 176.5
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 1366,
+            "height": 768
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 33,
+            "y": 428.5625,
+            "width": 209,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "timeToMenuMs": 11773,
+        "documentOverflow": false,
+        "bodyTextLength": 883,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "timeToMenuMs": 11773,
+        "documentOverflow": false,
+        "bodyTextLength": 883,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1920,
+          1080
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 28,
+            "y": 210,
+            "width": 235,
+            "height": 275.5625
+          },
+          {
+            "selector": "#battle-coach",
+            "x": 1642,
+            "y": 280,
+            "width": 250,
+            "height": 176.5
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 1920,
+            "height": 1080
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 41,
+            "y": 428.5625,
+            "width": 209,
+            "height": 44
+          },
+          {
+            "selector": "#radio",
+            "x": 680,
+            "y": 887,
+            "width": 560,
+            "height": 51
+          }
+        ]
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "timeToMenuMs": 7585,
+        "documentOverflow": false,
+        "bodyTextLength": 875,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "timeToMenuMs": 7585,
+        "documentOverflow": false,
+        "bodyTextLength": 875,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          1024,
+          600
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 20,
+            "y": 210,
+            "width": 235,
+            "height": 210
+          },
+          {
+            "selector": "#battle-coach",
+            "x": 754,
+            "y": 265,
+            "width": 250,
+            "height": 160
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 1024,
+            "height": 600
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 33,
+            "y": 428.5625,
+            "width": 209,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "timeToMenuMs": 5767,
+        "documentOverflow": false,
+        "bodyTextLength": 663,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "timeToMenuMs": 5767,
+        "documentOverflow": false,
+        "bodyTextLength": 663,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          390,
+          844
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 10,
+            "y": 140,
+            "width": 140,
+            "height": 147.140625
+          },
+          {
+            "selector": "#battle-coach",
+            "x": 212.3125,
+            "y": 290,
+            "width": 167.6875,
+            "height": 140
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 17,
+            "y": 236.140625,
+            "width": 126,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "timeToMenuMs": 5724,
+        "documentOverflow": false,
+        "bodyTextLength": 728,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Meaningful menu with no framework overlay",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "timeToMenuMs": 5724,
+        "documentOverflow": false,
+        "bodyTextLength": 728,
+        "errorOverlay": false
+      }
+    },
+    {
+      "label": "Viewport has no horizontal document overflow",
+      "passed": true,
+      "detail": {
+        "viewport": [
+          844,
+          390
+        ],
+        "screen": "open-skies",
+        "documentOverflow": false,
+        "boxes": [
+          {
+            "selector": "#battle-wing",
+            "x": 10,
+            "y": 76,
+            "width": 165,
+            "height": 146
+          },
+          {
+            "selector": "#hud",
+            "x": 0,
+            "y": 0,
+            "width": 844,
+            "height": 390
+          },
+          {
+            "selector": ".battle-actions",
+            "x": 19,
+            "y": 208.28125,
+            "width": 147,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "label": "Browser create/join/ready/flight/reload-resume/leave journey",
+      "passed": true,
+      "detail": {
+        "kind": "Two automated browser clients, one local service",
+        "checks": [
+          {
+            "label": "Create and join controls put both browsers in the same party",
+            "passed": true
+          },
+          {
+            "label": "Both rendered clients share the authoritative match epoch",
+            "passed": true
+          },
+          {
+            "label": "Host receives the guest identity in the authoritative roster",
+            "passed": true
+          },
+          {
+            "label": "Arrow Up steers the predicted aircraft in the live shared match",
+            "passed": true
+          },
+          {
+            "label": "Active online pilot menu has no solo Restart action",
+            "passed": true
+          },
+          {
+            "label": "Reload resumes the same aircraft identity and match, without a new party",
+            "passed": true
+          },
+          {
+            "label": "Guest can leave through the pilot menu",
+            "passed": true
+          }
+        ],
+        "captures": [
+          "party-host.png",
+          "party-guest.png"
+        ],
+        "errors": [],
+        "status": "passed-automated"
+      }
+    }
+  ],
+  "layouts": [
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "timeToMenuMs": 9772,
+      "documentOverflow": false,
+      "bodyTextLength": 883,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 20,
+          "y": 210,
+          "width": 235,
+          "height": 275.5625
+        },
+        {
+          "selector": "#battle-coach",
+          "x": 1096,
+          "y": 265,
+          "width": 250,
+          "height": 176.5
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 1366,
+          "height": 768
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 33,
+          "y": 428.5625,
+          "width": 209,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "timeToMenuMs": 11773,
+      "documentOverflow": false,
+      "bodyTextLength": 883,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 28,
+          "y": 210,
+          "width": 235,
+          "height": 275.5625
+        },
+        {
+          "selector": "#battle-coach",
+          "x": 1642,
+          "y": 280,
+          "width": 250,
+          "height": 176.5
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 41,
+          "y": 428.5625,
+          "width": 209,
+          "height": 44
+        },
+        {
+          "selector": "#radio",
+          "x": 680,
+          "y": 887,
+          "width": 560,
+          "height": 51
+        }
+      ]
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "timeToMenuMs": 7585,
+      "documentOverflow": false,
+      "bodyTextLength": 875,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 20,
+          "y": 210,
+          "width": 235,
+          "height": 210
+        },
+        {
+          "selector": "#battle-coach",
+          "x": 754,
+          "y": 265,
+          "width": 250,
+          "height": 160
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 600
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 33,
+          "y": 428.5625,
+          "width": 209,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "timeToMenuMs": 5767,
+      "documentOverflow": false,
+      "bodyTextLength": 663,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 10,
+          "y": 140,
+          "width": 140,
+          "height": 147.140625
+        },
+        {
+          "selector": "#battle-coach",
+          "x": 212.3125,
+          "y": 290,
+          "width": 167.6875,
+          "height": 140
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 17,
+          "y": 236.140625,
+          "width": 126,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "timeToMenuMs": 5724,
+      "documentOverflow": false,
+      "bodyTextLength": 728,
+      "errorOverlay": false
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "screen": "open-skies",
+      "documentOverflow": false,
+      "boxes": [
+        {
+          "selector": "#battle-wing",
+          "x": 10,
+          "y": 76,
+          "width": 165,
+          "height": 146
+        },
+        {
+          "selector": "#hud",
+          "x": 0,
+          "y": 0,
+          "width": 844,
+          "height": 390
+        },
+        {
+          "selector": ".battle-actions",
+          "x": 19,
+          "y": 208.28125,
+          "width": 147,
+          "height": 44
+        }
+      ]
+    }
+  ],
+  "captures": [
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "menu",
+      "path": "menu-1366x768.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "settings",
+      "path": "settings-1366x768.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "hangar",
+      "path": "hangar-1366x768.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "open-skies",
+      "path": "open-skies-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "orders",
+      "path": "orders-1366x768.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "chase",
+      "path": "chase-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "cockpit",
+      "path": "cockpit-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "cinematic",
+      "path": "cinematic-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "lighting-midday-clear",
+      "path": "lighting-midday-clear-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "lighting-sunset-clear",
+      "path": "lighting-sunset-clear-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "sunset",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "lighting-midday-cloudy",
+      "path": "lighting-midday-cloudy-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "cloudy",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "post-sample",
+      "path": "post-sample-1366x768.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "menu",
+      "path": "menu-1920x1080.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "settings",
+      "path": "settings-1920x1080.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "hangar",
+      "path": "hangar-1920x1080.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "open-skies",
+      "path": "open-skies-1920x1080.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "orders",
+      "path": "orders-1920x1080.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "chase",
+      "path": "chase-1920x1080.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "cockpit",
+      "path": "cockpit-1920x1080.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "name": "cinematic",
+      "path": "cinematic-1920x1080.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "menu",
+      "path": "menu-1024x600.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "settings",
+      "path": "settings-1024x600.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "hangar",
+      "path": "hangar-1024x600.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "open-skies",
+      "path": "open-skies-1024x600.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "orders",
+      "path": "orders-1024x600.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "chase",
+      "path": "chase-1024x600.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "cockpit",
+      "path": "cockpit-1024x600.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        1024,
+        600
+      ],
+      "name": "cinematic",
+      "path": "cinematic-1024x600.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "menu",
+      "path": "menu-390x844.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "settings",
+      "path": "settings-390x844.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "hangar",
+      "path": "hangar-390x844.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "open-skies",
+      "path": "open-skies-390x844.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "orders",
+      "path": "orders-390x844.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "chase",
+      "path": "chase-390x844.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "cockpit",
+      "path": "cockpit-390x844.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "cinematic",
+      "path": "cinematic-390x844.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "menu",
+      "path": "menu-844x390.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "settings",
+      "path": "settings-844x390.png",
+      "actual": {
+        "state": "menu",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "hangar",
+      "path": "hangar-844x390.png",
+      "actual": {
+        "state": "hangar",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "open-skies",
+      "path": "open-skies-844x390.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "orders",
+      "path": "orders-844x390.png",
+      "actual": {
+        "state": "paused",
+        "timeOfDay": "midday",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "chase",
+      "path": "chase-844x390.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "chase"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "cockpit",
+      "path": "cockpit-844x390.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cockpit"
+      }
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "name": "cinematic",
+      "path": "cinematic-844x390.png",
+      "actual": {
+        "state": "playing",
+        "timeOfDay": "day",
+        "weather": "clear",
+        "camera": "cinematic"
+      }
+    }
+  ],
+  "samples": [
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2999999999884,
+      "frameP95ms": 833.3999999999942,
+      "fps": 1.4593160432893715,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 728,
+      "triangles": 67359,
+      "geometries": 1867,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 9,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 1.016666666666668,
+      "heap": 102458206
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2999999999884,
+      "frameP95ms": 833.3999999999942,
+      "fps": 1.4976239186973028,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 706,
+      "triangles": 66799,
+      "geometries": 1867,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 9,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 1.5499999999999994,
+      "heap": 89730447
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2999999999884,
+      "frameP95ms": 816.7000000000116,
+      "fps": 1.5128740725051504,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 668,
+      "triangles": 69831,
+      "geometries": 1869,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 10,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 2.033333333333331,
+      "heap": 91875080
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2999999999884,
+      "frameP95ms": 816.7000000000116,
+      "fps": 1.5195307371456048,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 668,
+      "triangles": 70907,
+      "geometries": 1871,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 11,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 2.5166666666666626,
+      "heap": 92707676
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2999999999884,
+      "frameP95ms": 816.6999999999825,
+      "fps": 1.5203733303243125,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 669,
+      "triangles": 71891,
+      "geometries": 1874,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 12,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 2.9999999999999942,
+      "heap": 89231799
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2000000000116,
+      "frameP95ms": 816.6000000000058,
+      "fps": 1.5128849288959694,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 669,
+      "triangles": 71711,
+      "geometries": 1875,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 12,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 3.4666666666666592,
+      "heap": 114046493
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2000000000116,
+      "frameP95ms": 816.6000000000058,
+      "fps": 1.5113744161322935,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 668,
+      "triangles": 71655,
+      "geometries": 1876,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 13,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 3.949999999999991,
+      "heap": 103077260
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2000000000116,
+      "frameP95ms": 816.6000000000058,
+      "fps": 1.5068254234488183,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 613,
+      "triangles": 70515,
+      "geometries": 1886,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 14,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 4.433333333333323,
+      "heap": 120950655
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2000000000116,
+      "frameP95ms": 816.6000000000058,
+      "fps": 1.5013187491516398,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 617,
+      "triangles": 71705,
+      "geometries": 1890,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 15,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 4.9166666666666545,
+      "heap": 91719703
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2000000000116,
+      "frameP95ms": 816.6000000000058,
+      "fps": 1.4932355087110565,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 625,
+      "triangles": 72863,
+      "geometries": 1893,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 15,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 5.399999999999986,
+      "heap": 108452186
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 683.2000000000116,
+      "frameP95ms": 816.6000000000058,
+      "fps": 1.4897496119091516,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 628,
+      "triangles": 72993,
+      "geometries": 1897,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 15,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 5.866666666666651,
+      "heap": 122255152
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 666.7000000000116,
+      "frameP95ms": 800,
+      "fps": 1.4889680028006123,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 637,
+      "triangles": 74153,
+      "geometries": 1900,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 15,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 6.349999999999983,
+      "heap": 104523346
+    },
+    {
+      "sampleFrames": 240,
+      "frameP50ms": 666.7000000000116,
+      "frameP95ms": 799.8999999999942,
+      "fps": 1.48552159697423,
+      "quality": "low",
+      "dpr": 1,
+      "drawCalls": 637,
+      "triangles": 74153,
+      "geometries": 1901,
+      "textures": 15,
+      "programs": 60,
+      "terrainCache": 15,
+      "activeAircraft": 6,
+      "activeBullets": 0,
+      "activeMissiles": 0,
+      "encounter": {
+        "state": "active",
+        "phase": 1,
+        "phases": 3,
+        "name": "Establish air superiority",
+        "objective": "Clear the first patrol",
+        "remaining": 3,
+        "waveTotal": 3,
+        "defeated": 0,
+        "total": 8,
+        "recovery": 0,
+        "seed": 4422
+      },
+      "state": "playing",
+      "elapsed": 6.833333333333314,
+      "heap": 119671804
+    }
+  ],
+  "restarts": [],
+  "unverified": [
+    "human screenshot review and visual-readability judgement",
+    "physical laptop/mobile GPU performance",
+    "physical controller and touchscreen feel",
+    "audible audio and microphone capture",
+    "two-network human co-op/PvP session",
+    "two physical LAN devices with internet disconnected",
+    "two humans using actual split-screen controllers",
+    "Hardware-GPU benchmark: current WebGL renderer is software.",
+    "Hardware-GPU benchmark: current WebGL renderer is software.",
+    "Hardware-GPU benchmark: current WebGL renderer is software.",
+    "Hardware-GPU benchmark: current WebGL renderer is software.",
+    "Hardware-GPU benchmark: current WebGL renderer is software."
+  ],
+  "launchErrors": [],
+  "browserLaunch": {
+    "channel": "chrome"
+  },
+  "build": {
+    "sourceRevision": "425e36a69f6fbaf0e5e30a7bb84c9aeb04526cd6",
+    "sourceDigest": "738d135d9936ea2b5d2fc9eee3d35c0b939d7ac37975bf47e0ea26c478a45a9d",
+    "assetsDigest": "8cc35ba51779cb1644dec4c55fb008ecc8dbe017550825ea3c88f40f15c504ef"
+  },
+  "renderer": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "devicePixelRatio": 1,
+    "contextLost": false,
+    "software": true
+  },
+  "restartResources": [
+    {
+      "cycle": 1,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.1999999999971,
+        "frameP95ms": 833.3999999999942,
+        "fps": 1.4391778328579037,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 84723,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    },
+    {
+      "cycle": 2,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.1999999999971,
+        "frameP95ms": 850,
+        "fps": 1.40516719483925,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 84723,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    },
+    {
+      "cycle": 3,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.1999999999971,
+        "frameP95ms": 850,
+        "fps": 1.401992744302152,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 84723,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    },
+    {
+      "cycle": 4,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.1999999999971,
+        "frameP95ms": 833.3999999999942,
+        "fps": 1.399222416403812,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 84723,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    },
+    {
+      "cycle": 5,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.1999999999971,
+        "frameP95ms": 833.3999999999942,
+        "fps": 1.3974153169907355,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 84723,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    },
+    {
+      "cycle": 6,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.2000000000116,
+        "frameP95ms": 833.3999999999942,
+        "fps": 1.3937360025540968,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 84723,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    },
+    {
+      "cycle": 7,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.2999999999884,
+        "frameP95ms": 833.3999999999942,
+        "fps": 1.3901836645109855,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 70707,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    },
+    {
+      "cycle": 8,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.2999999999884,
+        "frameP95ms": 833.3999999999942,
+        "fps": 1.388904523633973,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 70707,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    },
+    {
+      "cycle": 9,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.2999999999884,
+        "frameP95ms": 833.3999999999942,
+        "fps": 1.3877085563265994,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 70707,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    },
+    {
+      "cycle": 10,
+      "snapshot": {
+        "sampleFrames": 240,
+        "frameP50ms": 683.2999999999884,
+        "frameP95ms": 833.3999999999942,
+        "fps": 1.3865832706870918,
+        "quality": "low",
+        "dpr": 1,
+        "drawCalls": 744,
+        "triangles": 70707,
+        "geometries": 1864,
+        "textures": 15,
+        "programs": 59,
+        "terrainCache": 9,
+        "activeAircraft": 6,
+        "activeBullets": 0,
+        "activeMissiles": 0,
+        "encounter": {
+          "state": "active",
+          "phase": 1,
+          "phases": 3,
+          "name": "Establish air superiority",
+          "objective": "Clear the first patrol",
+          "remaining": 3,
+          "waveTotal": 3,
+          "defeated": 0,
+          "total": 8,
+          "recovery": 0,
+          "seed": 4422
+        }
+      }
+    }
+  ],
+  "frameTime": {
+    "samples": 106,
+    "p50ms": 666.6000000000349,
+    "p95ms": 683.3000000000466,
+    "p99ms": 683.4000000000233,
+    "longestMs": 700,
+    "note": "Real requestAnimationFrame intervals; automated battle restarts are listed separately. This is not a human-completed sortie."
+  },
+  "publicPages": [
+    {
+      "route": "/about",
+      "status": 200
+    },
+    {
+      "route": "/help",
+      "status": 200
+    },
+    {
+      "route": "/privacy",
+      "status": 200
+    },
+    {
+      "route": "/terms",
+      "status": 200
+    },
+    {
+      "route": "/storage",
+      "status": 200
+    }
+  ],
+  "partyJourney": {
+    "kind": "Two automated browser clients, one local service",
+    "checks": [
+      {
+        "label": "Create and join controls put both browsers in the same party",
+        "passed": true
+      },
+      {
+        "label": "Both rendered clients share the authoritative match epoch",
+        "passed": true
+      },
+      {
+        "label": "Host receives the guest identity in the authoritative roster",
+        "passed": true
+      },
+      {
+        "label": "Arrow Up steers the predicted aircraft in the live shared match",
+        "passed": true
+      },
+      {
+        "label": "Active online pilot menu has no solo Restart action",
+        "passed": true
+      },
+      {
+        "label": "Reload resumes the same aircraft identity and match, without a new party",
+        "passed": true
+      },
+      {
+        "label": "Guest can leave through the pilot menu",
+        "passed": true
+      }
+    ],
+    "captures": [
+      "party-host.png",
+      "party-guest.png"
+    ],
+    "errors": [],
+    "status": "passed-automated"
+  },
+  "finished": "2026-09-29T05:32:56.668Z"
+}

@@ -17,7 +17,7 @@ const effects = { emit() {
 const makeWeapons = (hit) => new Weapons(new T.Scene(), effects, hit, () => {
 });
 test("pitch, roll and yaw have the requested signs and forward flight is stable", () => {
-  for (const [key, axis, sign] of [["ArrowUp", "y", 1], ["ArrowDown", "y", -1], ["KeyQ", "x", -1], ["KeyE", "x", 1]]) {
+  for (const [key, axis, sign] of [["ArrowUp", "y", 1], ["ArrowDown", "y", -1], ["KeyQ", "x", -1], ["KeyD", "x", 1]]) {
     const p2 = new Jet("player");
     for (let i = 0; i < 60; i++) updateFlight(p2, input(key), 1 / 60, settings);
     assert.ok(p2.forward[axis] * sign > 0.1, key);

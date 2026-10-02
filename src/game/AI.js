@@ -7,7 +7,9 @@ function updateAI(jet, game, dt) {
   const difficulty = game.settings.difficulty;
   const skill = difficulty === "easy" ? 0.65 : difficulty === "hard" ? 1.3 : 1;
   const enemy = jet.team === "enemy";
-  let target = enemy ? game.player : game.enemies.filter((e) => e.alive).sort((a, b) => jet.position.distanceToSquared(a.position) - jet.position.distanceToSquared(b.position))[0];
+  const opponents = enemy ? [game.player, ...game.allies] : game.enemies;
+  let target = opponents.filter(e => e.alive && (!game.canDetect || game.canDetect(jet, e)))
+    .sort((a, b) => jet.position.distanceToSquared(a.position) - jet.position.distanceToSquared(b.position))[0];
   if (!target?.alive) target = null;
 
   jet.fireTimer -= dt;

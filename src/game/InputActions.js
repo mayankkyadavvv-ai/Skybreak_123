@@ -1,17 +1,17 @@
-export const CONTROLS_VERSION = 4;
+export const CONTROLS_VERSION = 5;
 export const ACTIONS = Object.freeze({
   pitchDown: { label: 'Nose down', key: 'ArrowDown', kind: 'axis' },
   pitchUp: { label: 'Nose up', key: 'ArrowUp', kind: 'axis' },
   rollLeft: { label: 'Roll left', key: 'ArrowLeft', kind: 'axis' },
   rollRight: { label: 'Roll right', key: 'ArrowRight', kind: 'axis' },
   yawLeft: { label: 'Yaw / steer left', key: 'KeyQ', kind: 'axis' },
-  yawRight: { label: 'Yaw / steer right', key: 'KeyE', kind: 'axis' },
+  yawRight: { label: 'Yaw / steer right', key: 'KeyD', kind: 'axis' },
   throttleUp: { label: 'Increase throttle', key: 'KeyW', kind: 'held' },
   throttleDown: { label: 'Decrease throttle', key: 'KeyS', kind: 'held' },
   afterburner: { label: 'Afterburner', key: 'ShiftLeft', alternate: 'ShiftRight', kind: 'held' },
   airBrake: { label: 'Air / wheel brake', key: 'KeyB', kind: 'held' },
   cannon: { label: 'Cannon', key: 'Space', mouse: 'Mouse0', kind: 'held' },
-  missile: { label: 'Missile', key: 'KeyM', mouse: 'Mouse2', kind: 'press' },
+  missile: { label: 'Missile', key: 'KeyE', mouse: 'Mouse2', kind: 'press' },
   flare: { label: 'Flares', key: 'KeyX', kind: 'press' },
   targetNext: { label: 'Next target', key: 'KeyR', kind: 'press' },
   targetPrev: { label: 'Previous target', key: 'BracketLeft', kind: 'press' },
@@ -24,6 +24,9 @@ export const ACTIONS = Object.freeze({
   recenter: { label: 'Recenter mouse stick', key: 'KeyZ', kind: 'press' },
   levelFlight: { label: 'Assisted recovery', key: 'KeyA', kind: 'press' },
   timeOfDay: { label: 'Cycle time of day', key: 'KeyT', kind: 'press' },
+  targetCamera: { label: 'Target tracking camera', key: 'KeyK', kind: 'toggle' },
+  priorityTarget: { label: 'Select priority threat', key: 'KeyF', kind: 'press' },
+  pushToTalk: { label: 'Push to talk', key: 'KeyP', kind: 'held' },
   scoreboard: { label: 'Multiplayer scoreboard', key: 'Tab', kind: 'held' },
   teamComms: { label: 'Squadron / team commands', key: 'KeyY', kind: 'press' },
   allComms: { label: 'All quick commands', key: 'KeyU', kind: 'press' },
@@ -37,6 +40,7 @@ export function bindingsFor(action, settings = {}) {
   const definition = ACTIONS[action];
   if (!definition) return [];
   const custom = settings.keyBindings?.[action];
+  if(!custom && ['targetCamera','priorityTarget','pushToTalk'].includes(action) && Object.values(settings.keyBindings || {}).includes(definition.key))return [];
   return [custom || definition.key, !custom && definition.alternate, definition.mouse].filter(Boolean);
 }
 export const GAMEPAD_LABELS=Object.freeze({pitchUp:'LS down',pitchDown:'LS up',rollLeft:'LS left',rollRight:'LS right',yawLeft:'LB',yawRight:'RB',throttleUp:'D-pad ↑',throttleDown:'D-pad ↓',afterburner:'LS click',airBrake:'LT',cannon:'RT',missile:'A',flare:'B',targetNext:'X',landingGear:'D-pad →',tacticalMap:'D-pad ←',camera:'Y',freeLook:'RS',teamComms:'View / Back',pause:'Menu'});

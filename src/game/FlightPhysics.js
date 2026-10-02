@@ -2,6 +2,8 @@ import * as T from "three";
 import { clamp, damp, UP } from "./math.js";
 import { isHeld, curveAxis } from "./InputActions.js";
 import { GLIDE_ANGLE } from "./Landing.js";
+import { recoveryIntent } from './FlightAssists.js';
+import { systemEffects } from '../shared/DamageSystems.js';
 
 // ============================================================================
 // SKYBREAK FLIGHT DYNAMICS & CONTROL SYSTEM (STAGE 1)
@@ -50,18 +52,27 @@ export const FLIGHT_TUNING = {
 const euler = new T.Euler(0, 0, 0, "YXZ");
 const dq = new T.Quaternion();
 const stepEuler = new T.Euler();
-export function flightCommands(input, settings = {}) {
+const aimDirection=new T.Vector3(),inverseHeading=new T.Quaternion();
+export function flightCommands(input, settings = {}, player = input?.player) {
   const held = action => isHeld(input, action, settings);
   let pitch = (Number(held('pitchUp')) - Number(held('pitchDown'))) * (settings.keyboardInvert ? -1 : 1);
   let roll = Number(held('rollRight')) - Number(held('rollLeft'));
   const yaw = Number(held('yawRight')) - Number(held('yawLeft'));
   const device = settings.device || settings.input;
-  if ((device === 'mouse' || input.touchActive) && !input.freeLook) {
+  if ((device === 'mouse' || input.touchActive) && (!input.freeLook || input.touchActive)) {
     const zone = input.touchActive ? .04 : settings.mouseDeadzone ?? .08;
     const curve = settings.mouseCurve ?? 1.35;
     const sensitivity = settings.sensitivity ?? .8;
-    roll += curveAxis(input.mouse.x * sensitivity, zone, curve);
-    pitch -= curveAxis(input.mouse.y * sensitivity, zone, curve) * (settings.mouseInvert ? -1 : 1);
+    if(!input.touchActive && settings.mouseMode==='point-to-fly' && input.pointAim && player?.quaternion) {
+      aimDirection.copy(input.pointAim).applyQuaternion(inverseHeading.copy(player.quaternion).invert());
+      if(!pitch&&!roll){
+        roll=clamp(Math.atan2(aimDirection.x,-aimDirection.z)*1.4*sensitivity,-1,1);
+        pitch=clamp(Math.atan2(aimDirection.y,Math.hypot(aimDirection.x,aimDirection.z))*2.2*sensitivity,-1,1);
+      }
+    }else if(input.touchActive || settings.mouseMode!=='point-to-fly'){
+      roll += curveAxis(input.mouse.x * sensitivity, zone, curve);
+      pitch -= curveAxis(input.mouse.y * sensitivity, zone, curve) * (settings.mouseInvert ? -1 : 1);
+    }
   }
   if (device === 'gamepad') { pitch += (input.axes?.pitch || 0)*(settings.gamepadInvert?-1:1); roll += input.axes?.roll || 0; }
   return {
@@ -73,8 +84,11 @@ export function flightCommands(input, settings = {}) {
   };
 }
 
-function updateFlight(p, input, dt, settings) {
-  const command = flightCommands(input, settings);
+function updateFlight(p, input, dt, settings, environment = {}) {
+  const command = flightCommands(input, settings, p);
+  if(input.levelTimer>0 && (Math.abs(command.pitch)+Math.abs(command.roll)+Math.abs(command.yaw)>.08 || p.isLanded)) input.levelTimer=0;
+  const recovery=input.levelTimer>0?recoveryIntent(p,command,environment.terrainHeight):null;
+  p.recoveryStatus=recovery;
   const boost = command.boost, brake = command.brake;
   const landingMode = !!p.landingMode;
   const assisted = (settings.flightMode || (settings.input === 'advanced' ? 'manual' : 'assisted')) === 'assisted' || input.levelTimer > 0;
@@ -114,7 +128,7 @@ function updateFlight(p, input, dt, settings) {
   }
   if (assisted) {
     const recovering = input.levelTimer > 0;
-    const climb = recovering ? 0 : command.pitch, turn = recovering ? 0 : command.roll;
+    const climb = recovering ? recovery?.pitch || 0 : command.pitch, turn = recovering ? recovery?.roll || 0 : command.roll;
     const desiredPitch = climb * (landingMode ? .2 : FLIGHT_TUNING.ASSIST_MAX_PITCH) - (landingMode && p.flaps && !recovering ? GLIDE_ANGLE : 0);
     pitch = clamp((desiredPitch - euler.x) * FLIGHT_TUNING.ASSIST_PITCH_GAIN, -1, 1);
     roll = clamp((-turn * (landingMode ? .28 : FLIGHT_TUNING.ASSIST_MAX_BANK) - euler.z) * FLIGHT_TUNING.ASSIST_ROLL_GAIN, -1, 1);
@@ -124,8 +138,9 @@ function updateFlight(p, input, dt, settings) {
     if (!roll) roll = -euler.z * .18;
   }
 
-  const turnMult = p.stats?.turnMult || 1;
-  const speedMult = p.stats?.speedMult || 1;
+  const damage=systemEffects(p.systems,settings.difficulty || 'easy');
+  const turnMult = (p.stats?.turnMult || 1)*damage.turnMult;
+  const speedMult = (p.stats?.speedMult || 1)*damage.thrustMult;
   const boostMult = p.stats?.boostMult || 1;
 
   // Dynamic aerodynamic pressure scaling factor (q-factor)
@@ -139,7 +154,7 @@ function updateFlight(p, input, dt, settings) {
   // Angular rate damping with aircraft inertia & control surface authority
   p.angular.x = damp(p.angular.x, pitch * FLIGHT_TUNING.PITCH_RATE * effectiveTurn, FLIGHT_TUNING.PITCH_DAMPING * turnMult, dt);
   p.angular.y = damp(p.angular.y, yaw * FLIGHT_TUNING.YAW_RATE * effectiveTurn, FLIGHT_TUNING.YAW_DAMPING * turnMult, dt);
-  p.angular.z = damp(p.angular.z, roll * FLIGHT_TUNING.ROLL_RATE * effectiveTurn, FLIGHT_TUNING.ROLL_DAMPING * turnMult, dt);
+  p.angular.z = damp(p.angular.z, roll * FLIGHT_TUNING.ROLL_RATE * effectiveTurn * damage.rollMult, FLIGHT_TUNING.ROLL_DAMPING * turnMult, dt);
 
   dq.setFromEuler(stepEuler.set(p.angular.x * dt, p.angular.y * dt, p.angular.z * dt, "XYZ"));
   p.quaternion.multiply(dq).normalize();

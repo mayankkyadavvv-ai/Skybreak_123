@@ -227,13 +227,13 @@ test("FlightPhysics: ground rollout, wheel braking to stop, nosewheel steering, 
   assert.equal(p.speed, 0, "Speed should reach complete stop (0 m/s)");
   input.keys.delete("KeyB");
 
-  // 2. Nosewheel steering on ground with KeyE
+  // 2. Nosewheel steering on ground with KeyD
   const initEulerY = new T.Euler().setFromQuaternion(p.quaternion).y;
-  input.keys.add("KeyE");
+  input.keys.add("KeyD");
   updateFlight(p, input, 0.2, settings);
   const turnedEulerY = new T.Euler().setFromQuaternion(p.quaternion).y;
   assert.notEqual(initEulerY, turnedEulerY, "Nosewheel steering should turn aircraft on ground");
-  input.keys.delete("KeyE");
+  input.keys.delete("KeyD");
 
   // 3. Acceleration down runway with KeyW (throttle up)
   input.keys.add("KeyW");

@@ -6,6 +6,7 @@ import { Input } from '../src/game/Input.js';
 import { FREE_FLIGHT, MISSIONS } from '../src/game/Missions.js';
 import { Game } from '../src/game/Game.js';
 import { OpenSkiesEncounter, scoreOpenSkies } from '../src/game/OpenSkies.js';
+import { ActivityRuntime } from '../src/shared/Activities.js';
 
 function screen() {
   const { window, document } = parseHTML('<html><body><canvas id="world"></canvas><main id="app"></main></body></html>');
@@ -28,6 +29,30 @@ function screen() {
   return { ui, game, settings, document, window, starts, saves };
 }
 function click(document, selector) { const target = document.querySelector(selector);assert.ok(target, selector);target.click(); }
+
+test('F29 shared activity panel shows countdown, authoritative ranks, host actions and cancel',()=>{
+  const {ui,game,document}=screen();game.player={id:'local'};game.multiplayer={active:true,isHost:true,localId:'a',localName:'Ace',publicRoster:[{id:'b',name:'Wing <B>'}]};
+  const activity=new ActivityRuntime('race',{participants:['a','b']});game.activitySnapshot=activity.snapshot();const started=[];game.startActivity=type=>{started.push(type);return {ok:true};};let cancelled=0;game.cancelActivity=()=>cancelled++;
+  ui.showActivities();assert.match(document.querySelector('#activity-live').textContent,/starts in 5s/);click(document,'[data-activity="formation"]');assert.deepEqual(started,['formation']);
+  game.activitySnapshot={...activity.snapshot(),state:'complete',results:[{id:'b',rank:1,status:'finished',elapsed:51.5,score:6}]};ui.updateActivityPanel();assert.match(document.querySelector('#activity-results').textContent,/Wing <B>/);assert.match(document.querySelector('#activity-results').textContent,/51.50s/);assert.equal(document.querySelector('#activity-results b'),null);
+  click(document,'#activity-cancel');assert.equal(cancelled,1);game.multiplayer.isHost=false;ui.showActivities();assert.ok(document.querySelector('[data-activity="race"]').disabled);
+});
+test('F15 multiplayer replay preserves server identity, ignores hidden enemies and returns to shared debrief',()=>{
+  const {ui,game}=screen();game.player={id:'local-render-jet',position:{x:0,y:1500,z:0},hp:100,alive:true};game.mission={id:'multiplayer',name:'Shared sortie'};game.elapsed=0;game.sortieId=3;game.stats={};game.score=9;
+  game.multiplayer={active:true,localId:'server-a',localName:'Ace',matchEpoch:'epoch-1',remotePlayers:new Map(),lastResult:{winner:{team:'blue'}}};game.getSensorContacts=()=>[];
+  ui.beginExperienceFlight();ui.captureReplayFrame(game);game.elapsed=.2;ui.recordReplayEvent('damage','Unknown enemy','hidden');ui.recordReplayEvent('damage','Own aircraft hit','server-a');ui.finalizeReplay(true,'Complete');
+  assert.equal(ui.lastReplay.frames[0].entities[0].id,'server-a');assert.equal(ui.lastReplay.events.some(e=>e.id==='hidden'),false);assert.ok(ui.lastReplay.events.some(e=>e.id==='server-a'));
+  game.multiplayer.active=false;game.state='result';ui.modalType='mp_result';ui.showReplay();assert.equal(ui.replayReturnMode,'multiplayer');const score=game.score;ui.replayPlayer.seek(.1);assert.equal(game.score,score);let result;ui.showMultiplayerResult=value=>result=value;ui.experienceAction('replay-close');assert.equal(result,game.multiplayer.lastResult);
+});
+test('F22 opening a menu consumes held cannon until a physical release and new press',()=>{
+  const {document,window}=screen();let playing=true;const input=new Input(document.querySelector('canvas'),()=>{},()=>playing,()=>({device:'keyboard'}));
+  const key=(type,code,repeat=false)=>{const event=new window.Event(type);Object.assign(event,{code,repeat});window.dispatchEvent(event);};
+  key('keydown','Space');assert.ok(input.keys.has('Space'));input.clear();playing=false;key('keydown','Space',true);playing=true;key('keydown','Space',true);assert.equal(input.keys.has('Space'),false);key('keyup','Space');key('keydown','Space');assert.ok(input.keys.has('Space'));input.dispose();
+});
+test('F22 controller Menu plus missile prioritizes the menu and cannot launch',()=>{
+  const {document}=screen();let playing=true,actions=[];const input=new Input(document.querySelector('canvas'),name=>{actions.push(name);if(name==='pause'){playing=false;input.clear();}},()=>playing,()=>({device:'gamepad'}));
+  const pad={mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({value:0,pressed:false}))};pad.buttons[0].pressed=true;pad.buttons[9].pressed=true;input.poll(1/60,[pad]);assert.deepEqual(actions,['pause']);input.poll(1/60,[pad]);input.clear();playing=true;pad.buttons[9].pressed=false;input.poll(1/60,[pad]);assert.deepEqual(actions,['pause']);pad.buttons[0].pressed=false;input.poll(1/60,[pad]);pad.buttons[0].pressed=true;input.poll(1/60,[pad]);assert.deepEqual(actions,['pause','missile']);input.dispose();
+});
 
 function battleScreen() {
   const s = screen(), { game, ui } = s;
@@ -134,7 +159,7 @@ test('mission selection, switching modes and Help all use the current controls',
   assert.equal(game.state, 'paused');assert.equal(ui.modalType, 'controls');
   click(document, '#modal-root [data-mode="mouse"]');
   assert.equal(settings.input, 'mouse');assert.match(ui.modal.textContent, /Aim mouse toward/);
-  assert.match(ui.modal.textContent, /M \/ RMB/);
+  assert.match(ui.modal.textContent, /E \/ RMB/);
   click(document, '#modal-root [data-flight-mode="manual"]');
   assert.match(ui.modal.textContent, /Manual flight keeps inertia/);
   ui.closePanel();assert.equal(ui.modalType, 'pause');ui.closePanel();assert.equal(game.state, 'playing');
@@ -167,7 +192,8 @@ test('Sounds is reachable in the menu, Settings and paused Free Flight; closing 
   const { document, ui, game } = screen();
   click(document, '.menu-nav [data-action="sounds"]');assert.equal(ui.modalType, 'sounds');
   assert.equal(ui.modal.querySelectorAll('[data-preview]').length, 8);
-  assert.equal(ui.modal.querySelectorAll('input[type="range"]').length, 6);
+  assert.equal(ui.modal.querySelectorAll('input[type="range"]').length, 7);
+  assert.ok(ui.modal.querySelector('input[type="range"][data-audio-setting="radioVolume"]'));
   ui.closePanel();assert.equal(ui.modalType, null);assert.equal(game.state, 'menu');
   ui.showSettings('audio');click(document, '#modal-root [data-action="sounds"]');ui.closePanel();assert.equal(ui.modalType, 'settings');
   game.start(3);game.state = 'playing';game.pause();

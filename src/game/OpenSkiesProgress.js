@@ -27,3 +27,21 @@ export function recordOpenSkiesResult(manager, instanceId, result, difficulty = 
   manager.saveProfile();
   return { awarded: !!result.success, personalBest: !!personalBest, best: progress.best[difficulty] };
 }
+
+/** Generated/adaptive and campaign records never enter standard Open Skies leaderboards. */
+export function recordOperationResult(manager, instanceId, result, source = 'custom') {
+  if (!instanceId || !result || !['escort', 'intercept', 'base-defence', 'strike-support'].includes(result.template)) return { awarded: false };
+  const profile = manager.profile;
+  const previous = profile.operations && profile.operations.version === 1 ? profile.operations : {};
+  const applied = Array.isArray(previous.applied) ? previous.applied.filter(id => typeof id === 'string').slice(-64) : [];
+  if (applied.includes(instanceId)) return { awarded: false };
+  const best = previous.best && typeof previous.best === 'object' ? { ...previous.best } : {};
+  const difficulty = ['easy', 'medium', 'hard'].includes(result.preset?.difficulty) ? result.preset.difficulty : 'easy';
+  const category = source === 'campaign' ? 'campaign' : result.category === 'custom-fixed' ? 'custom-fixed' : 'custom-adaptive';
+  const key = `${result.template}:${difficulty}:${category}`;
+  const elapsed = bounded(result.elapsed, 3600);
+  if (result.success && (!best[key] || elapsed < best[key].elapsed)) best[key] = { elapsed, seed: Number(result.seed) >>> 0, template: result.template, category };
+  profile.operations = { version: 1, applied: [...applied, instanceId].slice(-64), best };
+  // Game.finish grants its usual mission completion once; this stores records only.
+  manager.saveProfile(); return { awarded: false, recorded: true, best: best[key], category };
+}

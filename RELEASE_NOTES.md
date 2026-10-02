@@ -1,5 +1,7 @@
 # Skybreak — September 2026 local upgrade
 
+> Historical stage report. Current controls/fixes: [FLAW_FIXES.md](FLAW_FIXES.md) and [PLAYING_GUIDE_HINGLISH.md](PLAYING_GUIDE_HINGLISH.md). Defaults are ↑ nose up, ↓ nose down, E missile, Q/D yaw.
+
 Local source/build handoff, 28 September 2026. Deployment is deferred. See SKYBREAK_UPGRADE_REPORT.md for phase status and verification limits.
 
 ## Controls and game fixes

@@ -15,7 +15,7 @@ Date: 2026-09-28. Base commit: `fda260d57a6dd00c0ee3241cec91454a426e5bcb`.
 ## How to play
 
 1. Missions → **Open Skies** → Play. Assisted flight and Easy are the defaults.
-2. **↑ = nose up; ↓ = nose down.** ←/→ roll and turn; Q/E yaw. W/S sets throttle and holds it, Shift boosts, B brakes. Release steering to level in Assisted mode.
+2. **↑ = nose up; ↓ = nose down.** ←/→ roll and turn; Q/D yaw. W/S sets throttle and holds it, Shift boosts, B brakes. Release steering to level in Assisted mode.
 3. R selects a hostile. Keep its diamond in the reticle for 1.4 seconds until LOCKED; M/right click fires a missile. Space/left click fires cannon. X deploys flares after a missile warning.
 4. **Y** opens squadron orders and pauses flight: **1 Cover me, 2 Attack my target, 3 Regroup**. Numbers act only inside this panel. Esc/Y closes and restores the prior state. Touch WING or standard controller View/Back opens the same panel; D-pad navigates, A confirms, B closes. Multiplayer retains its separate commands.
 5. Clear the patrol, protect your squadron from reinforcements, then defeat VIPER. H opens Help. Keep wingmen alive and avoid damage for a better medal.

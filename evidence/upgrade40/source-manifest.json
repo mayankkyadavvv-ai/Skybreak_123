@@ -1,0 +1,989 @@
+{
+  "schema": 1,
+  "version": "2.0.0-rc.1",
+  "protocol": 2,
+  "generatedAt": "2026-09-28T18:09:10.583599+00:00",
+  "upstreamBase": "ae1fedbb9ae2a790832e0415029f2044ae77562d",
+  "specificationSha256": "e3daee237bcf78d296a296ca1001c102377c303f86686cba460b428945ae0de5",
+  "scope": "Exact source, server, scripts, tests, public assets and selected build configuration; documentation/evidence excluded from source hash to avoid recursive identity. Built asset hashes identify the tested Vite output.",
+  "sourceAggregateSha256": "cb977007035296ce88813964247c5c5eec9f29d88d7ac36d3bb81161baba54a8",
+  "source": [
+    {
+      "path": ".dockerignore",
+      "bytes": 65,
+      "sha256": "60e569b7773df71e16643aab6c6377dd7966965deb763e1e2d0a68d777c24f6e"
+    },
+    {
+      "path": ".env.example",
+      "bytes": 544,
+      "sha256": "e2a589a1d13d7be8d10899b8584c1684b1ad24c38328611ad40ca26dbd8c90b2"
+    },
+    {
+      "path": "Dockerfile.match",
+      "bytes": 658,
+      "sha256": "38cc6168fbab1f6531a748d45889d3eaaab0f6568b6ec2fa181191346317c840"
+    },
+    {
+      "path": "START_SKYBREAK_LAN.cmd",
+      "bytes": 675,
+      "sha256": "695c0153cf196a21e6268e4755eb6c0a7bf33f9e6d379a1c66a8b263a1126a1e"
+    },
+    {
+      "path": "index.html",
+      "bytes": 3058,
+      "sha256": "344627092620f13bea8ca6d9216ca03cd517bc946b3bf25a06b937574952ec01"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 279060,
+      "sha256": "3048d694246c1053ee94c86837156e18702be37d828d79e5b8884dffb7f286dc"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1053,
+      "sha256": "8888150967cfd07096f163930683fcf158a3f1ac2d16df6697ab9222249a05aa"
+    },
+    {
+      "path": "public/404.html",
+      "bytes": 2664,
+      "sha256": "878a748475b2b1e450acc0e3206061fb4667719fcf047ced419a6227836c93ba"
+    },
+    {
+      "path": "public/_headers",
+      "bytes": 660,
+      "sha256": "fea88c2da0ca8705b3b24b2ff7cee7655f2e850f0d283898aa53bf4dbf200df6"
+    },
+    {
+      "path": "public/about.html",
+      "bytes": 3659,
+      "sha256": "96eb7fb270dcbe46d9953cfca4b03487dddc749ffb15406a4c52faea1604dd10"
+    },
+    {
+      "path": "public/brand/apple-touch-icon.png",
+      "bytes": 3750,
+      "sha256": "e2128a39fc4307d5deb36f2a063becf53a33220880cb5ce649acbf92719f9bdb"
+    },
+    {
+      "path": "public/brand/favicon-32.png",
+      "bytes": 785,
+      "sha256": "e5b4ae49f7a65112de2f70c3c8bb0e20736e7078a53ae3a1f4a3fe572b00fe0e"
+    },
+    {
+      "path": "public/brand/favicon.svg",
+      "bytes": 274,
+      "sha256": "153ef4c3545a172cfdca5b05843e9f4a07941db5a256d1b72914e3ebcc6a3de6"
+    },
+    {
+      "path": "public/brand/icon-192.png",
+      "bytes": 3943,
+      "sha256": "a5c2f4f0d9a27cadaec0fe1cb5a522fb14b1f198a0f1ec23f1c01f32debf09a7"
+    },
+    {
+      "path": "public/brand/icon-512.png",
+      "bytes": 14206,
+      "sha256": "e7ed272b144d88db1982c8b671ce3927c4b42ec2df00efd0e1afe14c45cc09b6"
+    },
+    {
+      "path": "public/brand/skybreak-social.png",
+      "bytes": 146536,
+      "sha256": "b21ee2e1499dbaf1b892092d677545dddc8d9f5ab41e7edb0652ae1ead7d591b"
+    },
+    {
+      "path": "public/brand/skybreak-social.svg",
+      "bytes": 2484,
+      "sha256": "d8d562ca021301d058ce5d523acb96cdc004337d42645c07dc39667f7c4a28b9"
+    },
+    {
+      "path": "public/favicon.ico",
+      "bytes": 4729,
+      "sha256": "1a8de0fd173b10f0c21f06fe1f93f2f4cc23ee1e86b5b294cc73d8b6460e383d"
+    },
+    {
+      "path": "public/help.html",
+      "bytes": 7787,
+      "sha256": "4683096c89064094f846cb3a1b5e1133dbbdb0da09981bce2b4d1b9e16bf2d42"
+    },
+    {
+      "path": "public/privacy.html",
+      "bytes": 6940,
+      "sha256": "6621ec5504886cc769e97d49c54ad6926bb0bf434319bf208c1e410b3155ca01"
+    },
+    {
+      "path": "public/robots.txt",
+      "bytes": 77,
+      "sha256": "a85ac67bccd437112cad220ea32944e2ede064bfb374df7fa2d86ead16c82ed4"
+    },
+    {
+      "path": "public/site.css",
+      "bytes": 2457,
+      "sha256": "737a84f1a9771b0dacc6077f8159879b74942ad0006493d052121f3804aea7a5"
+    },
+    {
+      "path": "public/sitemap.xml",
+      "bytes": 369,
+      "sha256": "2aa2615a7ab899ac45791bdbb9d25961a233f7416aa642f65003b968575e1dec"
+    },
+    {
+      "path": "public/storage.html",
+      "bytes": 4667,
+      "sha256": "8a712177af5669459eacf74b64634986e2784c11e7de73e433d338f6c32ddf42"
+    },
+    {
+      "path": "public/storage.js",
+      "bytes": 1359,
+      "sha256": "9fbaa43cd874eb3ecbc895a60b95f9da5591c9e8c48bf44391b330ba5e67b195"
+    },
+    {
+      "path": "public/terms.html",
+      "bytes": 4152,
+      "sha256": "495dfdad2030f250fe3340b4126db1ef1c1956c28d779542cfc208694acb6f14"
+    },
+    {
+      "path": "scripts/audit-secrets.mjs",
+      "bytes": 1334,
+      "sha256": "97ed341c6a25280b46a4f1db5eec0ee5ab5ae0fbceda500d277cf422f1394cf1"
+    },
+    {
+      "path": "scripts/browser-acceptance.mjs",
+      "bytes": 7842,
+      "sha256": "785ab0872efc532efc82d6b34a223d1f82853fd2d57285fa2636e9e81d1a2977"
+    },
+    {
+      "path": "scripts/build-public.mjs",
+      "bytes": 19416,
+      "sha256": "aad87e54505978d306e9fbd634d12b8e0101254a1e9c9f32b87d76251352860c"
+    },
+    {
+      "path": "scripts/check-contrast.mjs",
+      "bytes": 1203,
+      "sha256": "cb5e4239e54a912a083c28bb66774ba1509c7a7d5380f8bf36520bff9b2f25f6"
+    },
+    {
+      "path": "scripts/export-source.py",
+      "bytes": 4864,
+      "sha256": "ea8fb222409490132b8f651c120640fa12c4c074e210c93994f66028b4b7cc7a"
+    },
+    {
+      "path": "scripts/lan-acceptance.mjs",
+      "bytes": 7607,
+      "sha256": "dd6ea467acfb017a7cc4b57f7f36d21c7c402de7fe4994fc81fdab61c847ed15"
+    },
+    {
+      "path": "scripts/lan-package.mjs",
+      "bytes": 7256,
+      "sha256": "85abe46dc220e5fadf2cbff8e21c719d1795e901aa84325850c3a0add6d6b939"
+    },
+    {
+      "path": "scripts/open-skies-browser.mjs",
+      "bytes": 6427,
+      "sha256": "ed914e75c3d78e62e12dee216ec24593fc203e45656ce72cf3bda062adab76e6"
+    },
+    {
+      "path": "scripts/play.mjs",
+      "bytes": 1531,
+      "sha256": "e278802b374832e3cab4f4bd1612ad5e399caa3305f2cdd76617f39d62a6c676"
+    },
+    {
+      "path": "scripts/preview.mjs",
+      "bytes": 2948,
+      "sha256": "d7bb218b7d38e5f885b1eb16efe7d59ef350cefaeea7ec38f85ca9f7266441a8"
+    },
+    {
+      "path": "scripts/release.mjs",
+      "bytes": 4243,
+      "sha256": "9165f9392920fd4f42421f0913c73ef2d0e9c9a58ccd983c6360b12d2a66d3ed"
+    },
+    {
+      "path": "scripts/security.mjs",
+      "bytes": 2306,
+      "sha256": "2582b5b653df3e6a87b9fdbb34d7d4268e00c1924f35d5a1d9fd3e91880aba4a"
+    },
+    {
+      "path": "scripts/templates/game.html",
+      "bytes": 1672,
+      "sha256": "12c02535e92bf6405171384b39ac99d6f20b7727e54e56a16b9685c6ca942ed1"
+    },
+    {
+      "path": "scripts/update-upgrade40-matrix.mjs",
+      "bytes": 18856,
+      "sha256": "856bb3185707834c10712264738e3444759c7f6bb9540f534cbd701bc43aceef"
+    },
+    {
+      "path": "scripts/upgrade40-browser.mjs",
+      "bytes": 13308,
+      "sha256": "616ca00718d14f57bf4cbfab2d98d60eee8f255c9ec941e94eaa8f20f0a2a2e3"
+    },
+    {
+      "path": "scripts/upgrade40-network-soak.mjs",
+      "bytes": 9944,
+      "sha256": "f567d44aeff9a36833936dab7d8e3b3474aa309e3f24e22e7343a6576d8bc39f"
+    },
+    {
+      "path": "scripts/validate-site.mjs",
+      "bytes": 2829,
+      "sha256": "e16f13013838bcac3bc99f707f48a3e5936b5a71496149d1658dcf2c00e6518b"
+    },
+    {
+      "path": "scripts/verify-live.mjs",
+      "bytes": 2122,
+      "sha256": "f3c289b9947945b2ce387e9298f2fe7f39ef09cfa2364b01a66a008b9bb1ae55"
+    },
+    {
+      "path": "server/GameServer.js",
+      "bytes": 18157,
+      "sha256": "40ed7513b30511982bb637a37d6bba003f93673c31faf0da70b8c8cc5344bbaa"
+    },
+    {
+      "path": "server/MatchState.js",
+      "bytes": 29683,
+      "sha256": "3b14cab14482617a94c381ba730998fc38224ea97bf71657135d4925280c6b8f"
+    },
+    {
+      "path": "server/Matchmaker.js",
+      "bytes": 3566,
+      "sha256": "1d5cad2125d905873ca8bd63ec9f22e2a559a3ef8798ae8c8f15e19f144671bb"
+    },
+    {
+      "path": "server/Room.js",
+      "bytes": 11367,
+      "sha256": "5c3796447d73576879b686d23f77c2bbe7c874b26979144c37dde85c992cb498"
+    },
+    {
+      "path": "server/RoomManager.js",
+      "bytes": 2039,
+      "sha256": "c9ac7cdd44c7cd67a0084195f2489d9f666ed64d05cc2dceaba44a1d45389aa6"
+    },
+    {
+      "path": "server/index.js",
+      "bytes": 1978,
+      "sha256": "840683b88bd9316b4bf7ac75d06a412a054406fb2fb72136f13af236611e5b3a"
+    },
+    {
+      "path": "server/lan-launcher.js",
+      "bytes": 1819,
+      "sha256": "49cba534f353cb51842837b476fcaca8467a72963f03a65ad4fa60cff1244f07"
+    },
+    {
+      "path": "server/lan.js",
+      "bytes": 13228,
+      "sha256": "614198e1e78700960dea93ab796443d78c056bbe63bec7fdfcfedfbb4233a13e"
+    },
+    {
+      "path": "server/offline-launcher.js",
+      "bytes": 190,
+      "sha256": "d5b5226de0be8de6e94a16db43c39fd32cf87c4b2fca0b60beb06daaab8ca441"
+    },
+    {
+      "path": "site.config.js",
+      "bytes": 280,
+      "sha256": "7dbf11d914c067a88ea5a51b755ea786f399779c8abc30b59432ae7c097105d4"
+    },
+    {
+      "path": "src/data/countries.json",
+      "bytes": 246018,
+      "sha256": "1b0ef51831811ed4a04b1e2a3910971edab44e67cb9339ae5404ffaf23e2daca"
+    },
+    {
+      "path": "src/game/AI.js",
+      "bytes": 5988,
+      "sha256": "483aa795755d5bd8c2b27e6d70b8c1da551af1efe37968d9f0103c37df5b3f63"
+    },
+    {
+      "path": "src/game/AdaptiveQuality.js",
+      "bytes": 3149,
+      "sha256": "8328b67c9cee9c3a812eb318f6c175ccc0f7ba7f1bb5efa9ac75f040fac3388b"
+    },
+    {
+      "path": "src/game/AircraftLOD.js",
+      "bytes": 3442,
+      "sha256": "5eb260d91e46bbc583657e1206b6fc1b7c568a0ea9aa07924387cefb84e7b0e7"
+    },
+    {
+      "path": "src/game/AirfieldDetail.js",
+      "bytes": 6240,
+      "sha256": "5d7207ef3b4dc10895c8e724d59ba3d7e8612c25d0fa929d9dfdc46f244f2e21"
+    },
+    {
+      "path": "src/game/Atmosphere.js",
+      "bytes": 10399,
+      "sha256": "3e4e1da6cedd31138627b4fa9871c142509ed315349b2e90bd71b56f0bce0187"
+    },
+    {
+      "path": "src/game/Audio.js",
+      "bytes": 14139,
+      "sha256": "4ee862b070078e327fdbcaffe46ba0ab1b6b174b293d0551d36aa2d57176f9fd"
+    },
+    {
+      "path": "src/game/Camera.js",
+      "bytes": 7026,
+      "sha256": "3111ca1a83cb37741287a5d4a26344c728df41454d05f7d353b36f8d038876d6"
+    },
+    {
+      "path": "src/game/CloudField.js",
+      "bytes": 88,
+      "sha256": "18cb2af5936efe746a6007a6ff8a7ac340d769ccf419c2d07a8813eb8128b710"
+    },
+    {
+      "path": "src/game/CoastalDetail.js",
+      "bytes": 3424,
+      "sha256": "aacd3520601020f6fb2ad15c93bce938afd86fc896b64beb03d1157cf5202fe4"
+    },
+    {
+      "path": "src/game/Cockpit.js",
+      "bytes": 5585,
+      "sha256": "f446b2c53869c9306f390fb0dbc8245d2ae380de5ce0dda5d62c2815dedce8d2"
+    },
+    {
+      "path": "src/game/Effects.js",
+      "bytes": 13013,
+      "sha256": "de7da9338d11a1cc5dd068c3dbcf342315ee19bf30e914f4f81715d25197ff1a"
+    },
+    {
+      "path": "src/game/Environment.js",
+      "bytes": 1362,
+      "sha256": "035738874719596430ac8a98179b7ef44d00699569ab2e83a036296620f863b0"
+    },
+    {
+      "path": "src/game/FlightAssists.js",
+      "bytes": 2191,
+      "sha256": "2be509867361527d339ea2eb594d481c90c0ad35a8d67419b0880bfa5e9f5a4b"
+    },
+    {
+      "path": "src/game/FlightPhysics.js",
+      "bytes": 11166,
+      "sha256": "bc5f85abd0582da57d2caa0eef8d14d6dee07a883e808a8a50cb9d709d45b984"
+    },
+    {
+      "path": "src/game/FlightSchool.js",
+      "bytes": 6710,
+      "sha256": "d5d413386f0cdb50d3caae390542c6ded78934fa70b1adc777ef40abf7d4f3b1"
+    },
+    {
+      "path": "src/game/Game.js",
+      "bytes": 65468,
+      "sha256": "ab9666e66c955659053c77ca5e30089072f0f30016d13008028180b2fc3fa30a"
+    },
+    {
+      "path": "src/game/GeoTexture.js",
+      "bytes": 14626,
+      "sha256": "cbb648bfa6e057b476538824ef8a10665dd81addcaec44570eedfad59a9947ce"
+    },
+    {
+      "path": "src/game/GeoWorld.js",
+      "bytes": 29603,
+      "sha256": "7c61cc5dc8d65f07c549c344252d53f0b955efda2769b89999b0d70dc7093530"
+    },
+    {
+      "path": "src/game/Input.js",
+      "bytes": 10683,
+      "sha256": "430461e71e10b5adda21b9b49a036f7a93b3c03c16777a27943155b07841838d"
+    },
+    {
+      "path": "src/game/InputActions.js",
+      "bytes": 8005,
+      "sha256": "6a7feda415bfa723655599b5073d2400c55bfb5d800c915e3b15def9516085d4"
+    },
+    {
+      "path": "src/game/Jet.js",
+      "bytes": 45831,
+      "sha256": "a7f67d81e59e7a9f25d4a86c32aae49ca9680c478d8207573fc43693384b4c93"
+    },
+    {
+      "path": "src/game/JetAsset.js",
+      "bytes": 2080,
+      "sha256": "5ad6b1bdb469ced27144c5b31b42e8041589a496ddd491c7963b74f07c84ecc6"
+    },
+    {
+      "path": "src/game/JetConfigs.js",
+      "bytes": 11703,
+      "sha256": "42114876f48c601a63580db6830a244069d296d8b31edd59155b8035d79d089d"
+    },
+    {
+      "path": "src/game/Landing.js",
+      "bytes": 2404,
+      "sha256": "647ca1d4844355deb80922203ad3ec29a244ba4c3f683a5459ca39d76e16efdf"
+    },
+    {
+      "path": "src/game/LocalCoop.js",
+      "bytes": 14246,
+      "sha256": "4dce6da9b5819313a6676a3a9573df7f51a513d3b8fc0b3f24aa6d0b7dc4da9a"
+    },
+    {
+      "path": "src/game/MissionIntegration.js",
+      "bytes": 16982,
+      "sha256": "a989f8819b4643953ff6678d92a80253c6c4d9a9aa8a303841b1fe6c1ff42d31"
+    },
+    {
+      "path": "src/game/Missions.js",
+      "bytes": 2652,
+      "sha256": "46da43e833d8e90c199d4373a52406eddac9f97d56c8bafeb910c5dc00dce270"
+    },
+    {
+      "path": "src/game/OpenSkies.js",
+      "bytes": 5228,
+      "sha256": "31380246dfed18fedb1afb012ee628ad88272def15182cdfafef198e1c4817f5"
+    },
+    {
+      "path": "src/game/OpenSkiesProgress.js",
+      "bytes": 3531,
+      "sha256": "27e51add3efb1d7f37c8a3cffeeb60cb0549023eaf6e2d7495f185a566cbdcc3"
+    },
+    {
+      "path": "src/game/Progression.js",
+      "bytes": 7084,
+      "sha256": "72e051b2b36d4b7a81f5d967c2a5684d515ecb1f09028eba1944116cfe016707"
+    },
+    {
+      "path": "src/game/Quality.js",
+      "bytes": 2219,
+      "sha256": "db04bad59b86252cdc5efa59e533f288d917a7ae560c2308adb5177d051bc0dd"
+    },
+    {
+      "path": "src/game/Replay.js",
+      "bytes": 6484,
+      "sha256": "7aabae4e3a939d7e569f7830a590258b29e2f3e146c2bc99865fae240b9cffa4"
+    },
+    {
+      "path": "src/game/Resources.js",
+      "bytes": 722,
+      "sha256": "84783265894deaf3caf135869e7b9fc142f8a92eb2deccfcde570290ea6d1539"
+    },
+    {
+      "path": "src/game/Settings.js",
+      "bytes": 6258,
+      "sha256": "63c3c5474168cf912531dd982bd6623da3e0c9246c4416f05e5f45452d48d180"
+    },
+    {
+      "path": "src/game/SoundDesign.js",
+      "bytes": 6711,
+      "sha256": "e16391982518111823e8c7e5b853f17aa267e326227482cf727efb9c0fbf2132"
+    },
+    {
+      "path": "src/game/SpatialHash.js",
+      "bytes": 5138,
+      "sha256": "103bcb3370714d4c323eb33aea39b7a01d969f3454ac6e408739c4db72422707"
+    },
+    {
+      "path": "src/game/SpeedEffects.js",
+      "bytes": 5086,
+      "sha256": "b71fb01409616bc79ad4956de98b50bb455d10d2b76105aa47b4a5c235708eff"
+    },
+    {
+      "path": "src/game/SquadronAI.js",
+      "bytes": 13224,
+      "sha256": "caf3bdf6b5f4d43a9d0a6209cd18a6adab0900bda3b4f053581ca4c50981a521"
+    },
+    {
+      "path": "src/game/StaticScenery.js",
+      "bytes": 2065,
+      "sha256": "1bed0165df09ded3079421b4740b6f039615d8a5766d4480317760803da27d31"
+    },
+    {
+      "path": "src/game/Storage.js",
+      "bytes": 255,
+      "sha256": "ab23fae60cd576f41bcd86215907a2c76361f61aefda549e3fd63eded6d68947"
+    },
+    {
+      "path": "src/game/SurfaceDetail.js",
+      "bytes": 3523,
+      "sha256": "5b2f17a11c35610bc8f7746efecb0f51b886ffd700f42986e3932c58d555c0fa"
+    },
+    {
+      "path": "src/game/TerrainChunks.js",
+      "bytes": 5982,
+      "sha256": "d4eece3516b64a6b73d800e1b7414b1d60aa896a121867e25c563151d555b871"
+    },
+    {
+      "path": "src/game/Weapons.js",
+      "bytes": 7024,
+      "sha256": "688ad68bad4fa5dbe4ce062d62a282a2bc0d80267f9bf7996ac2aa3cddc77e89"
+    },
+    {
+      "path": "src/game/World.js",
+      "bytes": 43208,
+      "sha256": "35454a4e527de1e416a7f1d93e99240ad4e4835180820f56fa81802f49b1ccac"
+    },
+    {
+      "path": "src/game/WorldDetailMaps.js",
+      "bytes": 1199,
+      "sha256": "2d69850e341ba8fdcd4ba386b9f8e30b6467939ead0e1843fb19c31ca139a43b"
+    },
+    {
+      "path": "src/game/math.js",
+      "bytes": 1089,
+      "sha256": "c3e12c95e5ed28e410652f3084fff709a1437a0386d5e054430411bb4b2198bf"
+    },
+    {
+      "path": "src/main.js",
+      "bytes": 1739,
+      "sha256": "a0a661c12223f819df3508df58f4377f1f090eaab254af92f1eb4e4276ead8d3"
+    },
+    {
+      "path": "src/multiplayer/Endpoint.js",
+      "bytes": 1152,
+      "sha256": "83856d05d448078dd92c8dd2d502133664cbb0712ad4d435b1830733a9fe250f"
+    },
+    {
+      "path": "src/multiplayer/FlightPrediction.js",
+      "bytes": 3517,
+      "sha256": "74dc5bf96b82dae78d3149dbb7a607f727eebeb296ce72727b633f0b0f33abe8"
+    },
+    {
+      "path": "src/multiplayer/Invites.js",
+      "bytes": 1163,
+      "sha256": "15602979ba10035defa0afa649deba233b1373e3f9ec60a2e6732fb05932678c"
+    },
+    {
+      "path": "src/multiplayer/MultiplayerManager.js",
+      "bytes": 27260,
+      "sha256": "8aa595c71fa25eeddf0a9f11cdb93ee64f4b7b363d01e0daf0979ddb64395a4f"
+    },
+    {
+      "path": "src/multiplayer/NetworkManager.js",
+      "bytes": 9555,
+      "sha256": "2a33e94778e0f8fe4103ff90c1df5bd18669d0c0191b8df8653067aab1aade4a"
+    },
+    {
+      "path": "src/multiplayer/QuickComms.js",
+      "bytes": 2337,
+      "sha256": "be1b4e80f7756f183418016dc97d6f5ca0e70ebc0bfab1ba0f6fe37132f43832"
+    },
+    {
+      "path": "src/multiplayer/SpectatorManager.js",
+      "bytes": 1870,
+      "sha256": "ecce73c51a28fd29aeabae93a3c288c9c420b981c5212f0622f8d0021c8020dc"
+    },
+    {
+      "path": "src/multiplayer/SyncManager.js",
+      "bytes": 5252,
+      "sha256": "f307fddb2a6632a38c6b5ac544bb189d553724101a63fd45229b0671521322e1"
+    },
+    {
+      "path": "src/multiplayer/VoiceManager.js",
+      "bytes": 9280,
+      "sha256": "cdfc8c07d1aaf0894765e672f4f9021488681f99afa40641ec749cf6e3772ca5"
+    },
+    {
+      "path": "src/multiplayer/WeaponNetworkManager.js",
+      "bytes": 5747,
+      "sha256": "4ce73fe692204d41ab2b2c2faf14da3ad7fed0b206838d4e956c7e3fe6b0c85e"
+    },
+    {
+      "path": "src/shared/Activities.js",
+      "bytes": 11488,
+      "sha256": "9bb90b081805fde1628fc6d9b7ba9b145454cec852471417f3d6046f6ea93027"
+    },
+    {
+      "path": "src/shared/AegisLandmarks.js",
+      "bytes": 3354,
+      "sha256": "767b3168eb8fc0c09fe770380203eb452ce7084b8cf13a4471e801684c23ee12"
+    },
+    {
+      "path": "src/shared/BattleDirector.js",
+      "bytes": 3148,
+      "sha256": "01c603eae9d52d5a20d24c670e1a34c9d14dce884f4eb7073943d55230dc6ef5"
+    },
+    {
+      "path": "src/shared/Campaign.js",
+      "bytes": 5922,
+      "sha256": "a63751c995a66fd45f04ba5566e7b62e6527319f2b02419d8f3d9535a139b279"
+    },
+    {
+      "path": "src/shared/CloudField.js",
+      "bytes": 2528,
+      "sha256": "08c59dcee695640c706cfb212ece4c7a270edb8ae4ad166c0c4e16d34fce2313"
+    },
+    {
+      "path": "src/shared/DamageSystems.js",
+      "bytes": 3611,
+      "sha256": "b2243823e61a6e48d4ff9eda850b8b6b5efd6e1c270f498e6e3dbb933f199a30"
+    },
+    {
+      "path": "src/shared/FlightCore.js",
+      "bytes": 9512,
+      "sha256": "931ae4c24a81c7943954ff202eeee53f145b44685d013a4ba988773c470bc5dc"
+    },
+    {
+      "path": "src/shared/MissionGenerator.js",
+      "bytes": 8715,
+      "sha256": "988da0884e09ed772d0616077627d8b4dc2091e3d5f0bdee2020bb9e2c5a6431"
+    },
+    {
+      "path": "src/shared/MissionRuntime.js",
+      "bytes": 17544,
+      "sha256": "ef15512e6bf3eeca4132aa84f0985ed369fea8024c5054935370b784a6ae9d4a"
+    },
+    {
+      "path": "src/shared/Protocol.js",
+      "bytes": 2505,
+      "sha256": "e381303de3b58fe12a1af68f7eb79a0a35fa87ecb520a98b0e71a80ecdf79bbd"
+    },
+    {
+      "path": "src/shared/Sensors.js",
+      "bytes": 5213,
+      "sha256": "17a26bd72bc88b7d1c7ac7c581567c5ba07e119ee87400356789cdd05f645f83"
+    },
+    {
+      "path": "src/shared/WorldGeometry.js",
+      "bytes": 4089,
+      "sha256": "1d72ba5abc6671edacd9ad146abfed89ce0e208734bacac7bf7d941b2a72c237"
+    },
+    {
+      "path": "src/style.css",
+      "bytes": 71705,
+      "sha256": "3295957d15094522ab106414e22ad0dfe8b106df1a79f0f2075509762498b9c2"
+    },
+    {
+      "path": "src/ui/Accessibility.js",
+      "bytes": 819,
+      "sha256": "7a2cc943ba1cbf48e52108ebebe24afe1c70ca5c1d26af6ab2572dadd5766f94"
+    },
+    {
+      "path": "src/ui/ActivityDisplay.js",
+      "bytes": 1610,
+      "sha256": "2a9a1836e80b65305b6eaba306ceb9c5457875cefa8e26eeb24156a6d7b25b69"
+    },
+    {
+      "path": "src/ui/Atlas.js",
+      "bytes": 2979,
+      "sha256": "d7bb31e99cf072d91bdc35ac62eab37f9c099dfe96ae086f2fc4e691b862a286"
+    },
+    {
+      "path": "src/ui/BeginnerGuide.js",
+      "bytes": 4304,
+      "sha256": "ad286fab71e1a9bdfe25a38e6a3891c6526b486411e54649772836c6c9b252fd"
+    },
+    {
+      "path": "src/ui/ExperienceUI.js",
+      "bytes": 34158,
+      "sha256": "6d221a095c66357ee0f0288c89a4b90fcb1a2e9de89331e49d814f717e8cd32e"
+    },
+    {
+      "path": "src/ui/HUDState.js",
+      "bytes": 1805,
+      "sha256": "c73060515824e92cd2ae4765c4456beacfae9c879e9671246b63692d5518a48a"
+    },
+    {
+      "path": "src/ui/HangarUI.js",
+      "bytes": 22422,
+      "sha256": "d30eff9fe2dddcad6e154d1b9b2b1d03701b47cfb70dd909b5a849ae278832ce"
+    },
+    {
+      "path": "src/ui/Icons.js",
+      "bytes": 703,
+      "sha256": "4473da66f49a25c81dfb077d830832e6481ca87c3e7e253666987c296388819d"
+    },
+    {
+      "path": "src/ui/LoadoutComparison.js",
+      "bytes": 848,
+      "sha256": "65e010ea269ee746d0ebd755d1d3ed90354ed141a595916d490f656436ea55d1"
+    },
+    {
+      "path": "src/ui/LocalCoop.css",
+      "bytes": 1723,
+      "sha256": "1457aaeddae6763de2c55d179e217f8802f5e572c9d6b2064caf123e4872171b"
+    },
+    {
+      "path": "src/ui/MultiplayerUI.js",
+      "bytes": 53679,
+      "sha256": "44916b981c141e30023fa052a5abc678c4860e3a1f522b50f4375c2bc99a93fe"
+    },
+    {
+      "path": "src/ui/MultiplayerUpgrade.css",
+      "bytes": 3265,
+      "sha256": "f479ef87ccdc990174becfa19ee6e2227b6f0f4db0f0b9c986e6c85467c6828b"
+    },
+    {
+      "path": "src/ui/OpenSkiesUI.js",
+      "bytes": 6572,
+      "sha256": "790aa9eca653025ff29fb6f850931e56c1605aff0071f2ad7e09e17614d6d656"
+    },
+    {
+      "path": "src/ui/SeatHUD.js",
+      "bytes": 2989,
+      "sha256": "0974955fc6e8ac0070d91ced7541871c88b468f2e9b2e9fb7bc368b16d158d53"
+    },
+    {
+      "path": "src/ui/SettingsUI.js",
+      "bytes": 6441,
+      "sha256": "8da26d501ea12cce13c3f03e120217e614f932e167665ff855fa8acfc377939a"
+    },
+    {
+      "path": "src/ui/SoundSettings.js",
+      "bytes": 3401,
+      "sha256": "9cd1e1074f2ed7746d1acd8034b73af5e545626eb2d0848862acc4079020a7cb"
+    },
+    {
+      "path": "src/ui/ThreatDisplay.js",
+      "bytes": 3609,
+      "sha256": "f3231e9848e64beae19fa13290288c76513622c0a6916a6603b83010919c4f9e"
+    },
+    {
+      "path": "src/ui/UI.js",
+      "bytes": 101811,
+      "sha256": "f656ca87c1b50525a2d62fcdef6b07fd823202b9c2cb9160fcc237b5449e08d5"
+    },
+    {
+      "path": "src/upgrade.css",
+      "bytes": 35058,
+      "sha256": "fd801973e3b10833b5dee10cf1fc41d367b0d6180e685f891c7e2a5554cc0764"
+    },
+    {
+      "path": "tests/approach.test.js",
+      "bytes": 3587,
+      "sha256": "7dfe55c1d39fe05bd77677ec563a2850a8a39876bb682727dc43b5fb08696f52"
+    },
+    {
+      "path": "tests/audio.test.js",
+      "bytes": 8833,
+      "sha256": "cc1e0e750532d7146360f59ceff50f6a9d1811a0dc2d8d49de7fcab243cb943c"
+    },
+    {
+      "path": "tests/controls-upgrade.test.js",
+      "bytes": 5109,
+      "sha256": "8b9eb466b987cadbbaf0d950b6491898ca72dcd8e98a729d224e4e15f9e07da5"
+    },
+    {
+      "path": "tests/flight_stage1.test.js",
+      "bytes": 4222,
+      "sha256": "57fbb5711d33cd30b2ac4e4459da188a24e13790acc61d48d6d6ed4a6373a30d"
+    },
+    {
+      "path": "tests/geoworld.test.js",
+      "bytes": 5150,
+      "sha256": "75922ab70b2887205f91dae2b05bd7c9b30c1088f354d6101f225fe5332d3b81"
+    },
+    {
+      "path": "tests/hangar-storage.test.js",
+      "bytes": 2032,
+      "sha256": "c3aa4ad6a0c9715fed0c386f6339a4740236dabde786dfddb2d23529e720532b"
+    },
+    {
+      "path": "tests/integration.test.js",
+      "bytes": 8508,
+      "sha256": "a9076d6410eb9c271dc6e7e36b21e35a8a2c952d00994d68b0262fa2e1b00026"
+    },
+    {
+      "path": "tests/jets.test.js",
+      "bytes": 6353,
+      "sha256": "287f8cd7f35bfe7802179685ba555bce2361971de51d78011311ef7114af8f00"
+    },
+    {
+      "path": "tests/lan.test.js",
+      "bytes": 6211,
+      "sha256": "8ff5d56690ee169944d09c09486c1e5d114a3abcfafbde971ddc2ce2c112d58b"
+    },
+    {
+      "path": "tests/landing.test.js",
+      "bytes": 12687,
+      "sha256": "33a544083e9f3f169735d8ef57ee90545a03e648bf06c5f455da9228c39c8bb1"
+    },
+    {
+      "path": "tests/multiplayer-socket.test.js",
+      "bytes": 4814,
+      "sha256": "546272cdb2672857c515ca53b8424f20b5a60a770281ec27cdb5da43a8bf67cc"
+    },
+    {
+      "path": "tests/multiplayer.test.js",
+      "bytes": 7191,
+      "sha256": "12d434c08d1998cad337775e0cda10aa60d20fb30961b3a64e1f592c8eeb8d0c"
+    },
+    {
+      "path": "tests/open-skies.test.js",
+      "bytes": 16667,
+      "sha256": "85444d6c21321695757bac4f1f17bae3a49978cb80106b57d5a44d20cefa6cb9"
+    },
+    {
+      "path": "tests/progression.test.js",
+      "bytes": 1573,
+      "sha256": "fa83d895a692d8d6e3cb61501b7e7aa9901665327aed31aa5e5a3da4fc2c1109"
+    },
+    {
+      "path": "tests/rendering-upgrade.test.js",
+      "bytes": 10649,
+      "sha256": "9ae27fc576ae53e4e17b43cd73d4fd854ded67bf4a34852e8e9d3f5b92365fa5"
+    },
+    {
+      "path": "tests/routes.test.js",
+      "bytes": 2042,
+      "sha256": "e1eed2c2c167531d91642a889d583c9679b05ba168aa635aca7d849bcfc383f9"
+    },
+    {
+      "path": "tests/security.test.js",
+      "bytes": 1494,
+      "sha256": "ab24d03761bf5953383ff36d80390812fc66f1edad78ea5bc75e7647f02a53eb"
+    },
+    {
+      "path": "tests/simulation.test.js",
+      "bytes": 14589,
+      "sha256": "17f2e03bb2665e8e72b66a22834e057a3d1a4b6b67c1dec280d074944e0a6f83"
+    },
+    {
+      "path": "tests/spatial.test.js",
+      "bytes": 1919,
+      "sha256": "f3f6a5c6578d7fb8b112ef832146910b70ff032b4b2f47e43f4730a7e7537516"
+    },
+    {
+      "path": "tests/ui.test.js",
+      "bytes": 22725,
+      "sha256": "e93acbffbdf8099cf16291dadb146532b2efc0eaceadf5bcd99e21d5dd4ae71c"
+    },
+    {
+      "path": "tests/upgrade40-authority.test.js",
+      "bytes": 11012,
+      "sha256": "85b82c96167946818630627867ed1092362b181baac5f326a3727424a058738c"
+    },
+    {
+      "path": "tests/upgrade40-network.test.js",
+      "bytes": 10857,
+      "sha256": "58aa29491e985be2dd5113ab561de0a04bfdc1b5cb0273c2b19c21f127558c79"
+    },
+    {
+      "path": "tests/upgrade40-simulation.test.js",
+      "bytes": 17613,
+      "sha256": "9a91e9d8927914266d86f67ed6964f6d3f0bd81fed9ae80e58df963fc5b46550"
+    },
+    {
+      "path": "vercel.json",
+      "bytes": 1314,
+      "sha256": "839183cb078bbf804bbb867bfd6d892d579c3972cd372f440702b5517995d21c"
+    },
+    {
+      "path": "vite.config.js",
+      "bytes": 1210,
+      "sha256": "b7402c0cbf3e46db0cb9a7d9eab6f258585534a4cd1bf1dd40a80e8943aa35cf"
+    }
+  ],
+  "built": [
+    {
+      "path": "dist/404.html",
+      "bytes": 2664,
+      "sha256": "878a748475b2b1e450acc0e3206061fb4667719fcf047ced419a6227836c93ba"
+    },
+    {
+      "path": "dist/_headers",
+      "bytes": 660,
+      "sha256": "fea88c2da0ca8705b3b24b2ff7cee7655f2e850f0d283898aa53bf4dbf200df6"
+    },
+    {
+      "path": "dist/about.html",
+      "bytes": 3659,
+      "sha256": "96eb7fb270dcbe46d9953cfca4b03487dddc749ffb15406a4c52faea1604dd10"
+    },
+    {
+      "path": "dist/assets/Atlas-DLBxZ76H.js",
+      "bytes": 248727,
+      "sha256": "21e9a8f966368f7e3865565ed2ec943030ebf495e86b71cab8a0865c35de87de"
+    },
+    {
+      "path": "dist/assets/GLTFLoader-B3-cDFuN.js",
+      "bytes": 43909,
+      "sha256": "a024d5a29de0a7ff4ddb3419f0e740e2811c8880f4229bedce4f8ddcdddc3e96"
+    },
+    {
+      "path": "dist/assets/browser-CQfvP_Zi.js",
+      "bytes": 25815,
+      "sha256": "2a00974057ce42653e208019a1a6a6d45e759ccc06ec93e3d6855ad0887d74ad"
+    },
+    {
+      "path": "dist/assets/index-BKV9Ok4S.css",
+      "bytes": 97799,
+      "sha256": "c5f081f1bf63f375327562f90d7d07e503685ec6664da98482a8f7f842c16d44"
+    },
+    {
+      "path": "dist/assets/index-D5FQpm6b.js",
+      "bytes": 587712,
+      "sha256": "a38d86c028a5363b46b06cf7768b0bc6a225587449b0630f7ddc6788bc8f3133"
+    },
+    {
+      "path": "dist/assets/three-DU3I6XFl.js",
+      "bytes": 568033,
+      "sha256": "74184300e94e0d35d4279d4f600c19eac4e423700f5ee92764021afab1024e52"
+    },
+    {
+      "path": "dist/brand/apple-touch-icon.png",
+      "bytes": 3750,
+      "sha256": "e2128a39fc4307d5deb36f2a063becf53a33220880cb5ce649acbf92719f9bdb"
+    },
+    {
+      "path": "dist/brand/favicon-32.png",
+      "bytes": 785,
+      "sha256": "e5b4ae49f7a65112de2f70c3c8bb0e20736e7078a53ae3a1f4a3fe572b00fe0e"
+    },
+    {
+      "path": "dist/brand/favicon.svg",
+      "bytes": 274,
+      "sha256": "153ef4c3545a172cfdca5b05843e9f4a07941db5a256d1b72914e3ebcc6a3de6"
+    },
+    {
+      "path": "dist/brand/icon-192.png",
+      "bytes": 3943,
+      "sha256": "a5c2f4f0d9a27cadaec0fe1cb5a522fb14b1f198a0f1ec23f1c01f32debf09a7"
+    },
+    {
+      "path": "dist/brand/icon-512.png",
+      "bytes": 14206,
+      "sha256": "e7ed272b144d88db1982c8b671ce3927c4b42ec2df00efd0e1afe14c45cc09b6"
+    },
+    {
+      "path": "dist/brand/skybreak-social.png",
+      "bytes": 146536,
+      "sha256": "b21ee2e1499dbaf1b892092d677545dddc8d9f5ab41e7edb0652ae1ead7d591b"
+    },
+    {
+      "path": "dist/brand/skybreak-social.svg",
+      "bytes": 2484,
+      "sha256": "d8d562ca021301d058ce5d523acb96cdc004337d42645c07dc39667f7c4a28b9"
+    },
+    {
+      "path": "dist/favicon.ico",
+      "bytes": 4729,
+      "sha256": "1a8de0fd173b10f0c21f06fe1f93f2f4cc23ee1e86b5b294cc73d8b6460e383d"
+    },
+    {
+      "path": "dist/help.html",
+      "bytes": 7787,
+      "sha256": "4683096c89064094f846cb3a1b5e1133dbbdb0da09981bce2b4d1b9e16bf2d42"
+    },
+    {
+      "path": "dist/index.html",
+      "bytes": 3232,
+      "sha256": "20e8ac06d05f3475bef045e06c1361dc932d5dbcb5b35b814f2cc80e14f19e72"
+    },
+    {
+      "path": "dist/privacy.html",
+      "bytes": 6940,
+      "sha256": "6621ec5504886cc769e97d49c54ad6926bb0bf434319bf208c1e410b3155ca01"
+    },
+    {
+      "path": "dist/robots.txt",
+      "bytes": 77,
+      "sha256": "a85ac67bccd437112cad220ea32944e2ede064bfb374df7fa2d86ead16c82ed4"
+    },
+    {
+      "path": "dist/site.css",
+      "bytes": 2457,
+      "sha256": "737a84f1a9771b0dacc6077f8159879b74942ad0006493d052121f3804aea7a5"
+    },
+    {
+      "path": "dist/sitemap.xml",
+      "bytes": 369,
+      "sha256": "2aa2615a7ab899ac45791bdbb9d25961a233f7416aa642f65003b968575e1dec"
+    },
+    {
+      "path": "dist/storage.html",
+      "bytes": 4667,
+      "sha256": "8a712177af5669459eacf74b64634986e2784c11e7de73e433d338f6c32ddf42"
+    },
+    {
+      "path": "dist/storage.js",
+      "bytes": 1359,
+      "sha256": "9fbaa43cd874eb3ecbc895a60b95f9da5591c9e8c48bf44391b330ba5e67b195"
+    },
+    {
+      "path": "dist/terms.html",
+      "bytes": 4152,
+      "sha256": "495dfdad2030f250fe3340b4126db1ef1c1956c28d779542cfc208694acb6f14"
+    }
+  ]
+}

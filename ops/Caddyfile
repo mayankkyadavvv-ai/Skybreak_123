@@ -1,0 +1,9 @@
+{$SKYBREAK_MATCH_DOMAIN} {
+  @match path /ws /health /ready /status
+  handle @match {
+    reverse_proxy match:8080
+  }
+  handle {
+    respond "Not found" 404
+  }
+}

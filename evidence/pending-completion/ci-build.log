@@ -1,0 +1,26 @@
+
+> skybreak-flight-combat@2.0.0-rc.1 build
+> node scripts/build-public.mjs && vite build && node scripts/validate-site.mjs && node scripts/record-build.mjs
+
+Generated 6 independent public pages; production canonical metadata. Draft policies remain noindex.
+[36mvite v6.1.0 [32mbuilding for production...[36m[39m
+Configured explicit production security headers. Host TLS/redirect/HSTS must be verified after deployment.
+transforming...
+[32m✓[39m 159 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                     [39m[1m[2m  3.22 kB[22m[1m[22m[2m │ gzip:   1.23 kB[22m
+[2mdist/[22m[2massets/[22m[35mindex-DBjPbuTu.css      [39m[1m[2m100.48 kB[22m[1m[22m[2m │ gzip:  21.28 kB[22m
+[2mdist/[22m[2massets/[22m[36mbrowser-CQfvP_Zi.js     [39m[1m[2m 25.82 kB[22m[1m[22m[2m │ gzip:  10.14 kB[22m
+[2mdist/[22m[2massets/[22m[36mGLTFLoader-D4BsUlrU.js  [39m[1m[2m 43.91 kB[22m[1m[22m[2m │ gzip:  12.93 kB[22m
+[2mdist/[22m[2massets/[22m[36mAtlas-C0o7-jYx.js       [39m[1m[2m248.72 kB[22m[1m[22m[2m │ gzip:  93.34 kB[22m
+[2mdist/[22m[2massets/[22m[36mthree-DU3I6XFl.js       [39m[1m[33m568.03 kB[39m[22m[2m │ gzip: 145.43 kB[22m
+[2mdist/[22m[2massets/[22m[36mindex-_LHD-Ppy.js       [39m[1m[33m592.58 kB[39m[22m[2m │ gzip: 191.36 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 2.64s[39m
+Static validation passed: 7 pages, local targets/fragments, IDs, metadata and 1200×630 social image. Browser accessibility/layout still needs verification.
+Build recorded: 152 public inputs, 26 assets; source bc2102a58b51a013d896392486d1330e20d690bddfdc92da57da61812882a985

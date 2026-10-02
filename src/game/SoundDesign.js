@@ -1,7 +1,7 @@
 // Original procedural audio. No recordings, downloaded samples or network requests.
 export const AUDIO_DEFAULTS = {
   volume: .65, sound: .8, music: .18,
-  engineVolume: .75, weaponsVolume: .8, warningVolume: .7,
+  engineVolume: .75, weaponsVolume: .8, warningVolume: .7, radioVolume: .75, subtitles: true, warningDucking: true,
   jetSound: 'turbine', cannonSound: 'rotary'
 };
 export const JET_PROFILES = {
@@ -20,6 +20,7 @@ export function normalizeAudioSettings(settings) {
   }
   if (!Object.hasOwn(JET_PROFILES, settings.jetSound)) settings.jetSound = AUDIO_DEFAULTS.jetSound;
   if (!Object.hasOwn(CANNON_PROFILES, settings.cannonSound)) settings.cannonSound = AUDIO_DEFAULTS.cannonSound;
+  settings.subtitles=settings.subtitles!==false;settings.warningDucking=settings.warningDucking!==false;
   return settings;
 }
 function random(seed) {
@@ -47,7 +48,7 @@ export function makeNoise(sampleRate, seconds = 4, seed = 37) {
   return finish(channels, sampleRate, .9, true);
 }
 export function makeEffect(type, sampleRate, variant = 0, style = 'rotary') {
-  const durations = { cannon: style === 'heavy' ? .23 : .15, missile: 1.05, explosion: 1.65, flare: .36, hit: .25, lock: .3, warning: .72, click: .045, pullup: .65, sonicboom: 1.25 };
+  const durations = { cannon: style === 'heavy' ? .23 : .15, missile: 1.05, explosion: 1.65, flare: .36, hit: .25, lock: .3, warning: .72, click: .045, pullup: .65, sonicboom: 1.25, radio: .18, flyby: .9 };
   if (!Object.hasOwn(durations, type)) throw new Error('Unknown sound effect: ' + type);
   const duration = durations[type], n = Math.ceil(sampleRate * duration);
   const lowRate = 1 - Math.exp(-2 * Math.PI * 180 / sampleRate);
@@ -94,7 +95,7 @@ export function makeEffect(type, sampleRate, variant = 0, style = 'rotary') {
         const shock = high * Math.exp(-t / .012) * 1.2;
         const rumble = low * Math.exp(-t / .48) * 3.2 + warm * Math.exp(-t / .18) * 1.5;
         value = shock + rumble + Math.sin(2 * Math.PI * 38 * t) * Math.exp(-t / .35) * .4;
-      } else value = Math.sin(2 * Math.PI * 900 * t) * Math.exp(-t / .012) * .25;
+      } else if(type==='radio'){value=Math.sin(2*Math.PI*(t<.08?1150:870)*t)*Math.exp(-t/.09)*.2+warm*.04;} else if(type==='flyby'){value=(warm*.8+low*.8)*Math.sin(Math.PI*t/duration)**2;} else value = Math.sin(2 * Math.PI * 900 * t) * Math.exp(-t / .012) * .25;
       channels[c][i] = value;
     }
   }

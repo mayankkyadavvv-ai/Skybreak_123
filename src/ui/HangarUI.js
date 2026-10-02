@@ -1,3 +1,4 @@
+import { comparisonSummary } from './LoadoutComparison.js';
 import { trapFocus, escapeHTML } from "./Accessibility.js";
 import { JET_MODELS, LIVERIES, MODIFICATIONS, computeJetStats } from "../game/JetConfigs.js";
 import { progression, RANKS } from "../game/Progression.js";
@@ -6,6 +7,7 @@ export class HangarUI {
   constructor(root, game, onClose) {
     this.root = root;
     this.game = game;
+    this.game.beginHangarPreview?.();
     this.onClose = onClose;
     this.activeTab = "fleet"; // fleet | liveries | performance | weapons
     this.config = { ...game.jetConfig, modifications: { ...game.jetConfig.modifications } };
@@ -63,6 +65,7 @@ export class HangarUI {
       this.game.ui.message(`🔒 LOCKED: Requires ${reqRank ? reqRank.name : "Higher Rank"} (${reqRank ? reqRank.minXP : 0} XP)`, 3);
       return;
     }
+    if(!JET_MODELS[modelId])return;
     this.config.modelId = modelId;
     this.game.equipJet(this.config);
     this.render();
@@ -74,6 +77,7 @@ export class HangarUI {
       this.game.ui.message(`🔒 LOCKED: Requires ${reqRank ? reqRank.name : "Higher Rank"} (${reqRank ? reqRank.minXP : 0} XP)`, 3);
       return;
     }
+    if(!LIVERIES[liveryId])return;
     this.config.liveryId = liveryId;
     this.game.equipJet(this.config);
     this.render();
@@ -265,7 +269,7 @@ export class HangarUI {
             <div class="dossier-callsign-editor">
               <label>PILOT CALLSIGN:</label>
               <div style="display:flex;gap:8px;">
-                <input type="text" id="input-dossier-callsign" value="${p.callsign}" maxlength="16" />
+                <input type="text" id="input-dossier-callsign" value="${escapeHTML(p.callsign)}" maxlength="16" />
                 <button class="primary" id="btn-save-callsign" style="padding:6px 14px;font-size:12px;">UPDATE</button>
               </div>
             </div>
@@ -330,6 +334,8 @@ export class HangarUI {
             const isSelected = this.config.modelId === m.id;
             const isUnlocked = progression.isUnlocked("jet", m.id);
             const reqRank = RANKS.find(r => r.unlockId === m.id);
+            const candidate=computeJetStats(m.id,this.config.modifications);
+            const comparison=comparisonSummary(this.config,{...this.config,modelId:m.id});
             return `
               <div class="jet-card ${isSelected ? "selected" : ""} ${!isUnlocked ? "locked-card" : ""}" data-model="${m.id}">
                 <div class="jet-card-header">
@@ -339,10 +345,11 @@ export class HangarUI {
                 <h4 class="jet-card-title">${m.name}</h4>
                 <div class="jet-card-role">${m.role}</div>
                 <div class="jet-card-stats-mini">
-                  <span>⚡ ${m.baseStats.speedKmh} km/h</span>
-                  <span>🔄 Agility ${m.baseStats.agility}</span>
-                  <span>🛡️ ${m.baseStats.armor} HP</span>
+                  <span>⚡ ${candidate.maxSpeedKmh} km/h</span>
+                  <span>🔄 Agility ${candidate.agility}</span>
+                  <span>🛡️ ${candidate.maxHp} HP</span>
                 </div>
+                <p class="stat-delta">${comparison}</p>
                 <div class="jet-card-footer">
                   ${!isUnlocked ? `<span class="lock-tag">🔒 UNLOCKS AT ${reqRank ? reqRank.name.toUpperCase() : "HIGHER RANK"} (${reqRank ? reqRank.minXP : 0} XP)</span>` : isSelected ? "<span class='equipped-badge'>✓ EQUIPPED</span>" : "<button class='select-btn'>SELECT AIRCRAFT</button>"}
                 </div>
@@ -355,7 +362,7 @@ export class HangarUI {
 
     if (this.activeTab === "liveries") {
       return `
-        <div class="liveries-list">
+        <p class="cosmetic-note">Liveries are cosmetic. They never change hitboxes, handling or weapon strength.</p><div class="liveries-list">
           ${Object.values(LIVERIES).map((l) => {
             const isSelected = this.config.liveryId === l.id;
             const isUnlocked = progression.isUnlocked("livery", l.id);
@@ -382,8 +389,9 @@ export class HangarUI {
       const metrics=[['maxSpeedKmh','km/h'],['turnMult','handling'],['maxHp','HP'],['missiles','missiles'],['cannon','rounds'],['flares','flares'],['cannonDamage','damage']];
       return `<div class="mods-container">${groups.map(category=>`<section class="mod-category-block"><h4>${MODIFICATIONS[category].title}</h4><div class="mod-options-list">${Object.values(MODIFICATIONS[category].options).map(option=>{
         const selected=this.config.modifications[category]===option.id,unlocked=progression.isUnlocked('mod',option.id),next=computeJetStats(this.config.modelId,{...this.config.modifications,[category]:option.id});
+        const requirement=RANKS.find(r=>r.unlockId===option.id);
         const delta=metrics.map(([key,label])=>{const change=Math.round((next[key]-current[key])*100)/100;return change?`${change>0?'+':''}${change} ${label}`:'';}).filter(Boolean).join(' · ');
-        return `<div class="mod-card ${selected?'selected':''} ${unlocked?'':'locked-card'}" data-mod-cat="${category}" data-mod-id="${option.id}"><div class="mod-card-top"><strong>${option.name}</strong><span>${selected?'Equipped':unlocked?'Available':'Locked'}</span></div><p>${option.desc}</p><small class="stat-delta">${delta || 'Current performance'}</small></div>`;
+        return `<div class="mod-card ${selected?'selected':''} ${unlocked?'':'locked-card'}" data-mod-cat="${category}" data-mod-id="${option.id}"><div class="mod-card-top"><strong>${option.name}</strong><span>${selected?'Equipped':unlocked?'Available':'Locked'}</span></div><p>${option.desc}</p>${!unlocked?`<small>Requires ${requirement?.name || 'higher rank'}${requirement?` · ${requirement.minXP} XP`:''}</small>`:''}<small class="stat-delta">${delta || 'Current performance'}</small></div>`;
       }).join('')}</div></section>`).join('')}</div>`;
     }
 
@@ -463,6 +471,7 @@ export class HangarUI {
   }
 
   close(launch = false) {
+    this.game.endHangarPreview?.();
     window.removeEventListener("keydown",this.onKey,true);
     this.isDragging=false;this.container.remove();
     this.returnFocus?.focus?.();

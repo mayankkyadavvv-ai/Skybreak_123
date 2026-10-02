@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-09-29T05:17:54Z",
+  "deployment": "dpl_E3fxbKcJUHotpS4abFjxp9np5Ps4",
+  "project": "skybreak",
+  "target": "preview",
+  "status": "READY",
+  "commit": "c59bbfff597d867dcc9def3ecba1232a52f93e6f",
+  "url": "https://skybreak-sa1kvf0ov-mayankkyadavvv-3062.vercel.app",
+  "buildSeconds": 53.178,
+  "authenticatedFetch": {
+    "/": 200,
+    "/build-manifest.json": 200,
+    "/help": 302,
+    "/privacy": 302
+  },
+  "sourceFilesDifferingFromLocal": [
+    "index.html",
+    "public/about.html",
+    "public/help.html"
+  ],
+  "note": "Only generated index/about/help sources differ under preview noindex generation. All src, server and script input hashes agree. Vercel-generated output bytes are not assumed equal to local output. Root/manifest delivery is not a rendered gameplay or public multiplayer check. Subpage requests encountered existing authentication protection; no setting was loosened.",
+  "productionPromoted": false
+}

@@ -1,0 +1,528 @@
+{
+  "kind": "Eight scripted WebSocket clients on one host",
+  "startedAt": "2026-09-29T05:52:37.776Z",
+  "protocol": 2,
+  "environment": {
+    "os": "linux 6.17.0-1022-azure",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCPUs": 4,
+    "node": "v24.21.0"
+  },
+  "durationRequested": 65,
+  "artificialRTT": [
+    50,
+    100,
+    180
+  ],
+  "latencyModel": "Ordered application-delay queues with deterministic jitter; one 400 ms snapshot stall per client",
+  "humanPlayers": 0,
+  "realNetworks": 1,
+  "assertions": [
+    "Ten-second disconnect resumes the same player identity",
+    "Resume rotates its private credential",
+    "Resume does not duplicate an aircraft",
+    "Resume retains earned score",
+    "All eight sockets receive the authoritative match result",
+    "All clients agree on the final winner/tie",
+    "Every client receives sustained snapshots",
+    "No protocol, input validation or socket errors",
+    "Measured simulation exceeds 55 ticks/second",
+    "Leaving the party cleans the room"
+  ],
+  "errors": [],
+  "unverified": [
+    "Four humans across two external networks",
+    "Rendered correction smoothness",
+    "Real packet loss and TURN voice",
+    "Deployed TLS service"
+  ],
+  "status": "passed",
+  "memorySamples": [
+    {
+      "second": 1,
+      "rss": 101945344,
+      "heapUsed": 21129448
+    },
+    {
+      "second": 2,
+      "rss": 104042496,
+      "heapUsed": 20790000
+    },
+    {
+      "second": 3,
+      "rss": 108457984,
+      "heapUsed": 13639208
+    },
+    {
+      "second": 4,
+      "rss": 121303040,
+      "heapUsed": 17976736
+    },
+    {
+      "second": 5,
+      "rss": 123531264,
+      "heapUsed": 18963024
+    },
+    {
+      "second": 6,
+      "rss": 130158592,
+      "heapUsed": 14589688
+    },
+    {
+      "second": 7,
+      "rss": 130420736,
+      "heapUsed": 19162856
+    },
+    {
+      "second": 8,
+      "rss": 162500608,
+      "heapUsed": 15580776
+    },
+    {
+      "second": 9,
+      "rss": 164728832,
+      "heapUsed": 21105384
+    },
+    {
+      "second": 10,
+      "rss": 164347904,
+      "heapUsed": 31974800
+    },
+    {
+      "second": 11,
+      "rss": 164290560,
+      "heapUsed": 14178024
+    },
+    {
+      "second": 12,
+      "rss": 164945920,
+      "heapUsed": 21374256
+    },
+    {
+      "second": 13,
+      "rss": 164458496,
+      "heapUsed": 33679128
+    },
+    {
+      "second": 14,
+      "rss": 164327424,
+      "heapUsed": 34872616
+    },
+    {
+      "second": 15,
+      "rss": 165244928,
+      "heapUsed": 20512936
+    },
+    {
+      "second": 16,
+      "rss": 165638144,
+      "heapUsed": 21313640
+    },
+    {
+      "second": 17,
+      "rss": 165175296,
+      "heapUsed": 13496704
+    },
+    {
+      "second": 18,
+      "rss": 213790720,
+      "heapUsed": 43392872
+    },
+    {
+      "second": 19,
+      "rss": 219426816,
+      "heapUsed": 27927720
+    },
+    {
+      "second": 20,
+      "rss": 220213248,
+      "heapUsed": 20089400
+    },
+    {
+      "second": 21,
+      "rss": 220606464,
+      "heapUsed": 27409704
+    },
+    {
+      "second": 22,
+      "rss": 220868608,
+      "heapUsed": 34394640
+    },
+    {
+      "second": 23,
+      "rss": 221261824,
+      "heapUsed": 41126720
+    },
+    {
+      "second": 24,
+      "rss": 221523968,
+      "heapUsed": 48077816
+    },
+    {
+      "second": 25,
+      "rss": 221917184,
+      "heapUsed": 54529368
+    },
+    {
+      "second": 26,
+      "rss": 222441472,
+      "heapUsed": 59920224
+    },
+    {
+      "second": 27,
+      "rss": 222834688,
+      "heapUsed": 12440944
+    },
+    {
+      "second": 28,
+      "rss": 222834688,
+      "heapUsed": 19235512
+    },
+    {
+      "second": 29,
+      "rss": 222834688,
+      "heapUsed": 30664584
+    },
+    {
+      "second": 30,
+      "rss": 222834688,
+      "heapUsed": 42588872
+    },
+    {
+      "second": 31,
+      "rss": 222834688,
+      "heapUsed": 53842584
+    },
+    {
+      "second": 32,
+      "rss": 222834688,
+      "heapUsed": 65205016
+    },
+    {
+      "second": 33,
+      "rss": 223096832,
+      "heapUsed": 23006408
+    },
+    {
+      "second": 34,
+      "rss": 223096832,
+      "heapUsed": 34573712
+    },
+    {
+      "second": 35,
+      "rss": 223358976,
+      "heapUsed": 46883680
+    },
+    {
+      "second": 36,
+      "rss": 223358976,
+      "heapUsed": 59789776
+    },
+    {
+      "second": 37,
+      "rss": 223358976,
+      "heapUsed": 19079376
+    },
+    {
+      "second": 38,
+      "rss": 223358976,
+      "heapUsed": 33655216
+    },
+    {
+      "second": 39,
+      "rss": 223883264,
+      "heapUsed": 46448552
+    },
+    {
+      "second": 40,
+      "rss": 226119680,
+      "heapUsed": 51154424
+    },
+    {
+      "second": 41,
+      "rss": 226119680,
+      "heapUsed": 52738488
+    },
+    {
+      "second": 42,
+      "rss": 227430400,
+      "heapUsed": 54313640
+    },
+    {
+      "second": 43,
+      "rss": 227561472,
+      "heapUsed": 55292880
+    },
+    {
+      "second": 44,
+      "rss": 236081152,
+      "heapUsed": 15128160
+    },
+    {
+      "second": 45,
+      "rss": 236081152,
+      "heapUsed": 60121888
+    },
+    {
+      "second": 46,
+      "rss": 236572672,
+      "heapUsed": 13739336
+    },
+    {
+      "second": 47,
+      "rss": 236572672,
+      "heapUsed": 37018080
+    },
+    {
+      "second": 48,
+      "rss": 236965888,
+      "heapUsed": 29137104
+    },
+    {
+      "second": 49,
+      "rss": 237359104,
+      "heapUsed": 64349504
+    },
+    {
+      "second": 50,
+      "rss": 237236224,
+      "heapUsed": 63329896
+    },
+    {
+      "second": 51,
+      "rss": 237236224,
+      "heapUsed": 39162832
+    },
+    {
+      "second": 52,
+      "rss": 237383680,
+      "heapUsed": 59730976
+    },
+    {
+      "second": 53,
+      "rss": 237383680,
+      "heapUsed": 18596552
+    },
+    {
+      "second": 54,
+      "rss": 237514752,
+      "heapUsed": 20444976
+    },
+    {
+      "second": 55,
+      "rss": 237514752,
+      "heapUsed": 22596320
+    },
+    {
+      "second": 56,
+      "rss": 237105152,
+      "heapUsed": 27791008
+    },
+    {
+      "second": 57,
+      "rss": 237498368,
+      "heapUsed": 30031136
+    },
+    {
+      "second": 58,
+      "rss": 237498368,
+      "heapUsed": 55994920
+    },
+    {
+      "second": 59,
+      "rss": 237498368,
+      "heapUsed": 68806144
+    },
+    {
+      "second": 60,
+      "rss": 236802048,
+      "heapUsed": 22564272
+    },
+    {
+      "second": 61,
+      "rss": 236802048,
+      "heapUsed": 34137416
+    },
+    {
+      "second": 62,
+      "rss": 236802048,
+      "heapUsed": 46636856
+    },
+    {
+      "second": 63,
+      "rss": 236802048,
+      "heapUsed": 60041888
+    },
+    {
+      "second": 64,
+      "rss": 236802048,
+      "heapUsed": 20084008
+    },
+    {
+      "second": 65,
+      "rss": 236802048,
+      "heapUsed": 27477344
+    }
+  ],
+  "measurements": {
+    "wallSeconds": 65.11944515,
+    "simulationTicks": 3901,
+    "simulationHz": 59.90530157335039,
+    "roomLoopIterations": 3859,
+    "simulationTickMs": {
+      "p50": 0.14833299999736482,
+      "p95": 0.23920999999972992,
+      "p99": 0.2923900000005233,
+      "max": 2.2614659999999276
+    },
+    "cpuSeconds": 18.190417,
+    "cpuOneCorePercent": 27.933925048192766,
+    "rssStart": 90017792,
+    "rssEnd": 236802048,
+    "rssPeak": 237514752,
+    "bytesIn": 5142962,
+    "bytesOut": 60548416,
+    "outboundBytesPerSecond": 929805.4653341897,
+    "droppedSnapshots": 0,
+    "note": "CPU and RSS include the server plus eight scripted prediction clients. Tick cost measures simulation; total CPU includes snapshot filtering/serialization and clients."
+  },
+  "clients": [
+    {
+      "pilot": 1,
+      "artificialRTT": 50,
+      "snapshots": 1300,
+      "bytesIn": 8354020,
+      "bytesOut": 658144,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 4,
+        "correctionTotal": 23.94382957674285,
+        "maxCorrection": 11.998565024608984,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 9
+      },
+      "errors": []
+    },
+    {
+      "pilot": 2,
+      "artificialRTT": 100,
+      "snapshots": 1300,
+      "bytesIn": 7854169,
+      "bytesOut": 653769,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 4,
+        "correctionTotal": 27.942506208789087,
+        "maxCorrection": 11.998198416120443,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 13
+      },
+      "errors": []
+    },
+    {
+      "pilot": 3,
+      "artificialRTT": 180,
+      "snapshots": 1300,
+      "bytesIn": 7514173,
+      "bytesOut": 657324,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 5,
+        "correctionTotal": 39.92885093638907,
+        "maxCorrection": 11.996911392445504,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 16
+      },
+      "errors": []
+    },
+    {
+      "pilot": 4,
+      "artificialRTT": 50,
+      "snapshots": 1300,
+      "bytesIn": 7804367,
+      "bytesOut": 654107,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 4,
+        "correctionTotal": 23.94382957674285,
+        "maxCorrection": 11.998565024608984,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 9
+      },
+      "errors": []
+    },
+    {
+      "pilot": 5,
+      "artificialRTT": 100,
+      "snapshots": 1300,
+      "bytesIn": 7460236,
+      "bytesOut": 657664,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 4,
+        "correctionTotal": 27.942506208789084,
+        "maxCorrection": 11.998198416120443,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 13
+      },
+      "errors": []
+    },
+    {
+      "pilot": 6,
+      "artificialRTT": 180,
+      "snapshots": 1300,
+      "bytesIn": 7852409,
+      "bytesOut": 653431,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 5,
+        "correctionTotal": 39.92885093638748,
+        "maxCorrection": 11.996911392445504,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 16
+      },
+      "errors": []
+    },
+    {
+      "pilot": 7,
+      "artificialRTT": 50,
+      "snapshots": 1300,
+      "bytesIn": 7493715,
+      "bytesOut": 658004,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 4,
+        "correctionTotal": 23.94382957674285,
+        "maxCorrection": 11.998565024608984,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 9
+      },
+      "errors": []
+    },
+    {
+      "pilot": 8,
+      "artificialRTT": 100,
+      "snapshots": 1100,
+      "bytesIn": 6241809,
+      "bytesOut": 550519,
+      "resumes": 1,
+      "prediction": {
+        "corrections": 9,
+        "correctionTotal": 55.59148625422097,
+        "maxCorrection": 11.998198416120443,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 13
+      },
+      "errors": []
+    }
+  ],
+  "finishedAt": "2026-09-29T05:53:46.264Z"
+}

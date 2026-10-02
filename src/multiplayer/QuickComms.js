@@ -45,13 +45,13 @@ export class QuickComms {
       teamOnly
     });
 
-    // Add local echo to feed
-    this.addFeedItem({
-      senderName: this.game.multiplayer.localName || "You",
-      team: this.game.multiplayer.localTeam || "blue",
-      text: commText,
-      teamOnly
-    });
+    if (this.game.multiplayer.matchOptions?.mode === 'open_skies_coop') {
+      const order = { cover: 'cover', attack: 'attack', regroup: 'regroup' }[commKey];
+      if (order) this.game.multiplayer.network.send('squadron_order', { order, targetId: this.game.target?.id });
+    }
+    const pingKind = { spotted: 'attack', attack: 'attack', help: 'help', cover: 'defend', regroup: 'move', rtb: 'move' }[commKey];
+    if (teamOnly && pingKind) this.game.multiplayer.sendPing?.(pingKind, ['spotted', 'attack'].includes(commKey) ? this.game.target : null);
+
   }
 
   addFeedItem(item) {

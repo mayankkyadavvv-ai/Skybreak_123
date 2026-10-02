@@ -27,7 +27,7 @@ test('rebinding updates behavior and labels, rejects collisions, and preserves s
   const old={input:'advanced',invert:true,volume:0,controlsVersion:3,keyBindings:{pitchUp:'ArrowDown',pitchDown:'ArrowUp',missile:'KeyF',airBrake:'KeyJ',chaff:'KeyZ'}};
   const {settings,notices}=normalizeSettings(old);
   assert.equal(settings.device,'keyboard');assert.equal(settings.flightMode,'manual');assert.equal(settings.mouseInvert,true);assert.equal(settings.volume,0);
-  assert.equal(actionForCode('KeyF',settings),'missile');assert.equal(actionForCode('KeyM',settings),undefined);assert.equal(bindingLabel('missile',settings),'F / RMB');
+  assert.equal(actionForCode('KeyE',settings),'missile');assert.equal(actionForCode('KeyM',settings),undefined);assert.equal(bindingLabel('missile',settings),'E / RMB');
   assert.ok(bindingError('missile','KeyN',settings));assert.ok(notices.some(n=>n.includes('chaff')));
   assert.equal(flightCommands(input('KeyJ'),settings).brake,1);assert.equal(flightCommands(input('KeyB'),settings).brake,0);
   const jet=new Jet('player');run(jet,input('ArrowUp'),settings,1);assert.ok(jet.forward.y>0);

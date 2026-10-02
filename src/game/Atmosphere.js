@@ -30,12 +30,12 @@ const SKY_PRESETS = {
   },
   midday: {
     sunColor: 0xffffff,
-    sunIntensity: 2.7,
+    sunIntensity: 2.45,
     sunDir: new T.Vector3(-0.45, 0.82, -0.35).normalize(),
     moonDir: new T.Vector3(0.55, 0.62, 0.55).normalize(),
-    hemiSky: 0xbfe2ff,
+    hemiSky: 0xb8cedd,
     hemiGround: 0x424e3c,
-    hemiIntensity: 1.05,
+    hemiIntensity: .92,
     fogColor: 0x8ab8cb,
     fogDensity: 13e-6,
     bgColor: 0x8ab8cb,
@@ -66,21 +66,21 @@ const SKY_PRESETS = {
     waterSun: new T.Vector3(1.0, 0.76, 0.45)
   },
   sunset: {
-    sunColor: 0xff7e26,
-    sunIntensity: 2.8,
+    sunColor: 0xffb775,
+    sunIntensity: 2.25,
     sunDir: new T.Vector3(-0.92, 0.09, -0.38).normalize(),
     moonDir: new T.Vector3(0.55, 0.62, 0.55).normalize(),
-    hemiSky: 0xb54e60,
-    hemiGround: 0x3d251c,
+    hemiSky: 0x8593b6,
+    hemiGround: 0x554541,
     hemiIntensity: 0.92,
-    fogColor: 0x582c3c,
+    fogColor: 0x9b7e82,
     fogDensity: 16e-6,
-    bgColor: 0x582c3c,
-    skyTop: new T.Vector3(0.18, 0.08, 0.32),     // Twilight purple/indigo
-    skyBottom: new T.Vector3(0.98, 0.44, 0.16),  // Fiery sunset ember
-    sunGlow: new T.Vector3(1.0, 0.40, 0.12),     // Deep amber corona
+    bgColor: 0x9b7e82,
+    skyTop: new T.Vector3(0.12, 0.18, 0.31),     // Twilight purple/indigo
+    skyBottom: new T.Vector3(0.74, 0.46, 0.29),  // Fiery sunset ember
+    sunGlow: new T.Vector3(1.0, 0.58, 0.27),     // Deep amber corona
     waterDeep: new T.Vector3(0.12, 0.08, 0.16),
-    waterShallow: new T.Vector3(0.85, 0.42, 0.28),
+    waterShallow: new T.Vector3(0.40, 0.36, 0.33),
     waterSun: new T.Vector3(1.0, 0.65, 0.3)
   },
   night: {
@@ -196,18 +196,21 @@ class Atmosphere {
   }
 
   setWeather(weather) {
-    if(!['clear','storm'].includes(weather))return;
+    if(!['clear','cloudy','storm'].includes(weather))return;
     this.weather=weather;this.world.weather=weather;
     this.setTimeOfDay(this.timeOfDay);
   }
   applyWeather() {
-    const storm=this.weather==='storm',preset=SKY_PRESETS[this.timeOfDay];
+    const storm=this.weather==='storm',cloudy=this.weather==='cloudy',preset=SKY_PRESETS[this.timeOfDay];
     this.rainPoints.visible=storm;
-    this.world.sky.material.uniforms.stormFactor.value=storm?1:0;
-    this.world.sun.intensity=preset.sunIntensity*(storm?.55:1);
-    this.world.baseFogDensity=preset.fogDensity*(storm?2.2:1);
+    this.world.sky.material.uniforms.stormFactor.value=storm?1:cloudy?.35:0;
+    this.world.sun.intensity=preset.sunIntensity*(storm?.55:cloudy?.76:1);
+    this.world.hemi.intensity=preset.hemiIntensity*(cloudy?1.08:1);
+    this.world.baseFogDensity=preset.fogDensity*(storm?2.2:cloudy?1.25:1);
+    this.world.renderExposure=this.timeOfDay==='night'?1.03:this.timeOfDay==='sunset'?1.03:1;
+    this.world.environmentIntensity=storm?.5:cloudy?.65:this.timeOfDay==='night'?.48:.58;
     this.scene.fog.density=this.world.baseFogDensity;
-    if(storm)for(const cloud of this.world.clouds){cloud.material.color.setHex(0x707b8a);cloud.userData.baseOpacity=.82;}
+    if(storm||cloudy)for(const cloud of this.world.clouds){cloud.material.color.setHex(storm?0x707b8a:0xd2dce3);cloud.userData.baseOpacity=storm?.82:.76;}
   }
   dispose(){this.rainPoints.removeFromParent();this.rainGeo.dispose();this.rainMat.dispose();}
 
@@ -237,6 +240,7 @@ class Atmosphere {
       }
     }
 
+    this.rainMat.opacity=.4*(this.world.effectIntensity??1);
     // Weather effects
     if (this.weather === "storm") {
       const pos = this.rainGeo.attributes.position.array;
@@ -253,7 +257,7 @@ class Atmosphere {
 
       this.lightningTimer -= dt;
       if (this.lightningTimer <= 0) {
-        this.triggerLightning(audioManager);
+        if(!this.world.reducedMotion)this.triggerLightning(audioManager);
         this.lightningTimer = 5 + Math.random() * 8;
       }
 

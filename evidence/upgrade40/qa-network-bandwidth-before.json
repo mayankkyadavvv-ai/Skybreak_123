@@ -1,0 +1,201 @@
+{
+  "kind": "Eight scripted WebSocket clients on one host",
+  "startedAt": "2026-09-28T17:33:22.624Z",
+  "protocol": 2,
+  "environment": {
+    "os": "linux 6.18.44",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCPUs": 9,
+    "node": "v24.19.0"
+  },
+  "durationRequested": 65,
+  "artificialRTT": [
+    50,
+    100,
+    180
+  ],
+  "latencyModel": "Ordered application-delay queues with deterministic jitter; one 400 ms snapshot stall per client",
+  "humanPlayers": 0,
+  "realNetworks": 1,
+  "assertions": [
+    "Ten-second disconnect resumes the same player identity",
+    "Resume rotates its private credential",
+    "Resume does not duplicate an aircraft",
+    "Resume retains earned score",
+    "All eight sockets receive the authoritative match result",
+    "All clients agree on the final winner/tie",
+    "Every client receives sustained snapshots",
+    "No protocol, input validation or socket errors",
+    "Measured simulation exceeds 55 ticks/second",
+    "Leaving the party cleans the room"
+  ],
+  "errors": [],
+  "unverified": [
+    "Four humans across two external networks",
+    "Rendered correction smoothness",
+    "Real packet loss and TURN voice",
+    "Deployed TLS service"
+  ],
+  "status": "passed",
+  "measurements": {
+    "wallSeconds": 65.06395721499999,
+    "simulationTicks": 3901,
+    "simulationHz": 59.956390096430454,
+    "roomLoopIterations": 3890,
+    "simulationTickMs": {
+      "p50": 0.16237099999852944,
+      "p95": 0.3016769999999269,
+      "p99": 0.45454500000050757,
+      "max": 8.296697999998287
+    },
+    "cpuSeconds": 19.294806,
+    "cpuOneCorePercent": 29.65513753834778,
+    "rssStart": 64847872,
+    "rssEnd": 211599360,
+    "rssPeak": 212348928,
+    "bytesIn": 5148960,
+    "bytesOut": 103168334,
+    "outboundBytesPerSecond": 1585644.9317874466,
+    "droppedSnapshots": 0,
+    "note": "CPU and RSS include the server plus eight scripted prediction clients. Tick cost measures simulation; total CPU includes snapshot filtering/serialization and clients."
+  },
+  "clients": [
+    {
+      "pilot": 1,
+      "artificialRTT": 50,
+      "snapshots": 1300,
+      "bytesIn": 14832344,
+      "bytesOut": 658881,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 5,
+        "correctionTotal": 27.861855621626944,
+        "maxCorrection": 11.998896370401782,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 11
+      },
+      "errors": []
+    },
+    {
+      "pilot": 2,
+      "artificialRTT": 100,
+      "snapshots": 1300,
+      "bytesIn": 13518965,
+      "bytesOut": 654505,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 4,
+        "correctionTotal": 35.85392153760794,
+        "maxCorrection": 11.998565024608984,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 13
+      },
+      "errors": []
+    },
+    {
+      "pilot": 3,
+      "artificialRTT": 180,
+      "snapshots": 1300,
+      "bytesIn": 12591886,
+      "bytesOut": 658061,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 5,
+        "correctionTotal": 39.901899094792356,
+        "maxCorrection": 11.99736931492961,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 17
+      },
+      "errors": []
+    },
+    {
+      "pilot": 4,
+      "artificialRTT": 50,
+      "snapshots": 1300,
+      "bytesIn": 13381858,
+      "bytesOut": 654843,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 5,
+        "correctionTotal": 27.861855621627534,
+        "maxCorrection": 11.998896370401782,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 11
+      },
+      "errors": []
+    },
+    {
+      "pilot": 5,
+      "artificialRTT": 100,
+      "snapshots": 1300,
+      "bytesIn": 12458785,
+      "bytesOut": 658401,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 4,
+        "correctionTotal": 35.85392153760976,
+        "maxCorrection": 11.998565024608984,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 13
+      },
+      "errors": []
+    },
+    {
+      "pilot": 6,
+      "artificialRTT": 180,
+      "snapshots": 1300,
+      "bytesIn": 13522841,
+      "bytesOut": 654167,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 5,
+        "correctionTotal": 39.901899094792356,
+        "maxCorrection": 11.99736931492961,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 17
+      },
+      "errors": []
+    },
+    {
+      "pilot": 7,
+      "artificialRTT": 50,
+      "snapshots": 1300,
+      "bytesIn": 12552649,
+      "bytesOut": 658741,
+      "resumes": 0,
+      "prediction": {
+        "corrections": 5,
+        "correctionTotal": 27.861855621627534,
+        "maxCorrection": 11.998896370401782,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 11
+      },
+      "errors": []
+    },
+    {
+      "pilot": 8,
+      "artificialRTT": 100,
+      "snapshots": 1099,
+      "bytesIn": 10338461,
+      "bytesOut": 551361,
+      "resumes": 1,
+      "prediction": {
+        "corrections": 7,
+        "correctionTotal": 59.549602359478044,
+        "maxCorrection": 11.998565024608984,
+        "rejectedSnapshots": 0,
+        "stalls": 0,
+        "pending": 11
+      },
+      "errors": []
+    }
+  ],
+  "finishedAt": "2026-09-28T17:34:31.076Z"
+}

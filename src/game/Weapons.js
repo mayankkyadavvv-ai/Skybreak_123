@@ -59,6 +59,7 @@ class Weapons {
   }
   missile(owner, target) {
     if (!target?.alive) return false;
+    if(this.canTrack && !this.canTrack(owner,target))return false;
     const m = this.missiles.find((m2) => !m2.active);
     if (!m) return false;
     m.active = m.mesh.visible = true;
@@ -84,7 +85,8 @@ class Weapons {
         diverted++;
       }
     }
-    for (let i = 0; i < 30; i++) this.effects.emit(jet.position, new T.Vector3((i % 2 ? 1 : -1) * (30 + Math.random() * 55), -10 - Math.random() * 20, 40 + Math.random() * 70).applyQuaternion(jet.quaternion).add(jet.velocity.clone().multiplyScalar(0.7)), 16766859, 9, 1.5 + Math.random() * 1.5);
+    if(this.effects.flareBurst)this.effects.flareBurst(jet);
+    else for (let i = 0; i < 30; i++) this.effects.emit(jet.position, new T.Vector3((i % 2 ? 1 : -1) * (30 + Math.random() * 55), -10 - Math.random() * 20, 40 + Math.random() * 70).applyQuaternion(jet.quaternion).add(jet.velocity.clone().multiplyScalar(0.7)), 16766859, 9, 1.5 + Math.random() * 1.5);
     this.sound?.("flare", jet.position);
     return diverted;
   }
@@ -104,7 +106,7 @@ class Weapons {
 
       this.spatialGrid.querySegment(b.previous, b.p, 3, this._queryResults);
       for (const j of this._queryResults) {
-        if (!j.alive || j === b.owner || j.team === "enemy" === (b.owner.team === "enemy")) continue;
+        if (!j.alive || !b.owner || j === b.owner || (j.team === "enemy") === (b.owner.team === "enemy")) continue;
         const dmg = b.owner?.stats?.cannonDamage || 14;
         this.damage(j, dmg, b.owner, "cannon");
         this.effects.burst(b.p, 5, 5);
@@ -120,6 +122,7 @@ class Weapons {
       m.previous.copy(m.p);
       m.life -= dt;
       m.speed = Math.min(1050, m.speed + 240 * dt);
+      if(m.target?.alive && this.canTrack && !this.canTrack(m.owner,m.target))m.target=null;
       if (m.target?.alive) {
         const distance = m.p.distanceTo(m.target.position);
         const intercept = m.target.position.clone().addScaledVector(m.target.velocity, Math.min(0.75, distance / m.speed * 0.42)).sub(m.p).normalize();
@@ -150,12 +153,13 @@ class Weapons {
     }
   }
 }
-function updateLock(player, target, lock, dt) {
+function updateLock(player, target, lock, dt, options = {}) {
   if (!target?.alive) return 0;
+  if(options.canTrack && !options.canTrack(player,target))return Math.max(0,lock-dt*2);
   const delta = target.position.clone().sub(player.position);
   const inRange = delta.length() < 8500 && delta.length() > 60;
   const inCone = player.forward.dot(delta.normalize()) > 0.965;
-  return inRange && inCone ? Math.min(1.4, lock + dt) : Math.max(0, lock - dt * 2);
+  return inRange && inCone ? Math.min(1.4, lock + dt*(options.rate ?? 1)) : Math.max(0, lock - dt * 2);
 }
 export {
   Weapons,

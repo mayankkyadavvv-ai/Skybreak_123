@@ -1,3 +1,4 @@
+import { MISSION_TEMPLATES, MISSION_LOCATIONS } from '../shared/MissionGenerator.js';
 const MISSIONS = [
   { id: 0, name: "Air Patrol", code: "OPERATION 01", region: "TALON RIDGE", brief: "Hostile aircraft have crossed the northern ridge. Clear the airspace and bring your aircraft home.", objective: "Destroy 3 hostile fighters", fighters: 3, bombers: 0, allies: 0, tag: "PATROL", estimate: "3–5 MIN" },
   { id: 1, name: "Intercept", code: "OPERATION 02", region: "SABLE COAST", brief: "Two bombers are closing on the coastal airbase. Eliminate the bombers before they reach the runway, then clear their escorts.", objective: "Stop 2 bombers and destroy 2 escorts", fighters: 2, bombers: 2, allies: 0, tag: "TIME CRITICAL", estimate: "3–6 MIN" },
@@ -17,9 +18,29 @@ const FREE_FLIGHT = {
   tag: "NO ENEMIES",
   estimate: "NO TIME LIMIT"
 };
-const FLIGHT_MODES = [FREE_FLIGHT, ...MISSIONS];
+const SOLO_DUEL = {
+  id: 8, name: 'Ace Duel', code: 'OFFLINE PRACTICE', region: 'OPEN COAST',
+  brief: 'Face one hostile ace. Practise target selection, a steady lock and missile defence without an online server.',
+  objective: 'Destroy the hostile ace fighter', fighters: 1, bombers: 0, allies: 0,
+  duel: true, tag: '1 VS AI', estimate: '2–4 MIN',
+};
+const OPERATION_MISSIONS = Object.entries(MISSION_TEMPLATES).map(([template, entry]) => ({
+  id: entry.id, name: entry.name, code: `OPERATION ${String(entry.id).padStart(2, '0')}`,
+  region: template === 'base-defence' ? MISSION_LOCATIONS.coast.name.toUpperCase() : MISSION_LOCATIONS.aegis.name.toUpperCase(),
+  brief: entry.brief, objective: entry.objective, template, operation: true, fighters: 0, bombers: 0, allies: 0,
+  tag: entry.role.toUpperCase(), estimate: '4–8 MIN', coopEligible: true,
+}));
+const FLIGHT_MODES = [FREE_FLIGHT, ...MISSIONS, ...OPERATION_MISSIONS, SOLO_DUEL];
 function getMission(id) {
   return FLIGHT_MODES.find((mission) => mission.id === id) || FREE_FLIGHT;
+}
+function multiplayerMission(options = {}) {
+  const names = { '1v1': 'Duel', '2v2': 'Team Battle 2v2', '3v3': 'Team Battle 3v3', '4v4': 'Team Battle 4v4', open_skies_coop: 'Open Skies Co-op', air_superiority: 'Air Superiority', free_flight: 'Squadron Free Flight' };
+  const free = options.mode === 'free_flight', coop = options.mode === 'open_skies_coop';
+  return { id: 'multiplayer', name: names[options.mode] || 'Squadron Battle', code: coop ? 'ONLINE CO-OP' : 'ONLINE SQUADRON',
+    region: options.map === 'frontier' ? 'FRONTIER' : 'AEGIS STRAIT', freeFlight: free,
+    objective: free ? 'Fly together or start a shared activity' : coop ? 'Protect your squadron and complete the shared objective' : options.mode === 'air_superiority' ? 'Capture and hold the marked airspace' : 'Defeat the opposing squadron',
+  };
 }
 function missionStatus(enemies, player, base) {
   if (!player.alive) return "failed";
@@ -30,7 +51,10 @@ function missionStatus(enemies, player, base) {
 export {
   MISSIONS,
   FREE_FLIGHT,
+  SOLO_DUEL,
   FLIGHT_MODES,
+  OPERATION_MISSIONS,
   getMission,
+  multiplayerMission,
   missionStatus
 };

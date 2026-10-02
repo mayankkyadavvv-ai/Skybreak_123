@@ -1,0 +1,28 @@
+name: Skybreak Nemotron
+version: 1.0.0
+schema: v1
+
+models:
+  - name: NVIDIA Nemotron 3.5 Lightning
+    provider: openai
+    model: nvidia/nemotron-3.5-lightning-30b-a3b
+    apiBase: https://integrate.api.nvidia.com/v1
+    apiKey: ${{ secrets.NVIDIA_API_KEY }}
+    capabilities:
+      - tool_use
+    roles:
+      - chat
+      - edit
+      - apply
+      - summarize
+    defaultCompletionOptions:
+      temperature: 0.2
+      maxTokens: 8192
+
+context:
+  - provider: file
+  - provider: code
+  - provider: diff
+  - provider: tree
+  - provider: problems
+  - provider: terminal
