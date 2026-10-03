@@ -218,19 +218,19 @@ test('A06 UI Restart of a long flare lesson resets instructor state and initial 
   g.start(3); assert.equal(school.active, false); assert.equal(g.trainingLesson, null); assert.equal(g.trainingLastMissile, null);
 });
 
-test('E missile migration includes old saved profiles without yaw collisions and preserves later custom choices', () => {
+test('saved missile and yaw bindings survive migration while new profiles use E', () => {
   const saved = { controlsVersion: 4, keyBindings: { missile: 'KeyM', yawRight: 'KeyE', flare: 'KeyO' },
     controlProfiles: [{ id: 'old', name: 'Old keys', settings: { keyBindings: { missile: 'KeyF', yawRight: 'KeyE' }, mouseInvert: true } }] };
   const { settings, notices } = normalizeSettings(saved);
-  assert.equal(settings.controlsVersion, 5); assert.equal(actionForCode('KeyE', settings), 'missile');
-  assert.equal(flightCommands(control('KeyE'), settings).yaw, 0); assert.equal(flightCommands(control('KeyD'), settings).yaw, 1);
-  assert.equal(bindingLabel('flare', settings), 'O'); assert.ok(notices[0].includes('Missile = E'));
+  assert.equal(settings.controlsVersion, 5); assert.equal(actionForCode('KeyM', settings), 'missile');
+  assert.equal(flightCommands(control('KeyE'), settings).yaw, 1); assert.equal(flightCommands(control('KeyD'), settings).yaw, 0);
+  assert.equal(bindingLabel('flare', settings), 'O'); assert.ok(notices[0].includes('Missile = M'));
   const profile = settings.controlProfiles[0].settings;
-  assert.equal(profile.controlsVersion, 5); assert.equal(actionForCode('KeyE', profile), 'missile'); assert.equal(profile.mouseInvert, true);
+  assert.equal(profile.controlsVersion, 5); assert.equal(actionForCode('KeyF', profile), 'missile'); assert.equal(profile.mouseInvert, true);
   const custom = normalizeSettings({ controlsVersion: 5, keyBindings: { missile: 'KeyF' } }).settings;
-  assert.equal(actionForCode('KeyF', custom), 'missile'); assert.equal(bindingError('yawRight', 'KeyE', settings).length > 0, true);
+  assert.equal(actionForCode('KeyF', custom), 'missile'); assert.equal(bindingError('yawRight', 'KeyE', normalizeSettings().settings).length > 0, true);
   assert.equal(flightCommands(control('ArrowUp'), settings).pitch, 1); assert.equal(flightCommands(control('ArrowDown'), settings).pitch, -1);
-  assert.match(battleGuide(settings), /E \/ RMB/);
+  assert.match(battleGuide(settings), /M \/ RMB/);
 });
 
 test('actual E key press launches once, held auto-repeat never fires again and E never yaws the jet', t => {

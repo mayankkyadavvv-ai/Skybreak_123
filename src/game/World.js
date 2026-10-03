@@ -907,6 +907,12 @@ class World {
   cloudDensityAt(position) { return cloudDensityAt(position,{weather:this.weather,volumes:this.cloudVolumes||this.clouds}); }
   dispose(){this.terrainChunks?.dispose();this.coastalDetail?.dispose();this.airfieldDetail?.dispose();this.cloudShadowMap?.dispose();this.coastDepthMap?.dispose();disposeObject(this.scene);this.sun.shadow.map?.dispose();}
 
+  weaponSurface(p) {
+    if (!this.collision(p)) return false;
+    if (this.landmarkColliders?.some(box => box.containsPoint(p)) || this.buildings.some(box => box.containsPoint(p))) return 'ground';
+    return terrainHeight(p.x,p.z) <= 0 && !this.getRunwayAt(p.x,p.z) && !this.getAirbaseNear(p.x,p.z,3800) ? 'water' : 'ground';
+  }
+
   collision(p, isLanded = false, gearDown = false) {
     // If jet is landed or in ground rollout on a runway/tarmac, exempt from terrain collision
     if(this.landmarkColliders?.some(box=>box.containsPoint(p)))return true;

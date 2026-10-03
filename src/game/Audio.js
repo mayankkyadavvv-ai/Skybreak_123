@@ -50,7 +50,7 @@ class AudioManager {
       this.musicVoices.forEach(v => v.gain.gain.value = .028);
       this.samples = new Map();
       for (const style of ['rotary', 'heavy']) for (let i = 0; i < 4; i++) this.samples.set(`cannon:${style}:${i}`, this.buffer(makeEffect('cannon', ctx.sampleRate, i, style)));
-      for (const type of ['missile', 'explosion', 'flare', 'hit', 'lock', 'warning', 'click', 'pullup', 'sonicboom', 'radio', 'flyby']) this.samples.set(type, this.buffer(makeEffect(type, ctx.sampleRate)));
+      for (const type of ['release', 'rocket', 'groundHit', 'waterHit', 'missile', 'explosion', 'flare', 'hit', 'lock', 'warning', 'click', 'pullup', 'sonicboom', 'radio', 'flyby']) this.samples.set(type, this.buffer(makeEffect(type, ctx.sampleRate)));
       this.ready = true;this.syncMix();ctx.resume()?.catch(() => {});
       return true;
     } catch {
@@ -121,6 +121,8 @@ class AudioManager {
   }
   play(type, options = {}) {
     if (!this.ready || this.ctx.state === 'closed') return false;
+    if (this.settings.volume <= 0 || this.settings.sound <= 0) return false;
+    if (type === 'rocket' && (options.distance > 6000 || [...this.voices].filter(v => v.type === 'rocket').length >= 8)) return false;
     const urgent=['warning','pullup'].includes(type);
     if(urgent && !options.preview){this.duckUntil=Math.max(this.duckUntil,this.ctx.currentTime+1.25);if(options.subtitle)this.subtitle(options.subtitle,4,2);}
     if (this.voices.size >= 48) {const replace=urgent?[...this.voices].find(v=>!v.urgent):null;if(!replace)return false;try{replace.source.stop();}catch{}replace.source.disconnect();replace.gain.disconnect();replace.pan.disconnect();this.voices.delete(replace);}
@@ -161,7 +163,7 @@ class AudioManager {
     }
 
     const attenuation = 1 / (1 + (distance / 1400) ** 1.35);
-    const volumes = { cannon: .46, missile: .5, explosion: .68, flare: .3, hit: .33, lock: .18, warning: .24, click: .055, pullup: .45, sonicboom: .85 };
+    const volumes = { cannon: .46, release: .16, rocket: .12, groundHit: .22, waterHit: .2, missile: .5, explosion: .68, flare: .3, hit: .33, lock: .18, warning: .24, click: .055, pullup: .45, sonicboom: .85 };
     gain.gain.value = (volumes[type] ?? .4) * attenuation * (!options.preview && this.lastCamera === 'cockpit' && !warnings ? .72 : 1);
     pan.pan.value = Math.max(-.85, Math.min(.85, panValue));
     
@@ -171,7 +173,7 @@ class AudioManager {
     source.playbackRate.value = Math.max(0.5, Math.min(2.0, rate));
     
     source.connect(gain);gain.connect(pan);pan.connect(bus);
-    const voice = { source, gain, pan, preview: !!options.preview,urgent };
+    const voice = { source, gain, pan, type, preview: !!options.preview,urgent };
     this.voices.add(voice);
     source.onended = () => { source.disconnect();gain.disconnect();pan.disconnect();this.voices.delete(voice); };
     source.start(t);

@@ -218,9 +218,19 @@ class Effects {
   /**
    * Guided Missile Rocket Motor Smoke Plume & Exhaust Glow
    */
+  impact(pos, type = 'metal') {
+    const water = type === 'water', metal = type === 'metal';
+    const count = Math.max(3, Math.floor((metal ? 7 : 5) * this.quality));
+    for (let i = 0; i < count; i++) {
+      this._tempV.set((Math.random()-.5)*32, 6+Math.random()*18, (Math.random()-.5)*32);
+      this.emit(pos, this._tempV, water ? 0xb8dbe6 : metal ? 0xffb74e : 0x8c7961,
+        metal ? 1.6 : 4, metal ? .18 : .5, metal ? .2 : 1.7, -18, metal);
+    }
+  }
+
   missileTrail(pos, dir, speed = 400) {
     // Intense incandescent motor exhaust point
-    this.emit(pos, this._tempV.set(0,0,0), 0xffc781, 12, 0.09, 0.5, 0);
+    this.emit(pos, this._tempV.set(0,0,0), 0xffc781, 4, 0.07, 0.3, 0);
 
     // Expanding rocket propellant smoke puff
     const wakeVel = this._tempV.copy(dir).multiplyScalar(-speed * 0.08).add(this._tempW.set(
@@ -228,7 +238,7 @@ class Effects {
       1.5 + Math.random() * 2,
       (Math.random() - 0.5) * 3
     ));
-    this.emit(pos, wakeVel, 0xa19b89, 10, 1.3, 2.5, 0, false);
+    this.emit(pos, wakeVel, 0xa19b89, 3.5, .95, 1.8, 0, false);
   }
 
   waterWake(pos, vel, speed = 250) {

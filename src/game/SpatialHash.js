@@ -13,6 +13,7 @@ export class SpatialHash {
     this.objectData = new Map(); // object -> { key, x, y, z, radius }
     this._candidateSet = new Set();
     this._v0 = new T.Vector3();
+    this.maxRadius = 0;
   }
 
   _getKey(x, y, z) {
@@ -24,6 +25,7 @@ export class SpatialHash {
 
   insert(obj, pos, radius = 5) {
     if (!obj || !pos) return;
+    this.maxRadius = Math.max(this.maxRadius, radius);
     this.remove(obj);
 
     const key = this._getKey(pos.x, pos.y, pos.z);
@@ -56,6 +58,7 @@ export class SpatialHash {
     data.y = pos.y;
     data.z = pos.z;
     if (radius !== null) data.radius = radius;
+    this.maxRadius = Math.max(this.maxRadius, data.radius);
 
     if (newKey !== data.key) {
       const oldCell = this.cells.get(data.key);
@@ -88,6 +91,7 @@ export class SpatialHash {
     this.cells.clear();
     this.objectData.clear();
     this._candidateSet.clear();
+    this.maxRadius = 0;
   }
 
   /**
@@ -138,12 +142,13 @@ export class SpatialHash {
     outResults.length = 0;
     this._candidateSet.clear();
 
-    const minX = Math.floor((Math.min(p0.x, p1.x) - padding) * this.invCellSize);
-    const maxX = Math.floor((Math.max(p0.x, p1.x) + padding) * this.invCellSize);
-    const minY = Math.floor((Math.min(p0.y, p1.y) - padding) * this.invCellSize);
-    const maxY = Math.floor((Math.max(p0.y, p1.y) + padding) * this.invCellSize);
-    const minZ = Math.floor((Math.min(p0.z, p1.z) - padding) * this.invCellSize);
-    const maxZ = Math.floor((Math.max(p0.z, p1.z) + padding) * this.invCellSize);
+    const extent = padding + this.maxRadius;
+    const minX = Math.floor((Math.min(p0.x, p1.x) - extent) * this.invCellSize);
+    const maxX = Math.floor((Math.max(p0.x, p1.x) + extent) * this.invCellSize);
+    const minY = Math.floor((Math.min(p0.y, p1.y) - extent) * this.invCellSize);
+    const maxY = Math.floor((Math.max(p0.y, p1.y) + extent) * this.invCellSize);
+    const minZ = Math.floor((Math.min(p0.z, p1.z) - extent) * this.invCellSize);
+    const maxZ = Math.floor((Math.max(p0.z, p1.z) + extent) * this.invCellSize);
 
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {

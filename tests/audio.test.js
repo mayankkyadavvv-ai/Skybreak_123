@@ -130,6 +130,17 @@ test('weapons attenuate with distance, warnings use their own bus and finished v
   assert.equal(audio.play('cannon'), false);
 });
 
+test('rocket voices are bounded, mute prevents new sources, and restart cancels scheduled audio', () => {
+  const {audio}=setup();
+  for(let i=0;i<36;i++)audio.play('rocket',{distance:100});
+  assert.equal([...audio.voices].filter(v=>v.type==='rocket').length,8);
+  audio.play('explosion',{at:audio.ctx.currentTime+2});
+  const sources=[...audio.voices].map(v=>v.source);audio.stopFlight();
+  assert.equal(audio.voices.size,0);assert.ok(sources.every(s=>s.stopped));
+  audio.settings.volume=0;audio.syncMix();assert.equal(audio.play('cannon'),false);assert.equal(audio.voices.size,0);
+  audio.settings.volume=.5;assert.equal(audio.play('missile'),true);audio.dispose();
+});
+
 test('missing audio support fails gracefully and disposal stops continuous sources', async () => {
   globalThis.window = {};const unsupported = new AudioManager({});
   assert.equal(unsupported.init(), false);assert.equal(await unsupported.preview('cannon'), false);

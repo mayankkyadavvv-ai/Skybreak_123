@@ -12,6 +12,7 @@ import { SeatHUD } from '../ui/SeatHUD.js';
 import { ContactTracker, evaluateDetection } from '../shared/Sensors.js';
 import { cloudDensityAt } from '../shared/CloudField.js';
 import { OPEN_SKIES } from './OpenSkies.js';
+import { advanceCannon } from './WeaponCadence.js';
 
 export function connectedControllers(pads) {
   if(!pads){try{pads=globalThis.navigator?.getGamepads?.() || [];}catch{pads=[];}}
@@ -99,7 +100,7 @@ export class LocalCoop {
   step(dt){
     const g=this.game,seat=this.seats[1],v=seat.view,p=seat.player;if(!this.active)return;
     v.elapsed=g.elapsed;v.state=p.alive?g.state:'dying';v.mission=g.mission;v.stats=g.stats;
-    for(const key of ['missileCooldown','cannonCooldown','flareCooldown'])v[key]=Math.max(0,v[key]-dt);
+    for(const key of ['missileCooldown','flareCooldown'])v[key]=Math.max(0,v[key]-dt);
     if(p.alive){
       const previous=p.position.clone();updateFlight(p,seat.input,dt,v.getFlightSettings(),{terrainHeight});
       let touchdown=null;
@@ -108,7 +109,7 @@ export class LocalCoop {
       const center=g.openSkies?OPEN_SKIES.center:{x:0,z:0},radius=g.openSkies?OPEN_SKIES.boundaryRadius:95000;if(p.position.y>15000 || Math.hypot(p.position.x-center.x,p.position.z-center.z)>radius){if(g.mission.freeFlight)this.resetSeat(1);else g.damage(p,1000,null,'boundary');}
       if(!v.target?.alive)v.target=g.enemies.find(e=>e.alive && g.canDetect(p,e)) || null;
       v.lock=updateLock(p,v.target,v.lock,dt,{canTrack:(a,b)=>g.canDetect(a,b,'lockable'),rate:systemEffects(p.systems,g.settings.difficulty).lockRateMult});
-      if(!seat.paused && !g.mission.freeFlight && isHeld(seat.input,'cannon',v.settings) && v.cannonCooldown<=0 && v.cannonLeft>0 && g.weapons.cannon(p,v.target)){v.cannonLeft--;v.cannonCooldown=.065;g.stats.shots++;}
+      v.cannonCooldown=advanceCannon(v.cannonCooldown,dt,!seat.paused && !g.mission.freeFlight && isHeld(seat.input,'cannon',v.settings),()=>{if(v.cannonLeft<=0 || !g.weapons.cannon(p,v.target))return false;v.cannonLeft--;g.stats.shots++;return true;});
       if(v.lock>=1.4&&!v.lockSound){g.audio.play('lock');v.lockSound=true;}if(v.lock===0)v.lockSound=false;
     }
     v.incoming=g.weapons.missiles.filter(m=>m.active && m.target===p);

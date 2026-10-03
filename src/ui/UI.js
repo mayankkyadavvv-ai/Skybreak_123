@@ -7,7 +7,7 @@ import { BASE, terrainHeight } from "../game/World.js";
 import { ACTIONS, bindingLabel, bindingError, formatKey, chordFromEvent, actionForCode } from "../game/InputActions.js";
 import { normalizeSettings } from "../game/Settings.js";
 import { applyTouchLayout } from './TouchLayout.js';
-import { hudContext, primaryWarning, onlineObjectiveSummary } from "./HUDState.js";
+import { hudContext, primaryWarning, onlineObjectiveSummary, weaponStatus } from "./HUDState.js";
 import { settingsMarkup } from "./SettingsUI.js";
 import { beginnerGuide, flightHints } from "./BeginnerGuide.js";
 import { PREVIEW_LABELS, normalizeAudioSettings } from "../game/SoundDesign.js";
@@ -1511,15 +1511,9 @@ class UI {
     const nearestBaseInfo = getNearestIAFBase(p.position.x, p.position.z);
     const isNearRunway = nearestBaseInfo?.base && nearestBaseInfo.distance < 12000;
 
-    this.dom["lock-status"].textContent = g.mission.freeFlight
+    this.dom["lock-status"].textContent = g.mission.freeFlight && !g.trainingCombat
       ? `${bindingLabel("help",this.settings)} · HELP     ${bindingLabel("tacticalMap",this.settings)} · MAP`
-      : g.target?.alive
-      ? g.lock >= 1.4
-        ? `LOCKED · ${bindingLabel("missile",this.settings)}`
-        : g.lock > 0
-        ? "ACQUIRING LOCK " + Math.round((g.lock / 1.4) * 100) + "%"
-        : "KEEP TARGET IN RETICLE"
-      : "NO HOSTILES";
+      : weaponStatus(g);
     this.dom["lock-status"].classList.toggle("locked", g.lock >= 1.4);
     const ground = Math.max(0, terrainHeight(p.position.x,p.position.z));
     const context = hudContext(g,ground,nearestBaseInfo);
@@ -1551,6 +1545,12 @@ class UI {
       x = w / 2,
       y = h * 0.43;
     c.clearRect(0, 0, w, h);
+    if (g.hitConfirmUntil > g.elapsed) {
+      c.save(); c.strokeStyle = g.hitConfirmKill ? '#ffb34d' : '#d5f5ef'; c.lineWidth = 2;
+      c.beginPath();
+      for (const sx of [-1,1]) for (const sy of [-1,1]) { c.moveTo(x+sx*10,y+sy*10); c.lineTo(x+sx*17,y+sy*17); }
+      c.stroke(); c.restore();
+    }
     const ink = "#00f0ff",
       red = "#ff3333",
       blue = "#38bdf8";
