@@ -2124,3 +2124,18 @@
 
 
 
+
+/* Combat-first desktop instructions. Essential warnings and weapon state remain visible. */
+@media (pointer:fine) and (min-width:701px) {
+  #hud.quiet-hud .flight-hints,
+  #hud.quiet-hud #battle-coach { display:none!important; }
+  #hud .hud-mission {max-width:240px;padding:9px 12px;}
+  #hud .hud-mission h2 {font-size:20px;margin:4px 0;}
+  #hud .hud-mission p {font-size:12px;line-height:1.35;}
+  #hud .border-alert {top:78px;left:50%;transform:translateX(-50%);max-width:300px;animation:none;}
+  #hud .border-alert-inner {padding:8px 12px;text-align:left;box-shadow:none;border-width:1px;}
+  #hud .border-alert-title {font-size:12px;letter-spacing:.4px;margin:3px 0;}
+  #hud .border-alert-tag,#hud .border-alert-sub {font-size:9px;letter-spacing:.4px;}
+  #hud.quiet-hud .border-alert-tag,#hud.quiet-hud .border-alert-sub {display:none;}
+  #hud .hud-top-right [data-action="toggle-instructions"] {font-size:12px;padding:0 9px;}
+}

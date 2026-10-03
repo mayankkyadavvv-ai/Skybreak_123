@@ -133,6 +133,7 @@ class UI {
           <div id="hud-score"></div>
           <button class="icon-btn" data-action="toggle-map" aria-label="Tactical World Map">${icon("map")} <small data-bind="tacticalMap">N</small></button>
           <button class="icon-btn help-btn" data-action="flight-help" aria-label="Controls and help">${icon("help")} <small data-bind="help">H</small></button>
+          <button class="icon-btn" data-action="toggle-instructions" aria-label="Show detailed instructions" aria-pressed="false" title="Show or hide flight instructions">Tips</button>
           <button class="icon-btn" data-action="pause" aria-label="Pause game">Ⅱ</button>
         </div>
 
@@ -219,6 +220,7 @@ class UI {
     this.menuEl = root.querySelector("#menu");
     this.menuEl.insertAdjacentHTML('beforeend','<nav class="public-links" aria-label="Information"><a href="/about">About</a><a href="/help">Help</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/storage">Storage settings</a></nav>');
     this.hudEl = root.querySelector("#hud");
+    this.hudEl.classList.add("quiet-hud");
     this.modal = root.querySelector("#modal-root");
     this.canvas = root.querySelector("#hud-canvas");
     this.ctx = this.canvas.getContext("2d");
@@ -418,6 +420,13 @@ class UI {
   }
 
   action(a) {
+    if (a === "toggle-instructions") {
+      const compact = this.hudEl.classList.toggle("quiet-hud");
+      const button = this.hudEl.querySelector('[data-action="toggle-instructions"]');
+      button?.setAttribute("aria-pressed", String(!compact));
+      button?.setAttribute("aria-label", compact ? "Show detailed instructions" : "Hide detailed instructions");
+      return;
+    }
     if (a === 'squadron') { this.game.openSquadronPanel(); return; }
     if (a === 'battle-target') { this.game.action('targetNext'); document.getElementById('world')?.focus?.(); return; }
     if (a === 'battle-replay-seed') { this.game.start(2, { seed: this.game.battleResult?.seed }); return; }
