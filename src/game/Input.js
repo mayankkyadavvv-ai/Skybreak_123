@@ -13,6 +13,7 @@ class Input {
     this.listeners = [];
     const on = (target, type, fn) => { target.addEventListener(type, fn); this.listeners.push(() => target.removeEventListener(type, fn)); };
     on(window, 'keydown', event => {
+      const alreadyDown = this.physicalKeys.has(event.code);
       this.physicalKeys.add(event.code);
       if (event.code === 'Escape') { if (!event.repeat) { this.clear(); action('pause'); } return; }
       if(this.keyboardDisabled || this.blockedKeys.has(event.code))return;
@@ -22,7 +23,7 @@ class Input {
       const name = actionForCode(code, getSettings());
       if (!name) return;
       event.preventDefault(); this.keys.add(code); this.keyCodes.set(event.code, code);
-      if (!event.repeat) this.dispatch(name);
+      if (!event.repeat && !alreadyDown) this.dispatch(name);
     });
     on(window, 'keyup', event => {
       this.physicalKeys.delete(event.code);this.blockedKeys.delete(event.code);
@@ -30,6 +31,9 @@ class Input {
       if (/^(Shift|Control|Alt|Meta)/.test(event.code)) for (const code of this.keys) if (code.includes('+')) this.keys.delete(code);
     });
     on(window, 'blur', () => { this.clear();this.physicalKeys.clear();this.blockedKeys.clear();action('Blur'); });
+    on(document, 'focusin', event => {
+      if (event.target?.closest?.('input,textarea,select,button,a,[contenteditable]:not([contenteditable="false"])')) this.clear();
+    });
     on(document, 'visibilitychange', () => { if (document.hidden) { this.clear(); action('Blur'); } });
     on(document, 'pointerlockchange', () => {
       const locked = document.pointerLockElement === canvas;

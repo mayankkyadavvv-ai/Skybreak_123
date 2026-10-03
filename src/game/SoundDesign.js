@@ -48,7 +48,7 @@ export function makeNoise(sampleRate, seconds = 4, seed = 37) {
   return finish(channels, sampleRate, .9, true);
 }
 export function makeEffect(type, sampleRate, variant = 0, style = 'rotary') {
-  const durations = { cannon: style === 'heavy' ? .23 : .15, missile: 1.05, explosion: 1.65, flare: .36, hit: .25, lock: .3, warning: .72, click: .045, pullup: .65, sonicboom: 1.25, radio: .18, flyby: .9 };
+  const durations = { cannon: style === 'heavy' ? .23 : .15, release: .09, rocket: .26, groundHit: .22, waterHit: .3, missile: 1.05, explosion: 1.65, flare: .36, hit: .25, lock: .3, warning: .72, click: .045, pullup: .65, sonicboom: 1.25, radio: .18, flyby: .9 };
   if (!Object.hasOwn(durations, type)) throw new Error('Unknown sound effect: ' + type);
   const duration = durations[type], n = Math.ceil(sampleRate * duration);
   const lowRate = 1 - Math.exp(-2 * Math.PI * 180 / sampleRate);
@@ -69,6 +69,12 @@ export function makeEffect(type, sampleRate, variant = 0, style = 'rotary') {
         const report = warm * Math.exp(-t / (heavy ? .075 : .035)) * 1.35;
         const mechanism = (Math.sin(2 * Math.PI * 1190 * t) + .4 * Math.sin(2 * Math.PI * 2317 * t)) * Math.exp(-t / .017) * .07;
         value = crack + body + report + mechanism;
+      } else if (type === 'release') {
+        value = (warm + Math.sin(2*Math.PI*940*t)*.12)*Math.exp(-t/.018);
+      } else if (type === 'rocket') {
+        value = (warm*.75 + low*.4)*Math.sin(Math.PI*t/duration)**2;
+      } else if (type === 'groundHit' || type === 'waterHit') {
+        value = (type === 'waterHit' ? warm*.6 + high*.07 : low*1.8 + warm*.4)*Math.exp(-t/.06);
       } else if (type === 'missile') {
         const blast = warm * Math.exp(-t / .05) * 1.2;
         const rush = (w * .16 + warm * .8) * (1 - Math.exp(-t / .045)) * Math.exp(-t / .31);

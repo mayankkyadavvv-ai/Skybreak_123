@@ -48,20 +48,10 @@ export function normalizeSettings(saved = {}, reducedMotion = false) {
   }):[];
   value.activeControlProfile=typeof value.activeControlProfile==='string'&&value.controlProfiles.some(p=>p.id===value.activeControlProfile)?value.activeControlProfile:'';
   const savedBindings = { ...saved.keyBindings };
-  if ((Number(saved.controlsVersion) || 0) < 4) {
-    if (savedBindings.pitchUp === 'ArrowDown') delete savedBindings.pitchUp;
-    if (savedBindings.pitchDown === 'ArrowUp') delete savedBindings.pitchDown;
-  }
-  if ((Number(saved.controlsVersion) || 0) < 5) {
-    // Apply the requested E missile mapping once, including saved profiles.
-    // Later v5 user rebindings stay intact. E can never also command yaw.
-    delete savedBindings.missile;
-    for (const [action, code] of Object.entries(savedBindings)) if (code === 'KeyE') delete savedBindings[action];
-  }
   const migrated = migrateBindings(savedBindings);
   value.keyBindings = migrated.bindings; value.controlsVersion = CONTROLS_VERSION; value.input = value.device;
   delete value.invert;
   const notices = migrated.notices.map(action => `Reset conflicting or unsupported binding: ${action}.`);
-  if (saved.controlsVersion !== CONTROLS_VERSION && Object.keys(saved).length) notices.unshift(`Controls updated: ${bindingLabel('pitchUp', value, false)} nose up, ${bindingLabel('pitchDown', value, false)} nose down. Missile = ${bindingLabel('missile', value, false)}; yaw = ${bindingLabel('yawLeft', value, false)} / ${bindingLabel('yawRight', value, false)}. Previous missile/E bindings were updated, including saved profiles.`);
+  if (saved.controlsVersion !== CONTROLS_VERSION && Object.keys(saved).length) notices.unshift(`Controls updated: ${bindingLabel('pitchUp', value, false)} nose up, ${bindingLabel('pitchDown', value, false)} nose down. Missile = ${bindingLabel('missile', value, false)}; yaw = ${bindingLabel('yawLeft', value, false)} / ${bindingLabel('yawRight', value, false)}. Supported custom bindings preserved.`);
   return { settings: value, notices };
 }

@@ -1,4 +1,11 @@
 import { bindingLabel } from '../game/InputActions.js';
+export function weaponStatus(game) {
+  if (game.missilesLeft <= 0) return 'OUT OF AMMO';
+  if (game.missileCooldown > 0) return `MISSILE RELOADING · ${game.missileCooldown.toFixed(1)}s`;
+  if (!game.target?.alive) return 'NO TARGET';
+  const locked = game.multiplayer?.active ? game.multiplayer.authoritativeLock?.locked && game.multiplayer.authoritativeLock.targetId === game.target.id : game.lock >= 1.4;
+  return locked ? `LOCKED · ${bindingLabel('missile',game.settings)}` : `ACQUIRING LOCK ${Math.round(Math.min(1, game.lock / 1.4)*100)}%`;
+}
 export function onlineObjectiveSummary(multiplayer) {
   const mission = multiplayer.missionState;
   if (mission) {

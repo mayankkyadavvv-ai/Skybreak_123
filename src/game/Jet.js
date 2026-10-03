@@ -714,6 +714,10 @@ export function createJet(team = "player", bomber = false, modelId = "x17", live
   const muzzleLight = new T.PointLight(0xffb844, 0, 45);
   muzzleLight.position.set(0, -0.4, -9.5);
   g.add(muzzleLight);
+  const muzzleFlash = new T.Mesh(new T.SphereGeometry(1, 6, 4), new T.MeshBasicMaterial({color:0xffbd63, toneMapped:false}));
+  muzzleFlash.position.set(modelId === 'a10x' ? -.35 : 0, -.4, -11.4);
+  muzzleFlash.scale.set(.38,.38,1.5); muzzleFlash.visible=false; g.add(muzzleFlash);
+  muzzleLight.userData.flash = muzzleFlash;
 
   // Retractable Tricycle Landing Gear (Nose gear + Dual Main gear)
   const gearGroup = new T.Group();
@@ -1112,7 +1116,8 @@ export class Jet {
     }
 
     if (u.muzzleLight) {
-      u.muzzleLight.intensity = firing && !this.reducedMotion ? (Math.random() > 0.3 ? 3.5 : 1.2)*effectIntensity : 0;
+      u.muzzleLight.intensity = 0;
+      u.muzzleLight.userData.flash.visible = firing && effectIntensity > 0;
     }
   }
 }

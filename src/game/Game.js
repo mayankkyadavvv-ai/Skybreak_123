@@ -32,6 +32,7 @@ import { controllerDeadzone, openSkiesFlightSettings } from './FlightAssists.js'
 import { createDamageState, applySystemDamage, systemEffects, repairSystems } from '../shared/DamageSystems.js';
 import { installMissionExtensions, startOperationRuntime, stepMissionExtensions, updateOperationAircraft, clearMissionExtensions } from './MissionIntegration.js';
 import { LocalCoop, allocateLocalDevices } from './LocalCoop.js';
+import { advanceCannon } from './WeaponCadence.js';
 
 let sortieSequence = 0;
 
@@ -67,7 +68,13 @@ class Game {
     this.atmosphere = new Atmosphere(this.world, this.scene);
     this.effects = new Effects(this.scene);
     this.speedEffects = new SpeedEffects(this.scene, this.camera);
-    this.weapons = new Weapons(this.scene, this.effects, this.damage.bind(this), (type, position) => this.audio.play(type, { distance: position ? position.distanceTo(this.camera.position) : 0 }));
+    this._audioRight = new T.Vector3();
+    this.weapons = new Weapons(this.scene, this.effects, this.damage.bind(this), (type, position) => {
+      if (this.ui.modalType || !['playing','dying'].includes(this.state)) return;
+      this._audioRight.set(1,0,0).applyQuaternion(this.camera.quaternion);
+      this.audio.play(type, { position, cameraPos: this.camera.position, cameraRight: this._audioRight, distance: position ? position.distanceTo(this.camera.position) : 0 });
+    });
+    this.weapons.listenerPosition = this.camera.position;
     this.jetConfig = loadPlayerJetConfig();
     this.player = new Jet("player", false, this.jetConfig);
     this.scene.add(this.player.model);
@@ -343,6 +350,9 @@ class Game {
   }
 
   resetSessionCounters() {
+    this.audio.stopFlight?.();
+    this.hitConfirmUntil = 0; this.hitConfirmKill = false; this.dryFireUntil = 0;
+    this.player.muzzlePulse = 0;
     this.missileCooldown = 0;
     this.flareCooldown = 0;
     this.cannonCooldown = 0;
@@ -555,6 +565,7 @@ class Game {
       document.exitPointerLock?.();
       this.input.clear();
       this.ui.showPause();
+      this.audio.stopFlight?.();
     }
   }
 
@@ -696,6 +707,7 @@ class Game {
   }
 
   launch() {
+    if (this.state !== 'playing' || !this.player.alive || this.ui.modalType || this.multiplayer?.comms?.isOpen) return;
     if (this.multiplayer?.active) {
       if (!this.multiplayer.matchOptions?.weaponsEnabled) return;
       if (this.missilesLeft <= 0) {
@@ -707,7 +719,7 @@ class Game {
         return;
       }
       if (!this.target?.alive || !this.multiplayer.authoritativeLock?.locked || this.multiplayer.authoritativeLock.targetId!==this.target.id) {
-        this.ui.message("Keep the selected target inside the ring until LOCKED");
+        this.ui.message(this.target?.alive ? 'ACQUIRING LOCK' : 'NO TARGET');
         return;
       }
       const origin = this.player.position.clone().add(this.player.forward.clone().multiplyScalar(4));
@@ -731,7 +743,7 @@ class Game {
       return;
     }
     if (!this.target?.alive || this.lock < 1.4) {
-      this.ui.message("Keep the selected target inside the ring until LOCKED");
+      this.ui.message(this.target?.alive ? "ACQUIRING LOCK" : "NO TARGET");
       return;
     }
     if (this.weapons.missile(this.player, this.target)) {
@@ -742,7 +754,7 @@ class Game {
       this.lockSound = false;
       this.cam.shake = 0.5;
       this.notify("KESTREL", "Missile away.", 2);
-    }
+    } else this.ui.message('NO VALID TARGET / LAUNCHER BUSY', 1.5);
   }
 
   flare() {
@@ -771,6 +783,8 @@ class Game {
     jet.hp = Math.max(0, jet.hp - amount);
     this.ui?.recordReplayEvent?.('damage',`${jet.callsign || jet.id} hit`,jet.id);
     if (owner === this.player || owner?.localHuman) {
+      this.hitConfirmUntil = this.elapsed + .16;
+      this.hitConfirmKill = jet.hp === 0;
       if (weapon === "cannon") {
         this.stats.hits++;
         this.score += 20;
@@ -792,7 +806,7 @@ class Game {
       jet.alive = false;
       jet.deadTime = 0;
       this.effects.burst(jet.position, 65, 30);
-      this.effects.shockwave?.(jet.position, 220, 0xff9922);
+      this.cam.shake = Math.max(this.cam.shake || 0, .45 / (1 + jet.position.distanceTo(this.camera.position) / 350));
       if (weapon !== "missile") this.audio.play("explosion", { distance: jet.position.distanceTo(this.camera.position) });
       if (jet === this.player) {
         if(!this.localCoop?.active)this.state = "dying";
@@ -879,7 +893,6 @@ class Game {
     this.elapsed += dt;
     this.missileCooldown = Math.max(0, this.missileCooldown - dt);
     this.flareCooldown = Math.max(0, this.flareCooldown - dt);
-    this.cannonCooldown -= dt;
     this.damageFlash = Math.max(0, this.damageFlash - dt);
     this.warningTimer -= dt;
     if (this.notifications[0]) { this.notifications[0].ttl -= dt; if(this.notifications[0].ttl <= 0) this.notifications.shift(); }
@@ -1068,12 +1081,17 @@ class Game {
           this.cannonCooldown = 0.065;
           this.cam.shake = 0.15;
         }
-      } else if ((!this.mission.freeFlight || this.trainingCombat) && isFiringCannon && this.cannonCooldown <= 0 && this.cannonLeft > 0) {
-        if (this.weapons.cannon(this.player, this.target)) {
+      } else {
+        const permitted = !this.mission.freeFlight || this.trainingCombat;
+        this.cannonCooldown = advanceCannon(this.cannonCooldown, dt, permitted && isFiringCannon, () => {
+          if (this.cannonLeft <= 0 || !this.weapons.cannon(this.player, this.target)) return false;
           this.cannonLeft--;
           this.stats.shots++;
-          this.cannonCooldown = 0.065;
-          this.cam.shake = 0.15;
+          this.cam.shake = .035;
+          return true;
+        });
+        if (permitted && isFiringCannon && this.cannonLeft <= 0 && this.elapsed >= (this.dryFireUntil || 0)) {
+          this.dryFireUntil = this.elapsed + 1.2; this.ui.message('CANNON · OUT OF AMMO', 1); this.audio.play('click');
         }
       }
 
@@ -1112,7 +1130,7 @@ class Game {
       }
     }
 
-    this.weapons.update(dt, jets, (p) => this.world.collision(p));
+    this.weapons.update(dt, jets, (p) => this.world.weaponSurface ? this.world.weaponSurface(p) : this.world.collision(p));
     this.incoming = this.weapons.missiles.filter((m) => m.active && m.target === this.player);
     if (this.incoming.length && this.warningTimer <= 0) {
       this.audio.play("warning");
@@ -1188,7 +1206,8 @@ class Game {
       this.player.animate(this.menuTime);
       this.player.position.y = 1550 + Math.sin(this.menuTime * 0.7) * 0.35;
     } else if (this.player?.alive) {
-      const isFiring = this.cannonCooldown > 0.02;
+      const isFiring = this.state === 'playing' && !this.ui.modalType && this.player.muzzlePulse > 0;
+      this.player.muzzlePulse = Math.max(0, (this.player.muzzlePulse || 0) - dt);
       this.player.animate(
         this.elapsed,
         this.player.boost,
