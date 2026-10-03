@@ -1,5 +1,6 @@
 // WeaponNetworkManager: Visual and Audio synchronization for remote multiplayer weapons
 import * as T from "three";
+import { WeaponVisuals, emitMissileSegment } from "../game/WeaponVisuals.js";
 
 export class WeaponNetworkManager {
   constructor(game) {
@@ -11,29 +12,24 @@ export class WeaponNetworkManager {
     this.remoteBullets = [];
     this.remoteMissiles = [];
 
-    // Pooled visual meshes for remote bullets
-    this.bulletGeo = new T.CylinderGeometry(0.18, 0.18, 22, 4);
-    this.bulletGeo.rotateX(Math.PI / 2);
-    this.bulletMat = new T.MeshBasicMaterial({ color: 0xffcc33 });
+    this.visuals = new WeaponVisuals();
+    this._trailPoint = new T.Vector3();
+    this._previous = new T.Vector3();
 
-    // Pooled visual mesh for missiles
-    this.missileGeo = new T.ConeGeometry(0.48, 3.8, 6);
-    this.missileGeo.rotateX(-Math.PI / 2);
-    this.missileMat = new T.MeshBasicMaterial({ color: 0xff7722 });
   }
 
   handleCannonFired({ bId, ownerId, pos, vel }) {
-    if (!pos || !vel) return;
+    if (!pos || !vel || this.remoteBullets.length >= 180) return;
 
     // Position of origin
     const origin = new T.Vector3(pos.x, pos.y, pos.z);
     const velocity = new T.Vector3(vel.x, vel.y, vel.z);
 
     // Visual muzzle flash
-    this.effects?.emit(origin, velocity.clone().multiplyScalar(0.1), 0xffaa33, 6, 0.08);
+    this.effects?.muzzleFlash?.(origin, velocity.clone().multiplyScalar(.1), velocity.clone().normalize());
 
     // Create moving tracer
-    const mesh = new T.Mesh(this.bulletGeo, this.bulletMat);
+    const mesh = this.visuals.tracer();
     mesh.position.copy(origin);
     mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 0, -1), velocity.clone().normalize());
     this.scene.add(mesh);
@@ -51,15 +47,15 @@ export class WeaponNetworkManager {
   }
 
   handleMissileLaunched({ mId, ownerId, targetId, pos, dir, speed }) {
-    if (!pos || !dir) return;
+    if (!pos || !dir || this.remoteMissiles.length >= 36) return;
 
     const origin = new T.Vector3(pos.x, pos.y, pos.z);
     const direction = new T.Vector3(dir.x, dir.y, dir.z).normalize();
 
     // Visual ignition burst
-    this.effects?.burst(origin, 10, 6);
+    this.effects?.muzzleFlash?.(origin, new T.Vector3(), direction);
 
-    const mesh = new T.Mesh(this.missileGeo, this.missileMat);
+    const mesh = this.visuals.missile();
     mesh.position.copy(origin);
     mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 0, -1), direction);
     this.scene.add(mesh);
@@ -117,15 +113,13 @@ export class WeaponNetworkManager {
       const m = this.remoteMissiles[i];
       m.life -= dt;
       m.speed = Math.min(1050, m.speed + 220 * dt);
+      this._previous.copy(m.position);
       m.position.addScaledVector(m.direction, m.speed * dt);
       m.mesh.position.copy(m.position);
       m.mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 0, -1), m.direction);
 
-      m.trailTimer += dt;
-      if (m.trailTimer > 0.04) {
-        m.trailTimer = 0;
-        this.effects?.smoke(m.position, false, 8);
-      }
+      emitMissileSegment(this.effects, this._previous, m.position, m.direction, m.speed, this._trailPoint);
+      m.mesh.children[0].visible = this.effects?.intensity !== 0;
 
       if (m.life <= 0 || m.position.y < 5) {
         this.scene.remove(m.mesh);
@@ -133,6 +127,8 @@ export class WeaponNetworkManager {
       }
     }
   }
+
+  dispose() { this.clear(); this.visuals.dispose(); }
 
   clear() {
     for (const b of this.remoteBullets) {
@@ -146,3 +142,4 @@ export class WeaponNetworkManager {
     this.remoteMissiles = [];
   }
 }
+

@@ -1,5 +1,6 @@
 import * as T from "three";
 import { forward, pointSegmentDistance } from "./math.js";
+import { WeaponVisuals, emitMissileSegment } from "./WeaponVisuals.js";
 import { SpatialHash } from "./SpatialHash.js";
 class Weapons {
   constructor(scene, effects, damage, sound) {
@@ -7,18 +8,16 @@ class Weapons {
     this.effects = effects;
     this.damage = damage;
     this.sound = sound;
+    this.visuals = new WeaponVisuals();
+    this._trailPoint = new T.Vector3();
     this.bullets = Array.from({ length: 180 }, () => {
-      const mesh = new T.Mesh(new T.CylinderGeometry(0.18, 0.18, 24, 4), new T.MeshBasicMaterial({ color: 16770723 }));
-      mesh.geometry.rotateX(Math.PI / 2);
+      const mesh = this.visuals.tracer();
       mesh.visible = false;
       scene.add(mesh);
       return { mesh, active: false, p: mesh.position, previous: new T.Vector3(), v: new T.Vector3(), life: 0, owner: null };
     });
-    const geo = new T.ConeGeometry(0.5, 4, 6);
-    geo.rotateX(-Math.PI / 2);
-    const mat = new T.MeshBasicMaterial({ color: 16763256 });
     this.missiles = Array.from({ length: 36 }, () => {
-      const mesh = new T.Mesh(geo, mat);
+      const mesh = this.visuals.missile();
       mesh.visible = false;
       scene.add(mesh);
       return { mesh, p: mesh.position, previous: new T.Vector3(), dir: new T.Vector3(), active: false, target: null, owner: null, speed: 0, life: 0, trail: 0 };
@@ -26,7 +25,7 @@ class Weapons {
     this.spatialGrid = new SpatialHash(600);
     this._queryResults = [];
   }
-  dispose(){this.clear();const geometry=new Set(),materials=new Set();for(const shot of [...this.bullets,...this.missiles]){shot.mesh.removeFromParent();geometry.add(shot.mesh.geometry);materials.add(shot.mesh.material);}for(const item of geometry)item.dispose();for(const item of materials)item.dispose();}
+  dispose() { this.clear(); for (const shot of [...this.bullets, ...this.missiles]) shot.mesh.removeFromParent(); this.visuals.dispose(); }
   clear() {
     for (const o of [...this.bullets, ...this.missiles]) {
       o.active = false;
@@ -41,10 +40,11 @@ class Weapons {
     const b = this.bullets.find((b2) => !b2.active);
     if (!b) return false;
     b.active = b.mesh.visible = true;
+    b.mesh.children[0].visible = this.effects.intensity !== 0;
     b.owner = owner;
     b.life = 2;
     b.p.copy(owner.position).addScaledVector(owner.forward, 10);
-    let dir = owner.forward;
+    let dir = owner.forward.clone();
     if (target?.alive) {
       const lead = target.position.clone().addScaledVector(target.velocity, owner.position.distanceTo(target.position) / 1700).sub(b.p).normalize();
       if (dir.dot(lead) > 0.994) dir.lerp(lead, 0.85).normalize();
@@ -53,8 +53,9 @@ class Weapons {
     dir.y += (random() - 0.5) * spread;
     b.v.copy(dir.normalize()).multiplyScalar(1700).add(owner.velocity);
     b.mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 0, -1), dir);
-    this.effects.emit(b.p, owner.velocity, 16772789, 5, 0.06);
-    if (owner.team === "player") this.sound?.("cannon");
+    if (this.effects.muzzleFlash) this.effects.muzzleFlash(b.p, owner.velocity, dir);
+    else this.effects.emit(b.p, owner.velocity, 0xffcb68, 10, .065);
+    this.sound?.("cannon", owner.team === "player" ? undefined : b.p);
     return true;
   }
   missile(owner, target) {
@@ -62,6 +63,7 @@ class Weapons {
     const m = this.missiles.find((m2) => !m2.active);
     if (!m) return false;
     m.active = m.mesh.visible = true;
+    m.mesh.children[0].visible = this.effects.intensity !== 0;
     m.owner = owner;
     m.target = target;
     m.speed = owner.speed + 90;
@@ -70,8 +72,9 @@ class Weapons {
     m.p.copy(owner.position).add(new T.Vector3(owner.team === "player" ? -3 : 3, -1, 1).applyQuaternion(owner.quaternion));
     m.dir.copy(owner.forward);
     m.previous.copy(m.p);
-    this.effects.burst(m.p, 8, 5);
-    if (owner.team === "player") this.sound?.("missile");
+    m.mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 0, -1), m.dir);
+    this.effects.muzzleFlash?.(m.p, owner.velocity, m.dir);
+    this.sound?.("missile", owner.team === "player" ? undefined : m.p);
     return true;
   }
   deployFlares(jet) {
@@ -107,11 +110,14 @@ class Weapons {
         if (!j.alive || j === b.owner || j.team === "enemy" === (b.owner.team === "enemy")) continue;
         const dmg = b.owner?.stats?.cannonDamage || 14;
         this.damage(j, dmg, b.owner, "cannon");
-        this.effects.burst(b.p, 5, 5);
+        if (this.effects.weaponImpact) this.effects.weaponImpact(b.p, b.v, false);
+        else this.effects.burst(b.p, 5, 5);
         b.life = 0;
         break;
       }
-      if (b.life <= 0 || terrain?.(b.p)) {
+      const groundHit = b.life > 0 && terrain?.(b.p);
+      if (groundHit) this.effects.weaponImpact?.(b.p, b.v, false);
+      if (b.life <= 0 || groundHit) {
         b.active = b.mesh.visible = false;
       }
     }
@@ -128,23 +134,20 @@ class Weapons {
       }
       m.p.addScaledVector(m.dir, m.speed * dt);
       m.mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 0, -1), m.dir);
-      m.trail += dt;
-      if (m.trail > 0.038) {
-        m.trail = 0;
-        if (this.effects.missileTrail) {
-          this.effects.missileTrail(m.p, m.dir, m.speed);
-        } else {
-          this.effects.smoke(m.p, false, 10);
-          this.effects.emit(m.p, new T.Vector3(), 16759664, 8, 0.14);
-        }
-      }
+      emitMissileSegment(this.effects, m.previous, m.p, m.dir, m.speed, this._trailPoint);
+      const motor = m.mesh.children[0];
+      motor.visible = this.effects.intensity !== 0;
+      motor.scale.setScalar(1 + Math.sin(m.life * 73) * .07);
       if (m.target?.alive && pointSegmentDistance(m.target.position, m.previous, m.p) < m.target.radius + 19) {
         this.damage(m.target, 110, m.owner, "missile");
-        this.effects.burst(m.p, 35, 25);
+        if (this.effects.weaponImpact) this.effects.weaponImpact(m.p, m.dir, true);
+        else this.effects.burst(m.p, 35, 25);
         this.sound?.("explosion", m.p);
         m.life = 0;
       }
-      if (m.life <= 0 || terrain?.(m.p)) {
+      const groundHit = m.life > 0 && terrain?.(m.p);
+      if (groundHit) { this.effects.weaponImpact?.(m.p, m.dir, true); this.sound?.("explosion", m.p); }
+      if (m.life <= 0 || groundHit) {
         m.active = m.mesh.visible = false;
       }
     }
@@ -161,3 +164,4 @@ export {
   Weapons,
   updateLock
 };
+

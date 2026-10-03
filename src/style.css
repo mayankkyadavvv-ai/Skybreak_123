@@ -2124,3 +2124,45 @@
 
 
 
+
+/* Combat-first desktop instructions. Essential warnings and weapon state remain visible. */
+@media (pointer:fine) and (min-width:701px) {
+  #hud.quiet-hud .flight-hints,
+  #hud.quiet-hud #battle-coach { display:none!important; }
+  #hud .hud-mission {max-width:240px;padding:9px 12px;}
+  #hud .hud-mission h2 {font-size:20px;margin:4px 0;}
+  #hud .hud-mission p {font-size:12px;line-height:1.35;}
+  #hud .border-alert {top:78px;left:50%;transform:translateX(-50%);max-width:300px;animation:none;}
+  #hud .border-alert-inner {padding:8px 12px;text-align:left;box-shadow:none;border-width:1px;}
+  #hud .border-alert-title {font-size:12px;letter-spacing:.4px;margin:3px 0;}
+  #hud .border-alert-tag,#hud .border-alert-sub {font-size:9px;letter-spacing:.4px;}
+  #hud.quiet-hud .border-alert-tag,#hud.quiet-hud .border-alert-sub {display:none;}
+  #hud .hud-top-right [data-action="toggle-instructions"] {font-size:12px;padding:0 9px;}
+}
+
+
+/* Weapon pass v2: readable, compact and no animated instruction banners. */
+#hud .hud-weapons { background:rgba(8,21,30,.94); border:1px solid #526b77; border-top:2px solid #efba65; border-radius:8px; padding:14px 18px; }
+#hud .hud-weapons .weapon>span {font-size:11px;letter-spacing:1px;color:#c8dce5;}
+#hud .hud-weapons .weapon strong {font-size:36px;line-height:1.15;color:#f3f8fb;text-shadow:none;}
+#hud .hud-weapons .weapon strong small {font-size:15px;color:#a4becb;}
+#hud .hud-weapons .weapon-state {display:block;margin-top:7px;font:600 10px/1.5 ui-monospace,monospace;letter-spacing:.6px;color:#9ab4c3;}
+#hud .hud-weapons .weapon-state[data-mode="locked"] {color:#66efbd;}
+#hud .hud-weapons .weapon-state[data-mode="firing"],#hud .hud-weapons .weapon-state[data-mode="reload"] {color:#ffca79;}
+#hud .hud-weapons .weapon-state[data-mode="empty"] {color:#ff9185;}
+#hud .weapon-progress {height:3px;background:#31434e;margin-top:5px;overflow:hidden;border-radius:2px;}
+#hud .weapon-progress i {display:block;height:100%;background:#68dddc;}
+#hud .hud-weapons .flare-line {margin-top:10px;padding-top:9px;font-size:10px;}
+#hud .lock-status {font-size:11px;letter-spacing:1px;padding:5px 9px;pointer-events:none;}
+#hud .lock-status:empty {display:none;}
+#hud .weapon-hit {position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#ffcd7c;text-align:center;}
+#hud .weapon-hit[hidden] {display:none;}
+#hud .weapon-hit i {display:block;width:28px;height:28px;background:linear-gradient(currentColor,currentColor) left top/8px 2px no-repeat,linear-gradient(currentColor,currentColor) left top/2px 8px no-repeat,linear-gradient(currentColor,currentColor) right top/8px 2px no-repeat,linear-gradient(currentColor,currentColor) right top/2px 8px no-repeat,linear-gradient(currentColor,currentColor) left bottom/8px 2px no-repeat,linear-gradient(currentColor,currentColor) left bottom/2px 8px no-repeat,linear-gradient(currentColor,currentColor) right bottom/8px 2px no-repeat,linear-gradient(currentColor,currentColor) right bottom/2px 8px no-repeat;transform:rotate(45deg);margin:auto;}
+#hud .weapon-hit span {position:absolute;top:40px;left:50%;transform:translateX(-50%);font:700 10px ui-monospace,monospace;background:#0b1c28e8;padding:4px 7px;}
+#hud .weapon-hit[data-kind="DESTROYED"] {color:#83efbb;}
+@media (pointer:coarse),(max-width:700px) { #hud [data-action="toggle-instructions"] {display:none;} }
+@media (pointer:fine) and (min-width:701px) {
+  #hud .hud-weapons {width:260px;}
+  #hud .hud-weapons .weapon {min-width:0;}
+  #hud .hud-weapons .weapon.secondary {padding-left:15px;}
+}
