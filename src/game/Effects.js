@@ -51,11 +51,13 @@ class Effects {
       `,
       fragmentShader: `
         varying vec3 vColor; varying float vAlpha; varying float vVisible;
+        uniform float selectedChannel;
+        float noise(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
         void main() {
           if(vVisible<.5)discard;
           float r = length(gl_PointCoord - 0.5) * 2.0;
           if (r > 1.0) discard;
-          float alpha = pow(1.0 - r, 1.6) * 0.82;
+          float alpha = selectedChannel > .5 ? pow(1.0 - r, 1.35) * .9 : (1.0 - smoothstep(.15, 1.0, r)) * (.62 + .38 * noise(floor(gl_PointCoord * 12.0)));
           gl_FragColor = vec4(vColor, alpha*vAlpha);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
@@ -213,16 +215,26 @@ class Effects {
    * Guided Missile Rocket Motor Smoke Plume & Exhaust Glow
    */
   missileTrail(pos, dir, speed = 400) {
-    // Intense incandescent motor exhaust point
-    this.emit(pos, new T.Vector3(0, 0, 0), 0xfff0bb, 18, 0.09, 0.5, 0);
+    this._tempV.copy(dir).multiplyScalar(-speed * .025);
+    this.emit(pos, this._tempV, 0x9ab5c4, 6, 1.05, 3.4, 0, false);
+    this.emit(pos, this._tempV, 0xffd497, 4, .07, .5);
+  }
 
-    // Expanding rocket propellant smoke puff
-    const wakeVel = dir.clone().multiplyScalar(-speed * 0.08).add(new T.Vector3(
-      (Math.random() - 0.5) * 3,
-      1.5 + Math.random() * 2,
-      (Math.random() - 0.5) * 3
-    ));
-    this.emit(pos, wakeVel, 0x909aa2, 14, 1.3, 2.5, 0, false);
+  muzzleFlash(pos, velocity, dir) {
+    this.emit(pos, velocity, 0xffefb8, 13, .065, .2);
+    this._tempV.copy(velocity).addScaledVector(dir, 100);
+    this.emit(pos, this._tempV, 0xff9b35, 7, .10, .6);
+    this.emit(pos, velocity, 0x596875, 4, .24, 2.3, 0, false);
+  }
+
+  weaponImpact(pos, direction, missile = false) {
+    if (missile) { this.burst(pos, 42, 22); return; }
+    this.emit(pos, this._tempV.set(0,0,0), 0xffe8ae, 12, .075, .5);
+    for (let i=0; i<Math.max(3, Math.ceil(9*this.quality)); i++) {
+      this._tempV.set(Math.random()-.5, Math.random()-.2, Math.random()-.5).normalize().multiplyScalar(28+Math.random()*48);
+      this.emit(pos, this._tempV, i%2 ? 0xff9c36 : 0xffd58a, 2.8, .24+Math.random()*.22, .3, -16);
+    }
+    this.emit(pos, this._tempV.set(0,3,0), 0x48525c, 8, .55, 2.2, 0, false);
   }
 
   waterWake(pos, vel, speed = 250) {
@@ -329,3 +341,4 @@ class Effects {
 }
 
 export { Effects };
+

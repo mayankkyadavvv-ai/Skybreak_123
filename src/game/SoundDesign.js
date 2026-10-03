@@ -47,7 +47,7 @@ export function makeNoise(sampleRate, seconds = 4, seed = 37) {
   return finish(channels, sampleRate, .9, true);
 }
 export function makeEffect(type, sampleRate, variant = 0, style = 'rotary') {
-  const durations = { cannon: style === 'heavy' ? .23 : .15, missile: 1.05, explosion: 1.65, flare: .36, hit: .25, lock: .3, warning: .72, click: .045, pullup: .65, sonicboom: 1.25 };
+  const durations = { cannon: style === 'heavy' ? .23 : .15, missile: 1.45, explosion: 1.65, flare: .36, hit: .25, lock: .3, warning: .72, click: .045, pullup: .65, sonicboom: 1.25 };
   if (!Object.hasOwn(durations, type)) throw new Error('Unknown sound effect: ' + type);
   const duration = durations[type], n = Math.ceil(sampleRate * duration);
   const lowRate = 1 - Math.exp(-2 * Math.PI * 180 / sampleRate);
@@ -67,13 +67,19 @@ export function makeEffect(type, sampleRate, variant = 0, style = 'rotary') {
         const body = Math.sin(2 * Math.PI * (punch + variant * 2) * t) * Math.exp(-t / (heavy ? .07 : .035)) * .42;
         const report = warm * Math.exp(-t / (heavy ? .075 : .035)) * 1.35;
         const mechanism = (Math.sin(2 * Math.PI * 1190 * t) + .4 * Math.sin(2 * Math.PI * 2317 * t)) * Math.exp(-t / .017) * .07;
-        value = crack + body + report + mechanism;
+        const cycle = Math.max(0, t - .035);
+        const bolt = t > .035 ? (high * .13 + Math.sin(2 * Math.PI * 1860 * cycle) * .07) * Math.exp(-cycle / .012) : 0;
+        value = crack * .75 + body * 1.45 + report * 1.2 + mechanism + bolt;
       } else if (type === 'missile') {
         const blast = warm * Math.exp(-t / .05) * 1.2;
         const rush = (w * .16 + warm * .8) * (1 - Math.exp(-t / .045)) * Math.exp(-t / .31);
-        value = blast + rush + Math.sin(2 * Math.PI * 72 * t) * Math.exp(-t / .06) * .17;
+        const ignition = Math.max(0, t - .045);
+        const motor = t > .045 ? (warm * 1.8 + low * 2.3) * (1 - Math.exp(-ignition / .025)) * Math.exp(-ignition / .4) : 0;
+        const tail = warm * .65 * Math.exp(-t / .48) * (1 - Math.exp(-t / .15));
+        value = blast + rush * .55 + motor + tail + Math.sin(2 * Math.PI * (94 * t - 28 * t * t)) * Math.exp(-t / .18) * .28;
       } else if (type === 'explosion') {
         value = high * Math.exp(-t / .008) * .38 + warm * Math.exp(-t / .11) * 1.1 + low * Math.exp(-t / .44) * 3.5;
+        value += warm * .9 * Math.exp(-Math.max(0,t-.055)/.24) * Math.min(1,t/.055);
         value += (Math.sin(2 * Math.PI * 48 * t) + .3 * Math.sin(2 * Math.PI * 69 * t)) * Math.exp(-t / .3) * .28;
       } else if (type === 'flare') {
         value = high * Math.exp(-t / .013) * .3 + w * .3 * (1 - Math.exp(-t / .008)) * Math.exp(-t / .07);
@@ -100,3 +106,4 @@ export function makeEffect(type, sampleRate, variant = 0, style = 'rotary') {
   }
   return finish(channels, sampleRate, type === 'click' ? .3 : .88);
 }
+

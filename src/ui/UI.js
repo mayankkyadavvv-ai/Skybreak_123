@@ -1,3 +1,4 @@
+import { weaponHUD } from "./WeaponHUD.js";
 import { trapFocus, escapeHTML } from "./Accessibility.js";
 import { icon } from "./Icons.js";
 import * as T from "three";
@@ -133,6 +134,7 @@ class UI {
           <div id="hud-score"></div>
           <button class="icon-btn" data-action="toggle-map" aria-label="Tactical World Map">${icon("map")} <small data-bind="tacticalMap">N</small></button>
           <button class="icon-btn help-btn" data-action="flight-help" aria-label="Controls and help">${icon("help")} <small data-bind="help">H</small></button>
+          <button class="icon-btn" data-action="toggle-instructions" aria-label="Show detailed instructions" aria-pressed="false">Tips</button>
           <button class="icon-btn" data-action="pause" aria-label="Pause game">Ⅱ</button>
         </div>
 
@@ -145,6 +147,7 @@ class UI {
         </div>
 
         <div id="lock-status" class="lock-status"></div>
+        <div id="weapon-hit" class="weapon-hit" hidden><i></i><span id="weapon-hit-text"></span></div>
         <div id="flight-warning" class="flight-warning" role="status" aria-live="polite" aria-atomic="true"></div>
 
         <div class="hud-bottom-left">
@@ -157,15 +160,18 @@ class UI {
           </div>
         </div>
 
-        <div class="hud-weapons">
+        <div class="hud-weapons" data-weapons-version="2">
           <div class="weapon">
             <span>IR MISSILE <kbd data-bind="missile">M / RMB</kbd></span>
             <strong id="missile-value">06 <small>/ 06</small></strong>
             <div id="missile-bars"></div>
+            <small id="missile-state" class="weapon-state"></small>
+            <div class="weapon-progress" role="progressbar" aria-label="Missile readiness" aria-valuemin="0" aria-valuemax="100" id="missile-readiness"><i id="missile-progress"></i></div>
           </div>
           <div class="weapon secondary">
             <span>CANNON <kbd data-bind="cannon">Space / LMB</kbd></span>
             <strong id="cannon-value">1200</strong>
+            <small id="cannon-state" class="weapon-state"></small>
           </div>
           <div class="flare-line">COUNTERMEASURES <b id="flare-value">20</b> <kbd data-bind="flare">X</kbd></div>
         </div>
@@ -219,6 +225,7 @@ class UI {
     this.menuEl = root.querySelector("#menu");
     this.menuEl.insertAdjacentHTML('beforeend','<nav class="public-links" aria-label="Information"><a href="/about">About</a><a href="/help">Help</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/storage">Storage settings</a></nav>');
     this.hudEl = root.querySelector("#hud");
+    this.hudEl.classList.add("quiet-hud");
     this.modal = root.querySelector("#modal-root");
     this.canvas = root.querySelector("#hud-canvas");
     this.ctx = this.canvas.getContext("2d");
@@ -418,6 +425,14 @@ class UI {
   }
 
   action(a) {
+    if (a === 'toggle-instructions') {
+      const compact = this.hudEl.classList.toggle('quiet-hud');
+      const button = this.hudEl.querySelector('[data-action="toggle-instructions"]');
+      button?.setAttribute('aria-pressed', String(!compact));
+      button?.setAttribute('aria-label', compact ? 'Show detailed instructions' : 'Hide detailed instructions');
+      return;
+    }
+
     if (a === 'squadron') { this.game.openSquadronPanel(); return; }
     if (a === 'battle-target') { this.game.action('targetNext'); document.getElementById('world')?.focus?.(); return; }
     if (a === 'battle-replay-seed') { this.game.start(2, { seed: this.game.battleResult?.seed }); return; }
@@ -1348,6 +1363,16 @@ class UI {
       this.html("missile-bars", Array.from({ length: maxMissiles }, (_, i) => `<i class="${i < g.missilesLeft ? "loaded" : ""}"></i>`).join(""));
       this.lastAmmo = `${g.missilesLeft}/${maxMissiles}`;
     }
+    const weapons = weaponHUD(g);
+    this.text('missile-state', weapons.launched ? 'MISSILE AWAY' : weapons.label);
+    this.dom['missile-state'].dataset.mode = weapons.mode;
+    this.dom['missile-progress'].style.width = `${Math.round(weapons.progress*100)}%`;
+    this.dom['missile-readiness'].setAttribute('aria-valuenow', String(Math.round(weapons.progress*100)));
+    this.text('cannon-state', weapons.cannon);
+    this.dom['cannon-state'].dataset.mode = weapons.cannon === 'FIRING' ? 'firing' : weapons.cannon === 'READY' ? 'ready' : 'empty';
+    this.dom['weapon-hit'].hidden = !weapons.hit;
+    this.dom['weapon-hit'].dataset.kind = weapons.hit;
+    this.text('weapon-hit-text', weapons.hit);
     this.text("cannon-value", g.cannonLeft);
     this.text("flare-value", g.flaresLeft);
     this.text("mission-time", time(g.elapsed));
@@ -1396,16 +1421,8 @@ class UI {
     const nearestBaseInfo = getNearestIAFBase(p.position.x, p.position.z);
     const isNearRunway = nearestBaseInfo?.base && nearestBaseInfo.distance < 12000;
 
-    this.dom["lock-status"].textContent = g.mission.freeFlight
-      ? `${bindingLabel("help",this.settings)} · HELP     ${bindingLabel("tacticalMap",this.settings)} · MAP`
-      : g.target?.alive
-      ? g.lock >= 1.4
-        ? `LOCKED · ${bindingLabel("missile",this.settings)}`
-        : g.lock > 0
-        ? "ACQUIRING LOCK " + Math.round((g.lock / 1.4) * 100) + "%"
-        : "KEEP TARGET IN RETICLE"
-      : "NO HOSTILES";
-    this.dom["lock-status"].classList.toggle("locked", g.lock >= 1.4);
+    this.dom["lock-status"].textContent = g.mission.freeFlight ? '' : weapons.launched ? 'MISSILE AWAY' : weapons.mode === 'locked' ? `LOCKED · ${bindingLabel("missile",this.settings)}` : weapons.mode === 'acquiring' && g.lock > 0 ? `TRACK ${Math.round(weapons.progress*100)}%` : '';
+    this.dom["lock-status"].classList.toggle("locked", weapons.mode === 'locked');
     const ground = Math.max(0, terrainHeight(p.position.x,p.position.z));
     const context = hudContext(g,ground,nearestBaseInfo);
     this.hudEl.dataset.context=context;
@@ -2277,3 +2294,4 @@ class UI {
 export {
   UI
 };
+

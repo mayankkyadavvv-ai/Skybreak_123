@@ -147,7 +147,11 @@ test('Free Flight HUD has no zero-division progress or hostile objective; reset 
   assert.equal(ui.dom['objective-count'].textContent, 'NO ENEMIES · NO TIME LIMIT');
   assert.equal(ui.dom['objective-fill'].style.width, '0%');
   assert.equal(ui.dom['objective-fill'].parentElement.hidden, true);
-  assert.match(ui.dom['lock-status'].textContent, /HELP/);
+  assert.equal(ui.dom['lock-status'].textContent, '');
+  assert.ok(document.querySelector('[data-action="flight-help"]'));
+  assert.ok(ui.hudEl.classList.contains('quiet-hud'));
+  click(document, '[data-action="toggle-instructions"]');
+  assert.equal(ui.hudEl.classList.contains('quiet-hud'), false);
   assert.equal(ui.dom.threat.hidden, true);
   click(document, '[data-action="practice-reset"]');assert.equal(game.resets, 1);
 });
@@ -235,3 +239,4 @@ test('controller pause edges work in both flight and paused menus without repeat
  pad.buttons[9].pressed=true;input.poll(.016,[pad]);input.poll(.016,[pad]);assert.equal(game.state,'paused');assert.equal(actions.length,1);
  pad.buttons[9].pressed=false;input.poll(.016,[pad]);pad.buttons[9].pressed=true;input.poll(.016,[pad]);assert.equal(game.state,'playing');assert.equal(actions.length,2);input.dispose();
 });
+

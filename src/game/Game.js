@@ -62,7 +62,7 @@ class Game {
     this.atmosphere = new Atmosphere(this.world, this.scene);
     this.effects = new Effects(this.scene);
     this.speedEffects = new SpeedEffects(this.scene, this.camera);
-    this.weapons = new Weapons(this.scene, this.effects, this.damage.bind(this), (type, position) => this.audio.play(type, { distance: position ? position.distanceTo(this.camera.position) : 0 }));
+    this.weapons = new Weapons(this.scene, this.effects, this.damage.bind(this), (type, position) => this.audio.play(type, { position, cameraPos: this.camera.position, cameraRight: this.cameraRightForAudio || (this.cameraRightForAudio = new T.Vector3()), distance: position ? position.distanceTo(this.camera.position) : 0 }));
     this.jetConfig = loadPlayerJetConfig();
     this.player = new Jet("player", false, this.jetConfig);
     this.scene.add(this.player.model);
@@ -242,6 +242,7 @@ class Game {
     this.lastKill = -20;
     this.combo = 0;
     this.damageFlash = 0;
+    this.weaponHitUntil = 0; this.weaponHitKill = false; this.weaponLaunchUntil = 0;
     this.notifications = [];
     this.stats = { kills: 0, hits: 0, shots: 0, missiles: 0, missileHits: 0, damageTaken: 0 };
     this.resultCommitted = false;
@@ -543,6 +544,7 @@ class Game {
       this.missilesLeft--;
       this.stats.missiles++;
       this.missileCooldown = 1.7;
+      this.weaponLaunchUntil = this.elapsed + .85;
       this.lock = 0;
       this.lockSound = false;
       this.cam.shake = 0.5;
@@ -566,6 +568,7 @@ class Game {
       this.missilesLeft--;
       this.stats.missiles++;
       this.missileCooldown = 1.7;
+      this.weaponLaunchUntil = this.elapsed + .85;
       this.lock = 0;
       this.lockSound = false;
       this.cam.shake = 0.5;
@@ -598,6 +601,11 @@ class Game {
     if (jet === this.player) this.stats.damageTaken = (this.stats.damageTaken || 0) + Math.min(jet.hp, Math.max(0, amount));
     jet.hp = Math.max(0, jet.hp - amount);
     if (owner === this.player) {
+      if (weapon === "cannon" || weapon === "missile") {
+        if (!(this.weaponHitUntil > this.elapsed)) this.audio.play("hit");
+        this.weaponHitUntil = this.elapsed + .24;
+        this.weaponHitKill = jet.hp === 0;
+      }
       if (weapon === "cannon") {
         this.stats.hits++;
         this.score += 20;
@@ -674,6 +682,8 @@ class Game {
     for (const jet of this.enemies) jet.beginStep?.();
     for (const jet of this.allies) jet.beginStep?.();
     this.elapsed += dt;
+    this.cameraRightForAudio ||= new T.Vector3();
+    this.cameraRightForAudio.set(1,0,0).applyQuaternion(this.camera.quaternion);
     if (this.multiplayer?.active) {
       this.multiplayer.step(dt);
     }
@@ -1038,7 +1048,7 @@ class Game {
     if(this.disposed)return;this.disposed=true;cancelAnimationFrame(this.animationFrame);
     window.removeEventListener('resize',this.onResize);this.renderer.domElement.removeEventListener('webglcontextlost',this.onContextLost);
     this.openSkies?.abort();this.openSkies=null;
-    this.input.dispose();this.multiplayer.clearRemotePlayers();this.multiplayer.network.disconnect();
+    this.input.dispose();this.multiplayer.weapons.dispose();this.multiplayer.clearRemotePlayers();this.multiplayer.network.disconnect();
     for(const jet of [this.player,...this.enemies,...this.allies])jet.dispose();
     this.weapons.dispose();this.effects.dispose();this.speedEffects.dispose();this.atmosphere.dispose();this.environment?.dispose();this.world.dispose();
     for(const pass of this.composer?.passes || [])pass.dispose?.();this.composer?.dispose();this.renderer.dispose();this.audio.dispose()?.catch?.(()=>{});
@@ -1154,3 +1164,4 @@ class Game {
 export {
   Game
 };
+
